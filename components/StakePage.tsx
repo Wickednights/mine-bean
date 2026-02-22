@@ -557,6 +557,8 @@ const styles: { [key: string]: React.CSSProperties } = {
         display: "flex",
         justifyContent: "center",
         paddingTop: "30px",
+        minHeight: "100vh",
+        paddingBottom: "60px",
     },
     containerMobile: {
         background: "rgba(255, 255, 255, 0.02)",
