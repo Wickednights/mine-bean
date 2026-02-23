@@ -86,15 +86,16 @@ export default function HelpButton() {
       )}
       {showHowTo && (
         <div onClick={() => setShowHowTo(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(12px)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-          <div onClick={e => e.stopPropagation()} style={{ background: 'rgba(18,22,35,0.98)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 20, padding: '32px', width: '100%', maxWidth: 480, boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: 'rgba(18,22,35,0.98)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 20, padding: '32px', width: '100%', maxWidth: 780, maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
               <span style={{ fontSize: 18, fontWeight: 700, color: '#fff' }}>How to Play</span>
               <button onClick={() => setShowHowTo(false)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', display: 'flex' }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
               </button>
             </div>
+            <video src="https://customer-9u3b1kxg6ai5dy2s.cloudflarestream.com/bfe42d7748bf1af795820bf22c0a6c87/downloads/default.mp4" controls style={{ width: '100%', borderRadius: 12, marginBottom: 24, outline: 'none' }} />
             {[
-              { num: '01', title: 'Pick Your Blocks', desc: 'Each round, select one or more blocks on the 5×5 grid. You can only deploy once per round so choose carefully.' },
+            { num: '01', title: 'Pick Your Blocks', desc: 'Each round, select one or more blocks on the 5×5 grid. You can only deploy once per round so choose carefully.' },
               { num: '02', title: 'Deploy ETH', desc: 'Set your ETH amount per block and hit Deploy. The more ETH you deploy to a block, the larger your share of winnings if it wins.' },
               { num: '03', title: 'Wait for the Winner', desc: 'Every 60 seconds, one block is randomly selected as the winner. All ETH deployed to that block splits the round pot proportionally.' },
               { num: '04', title: 'Earn BEAN', desc: 'The top miner on the winning block earns BEAN tokens each round. Stake BEAN to earn a share of protocol revenue.' },
