@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import WalletButton from './WalletButton'
 import BeanLogo, { BeansTextLogo } from './BeanLogo'
+import { CONTRACTS } from '@/lib/contracts'
 
 interface LandingPageProps {
   onStartMining: () => void
@@ -16,7 +17,7 @@ export default function LandingPage({ onStartMining }: LandingPageProps) {
   useEffect(() => {
     const fetchBeansPrice = async () => {
       try {
-        const response = await fetch('https://api.dexscreener.com/latest/dex/pairs/base/0x3e9b01e1C30ea92Adc8B02C0BCf3f0DE509aCbD3')
+        const response = await fetch(`https://api.dexscreener.com/latest/dex/pairs/base/${CONTRACTS.LP.address}`)
         const data = await response.json()
         if (data.pair?.priceUsd) setBeansPrice(parseFloat(data.pair.priceUsd).toFixed(4))
       } catch {

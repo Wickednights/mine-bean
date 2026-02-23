@@ -22,7 +22,7 @@ export const CONTRACTS = {
     abi: TreasuryABI,
   },
   LP: {
-    address: '' as `0x${string}`,
+    address: '0x75f608473ca581b0031408cc2aa9c41eda6e89642fb821d91356c3c554018970' as `0x${string}`,
   },
   Staking: {
     address: '0x58237d94dD81251289b17830A11A33c75117dcf3' as `0x${string}`,

@@ -7,6 +7,7 @@ import BeanLogo from './BeanLogo'
 import { apiFetch } from '../lib/api'
 import { useSSE } from '../lib/SSEContext'
 import { useUserData } from '../lib/UserDataContext'
+import { CONTRACTS } from '../lib/contracts'
 
 interface StakePageProps {
     userAddress?: string
@@ -65,7 +66,7 @@ export default function StakePage({
         const fetchBeansPrice = async () => {
             try {
                 const response = await fetch(
-                    "https://api.dexscreener.com/latest/dex/pairs/base/0x3e9b01e1C30ea92Adc8B02C0BCf3f0DE509aCbD3"
+                    `https://api.dexscreener.com/latest/dex/pairs/base/${CONTRACTS.LP.address}`
                 )
                 const data = await response.json()
                 if (data.pair?.priceUsd) {

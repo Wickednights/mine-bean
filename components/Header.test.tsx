@@ -145,7 +145,7 @@ describe('Header', () => {
     }, { timeout: 3000 })
 
     // Verify fetch was called with DexScreener API
-    expect(global.fetch).toHaveBeenCalledWith('https://api.dexscreener.com/latest/dex/pairs/base/0x3e9b01e1C30ea92Adc8B02C0BCf3f0DE509aCbD3')
+    expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('api.dexscreener.com/latest/dex/pairs/base/'))
   })
 
   it('shows price values when loaded', async () => {
