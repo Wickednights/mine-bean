@@ -42,6 +42,7 @@ export default function MinersPanel() {
                     setRoundId(data.roundId)
                     setWinningBlock(data.winningBlock)
                     setIsOpen(true)
+                    setTimeout(() => setIsOpen(false), 3000)
                 }
                 // If no miners (empty round), keep showing previous round's data
                 // but don't open the panel — it stays as-is
