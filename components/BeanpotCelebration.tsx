@@ -208,18 +208,21 @@ export default function BeanpotCelebration() {
   // Listen for real beanpot hits from the roundSettled window event
   const { subscribeGlobal } = useSSE()
 
+const prevBeanpotPoolRef = useRef<number>(0)
+
 useEffect(() => {
   return subscribeGlobal('roundTransition', (data: any) => {
     const settled = data.settled
     if (!settled) return
     const beanpotPaid = parseFloat(settled.beanpotAmount || '0')
     const newPool = parseFloat(data.newRound?.beanpotPool || '0')
-    if (beanpotPaid > 0 && beanpotPaid > newPool) {
+    const prevPool = prevBeanpotPoolRef.current
+    prevBeanpotPoolRef.current = newPool
+    if (beanpotPaid > 0 && newPool < prevPool) {
       triggerCelebration()
     }
   })
 }, [subscribeGlobal, triggerCelebration])
-
   return (
     <>
 
