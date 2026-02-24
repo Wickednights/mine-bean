@@ -93,7 +93,7 @@ export default function HelpButton() {
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
               </button>
             </div>
-            <video src="https://customer-9u3b1kxg6ai5dy2s.cloudflarestream.com/bfe42d7748bf1af795820bf22c0a6c87/downloads/default.mp4" controls style={{ width: '100%', borderRadius: 12, marginBottom: 24, outline: 'none' }} />
+            <video src="https://customer-9u3b1kxg6ai5dy2s.cloudflarestream.com/d59092db5733750b3a5e22c3810922c1/downloads/default.mp4" controls style={{ width: '100%', borderRadius: 12, marginBottom: 24, outline: 'none' }} />
             {[
             { num: '01', title: 'Pick Your Blocks', desc: 'Each round, select one or more blocks on the 5×5 grid. You can only deploy once per round so choose carefully.' },
               { num: '02', title: 'Deploy ETH', desc: 'Set your ETH amount per block and hit Deploy. The more ETH you deploy to a block, the larger your share of winnings if it wins.' },

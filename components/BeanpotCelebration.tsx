@@ -213,7 +213,7 @@ export default function BeanpotCelebration() {
       // Only trigger when beanpot is actually won (paid out), not just accumulated
       const amount = detail.motherlodeAmount || detail.beanpotAmount || '0'
       const amountNum = parseFloat(amount)
-      if (amountNum > 1e15) {
+      if (amountNum > 0) {
         triggerCelebration()
       }
     }
