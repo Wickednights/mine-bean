@@ -210,11 +210,10 @@ export default function BeanpotCelebration() {
     const handleRoundSettled = (event: Event) => {
       const detail = (event as CustomEvent).detail
       if (!detail) return
-      console.log("roundSettled detail:", JSON.stringify(detail))
+      
       // Only trigger when beanpot is actually won (paid out), not just accumulated
       const amount = detail.motherlodeAmount || detail.beanpotAmount || '0'
-      const amountNum = parseFloat(amount)
-      if (amountNum > 0) {
+      if (amount !== '0' && amount !== '') {
         triggerCelebration()
       }
     }
