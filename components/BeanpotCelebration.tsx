@@ -219,7 +219,7 @@ useEffect(() => {
     const prevPool = prevBeanpotPoolRef.current
     prevBeanpotPoolRef.current = newPool
     console.log("beanpot check:", beanpotPaid, newPool, prevPool)
-    if (beanpotPaid > 0 if (beanpotPaid > 0 && newPool < prevPool) {if (beanpotPaid > 0 && newPool < prevPool) { newPool < prevPool) {
+    if (beanpotPaid > 0 && newPool < prevPool) {
       triggerCelebration()
     }
   })
