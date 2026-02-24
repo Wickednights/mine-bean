@@ -212,8 +212,9 @@ useEffect(() => {
   return subscribeGlobal('roundTransition', (data: any) => {
     const settled = data.settled
     if (!settled) return
-    const amount = settled.motherlodeAmount || settled.beanpotAmount || '0'
-    if (amount !== '0' && amount !== '') {
+    const beanpotPaid = parseFloat(settled.beanpotAmount || '0')
+    const newPool = parseFloat(data.newRound?.beanpotPool || '0')
+    if (beanpotPaid > 0 && beanpotPaid > newPool) {
       triggerCelebration()
     }
   })
