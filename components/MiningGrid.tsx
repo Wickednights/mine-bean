@@ -563,6 +563,7 @@ const styles: { [key: string]: React.CSSProperties } = {
         color: "#999",
     },
     minerCount: {
+        marginLeft: "auto",
         fontSize: "10px",
         fontWeight: 600,
         color: "#aaa",
