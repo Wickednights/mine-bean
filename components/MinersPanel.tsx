@@ -25,6 +25,7 @@ export default function MinersPanel() {
     const [roundId, setRoundId] = useState<number | null>(null)
     const [winningBlock, setWinningBlock] = useState<number | null>(null)
     const [loading, setLoading] = useState(false)
+    const autoCloseRef = useRef<NodeJS.Timeout | null>(null)
 
     // Resolve miner addresses to usernames via batch profile lookup
     const minerAddresses = useMemo(() => miners.map(m => m.address), [miners])
@@ -40,9 +41,9 @@ export default function MinersPanel() {
                 if (data.miners.length > 0) {
                     setMiners(data.miners)
                     setRoundId(data.roundId)
-                    setWinningBlock(data.winningBlock)
                     setIsOpen(true)
-                    setTimeout(() => setIsOpen(false), 3000)
+if (autoCloseRef.current) clearTimeout(autoCloseRef.current)
+autoCloseRef.current = setTimeout(() => setIsOpen(false), 3000)
                 }
                 // If no miners (empty round), keep showing previous round's data
                 // but don't open the panel — it stays as-is
