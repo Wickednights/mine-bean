@@ -88,7 +88,7 @@ autoCloseRef.current = setTimeout(() => setIsOpen(false), 3000)
                         ...styles.tab,
                         borderWidth: isHoveringTab ? "2px" : "1px",
                     }}
-                    onClick={() => setIsOpen(true)}
+                    onClick={() => { setIsOpen(true); if (autoCloseRef.current) clearTimeout(autoCloseRef.current); autoCloseRef.current = setTimeout(() => setIsOpen(false), 3000) }}
                     onMouseEnter={() => setIsHoveringTab(true)}
                     onMouseLeave={() => setIsHoveringTab(false)}
                 >
