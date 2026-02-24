@@ -208,14 +208,14 @@ export default function BeanpotCelebration() {
   // Listen for real beanpot hits from the roundSettled window event
   const { subscribeGlobal } = useSSE()
 
-useEffect(() => {
-  return subscribeGlobal('roundSettled', (data: any) => {
-    const amount = data.motherlodeAmount || data.beanpotAmount || '0'
+return subscribeGlobal('roundTransition', (data: any) => {
+    const settled = data.settled
+    if (!settled) return
+    const amount = settled.motherlodeAmount || settled.beanpotAmount || '0'
     if (amount !== '0' && amount !== '') {
       triggerCelebration()
     }
   })
-}, [subscribeGlobal, triggerCelebration])
 
   return (
     <>
