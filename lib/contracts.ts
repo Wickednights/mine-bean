@@ -6,7 +6,7 @@ import StakingABI from './abis/Staking.json'
 
 export const CONTRACTS = {
   GridMining: {
-    address: '0x6d13A234a589e73AD5868121859E4EcA3b027339' as `0x${string}`,
+    address: '0x854EeD669c32561Ab54cF3e9731FAbEE7890c0D3' as `0x${string}`,
     abi: GridMiningABI,
   },
   Bean: {
@@ -14,7 +14,7 @@ export const CONTRACTS = {
     abi: BeanABI,
   },
   AutoMiner: {
-    address: '0xaff68371ead83d6C56485a7A24Db3E002244a040' as `0x${string}`,
+    address: '0x79Db4f7caF0a5E09f2E5B59815FBF21f3723B0DC' as `0x${string}`,
     abi: AutoMinerABI,
   },
   Treasury: {
@@ -22,7 +22,7 @@ export const CONTRACTS = {
     abi: TreasuryABI,
   },
   LP: {
-    address: '' as `0x${string}`,
+    address: '0x08e5e77763ba3deae8dd020e15727b06fe746a64fa562f66a66da3e38357b492' as `0x${string}`,
   },
   Staking: {
     address: '0x3Db46e2957F0B720D2dB3d5C3dc862083521C811' as `0x${string}`,
