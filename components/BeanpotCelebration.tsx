@@ -130,6 +130,7 @@ function playCelebrationSound() {
 export default function BeanpotCelebration() {
   const [showText, setShowText] = useState(false)
   const timeoutRef = useRef<NodeJS.Timeout[]>([])
+  const prevBeanpotPoolRef = useRef<number>(0)
 
   const triggerCelebration = useCallback(() => {
     timeoutRef.current.forEach(t => clearTimeout(t))
@@ -208,7 +209,6 @@ export default function BeanpotCelebration() {
   // Listen for real beanpot hits from the roundSettled window event
   const { subscribeGlobal } = useSSE()
 
-const prevBeanpotPoolRef = useRef<number>(0)
 
 useEffect(() => {
   return subscribeGlobal('roundTransition', (data: any) => {
