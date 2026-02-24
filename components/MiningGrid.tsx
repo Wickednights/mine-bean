@@ -117,7 +117,7 @@ export default function MiningGrid({
     const [userDeployedBlocks, setUserDeployedBlocks] = useState<Set<number>>(new Set())
     const [hasDeployedThisRound, setHasDeployedThisRound] = useState(false)
     const [autoMode, setAutoMode] = useState<{ enabled: boolean, strategy: "all" | "random" | null }>({ enabled: false, strategy: null })
-
+const [isAutoMinerActive, setIsAutoMinerActive] = useState(false)
     // Animation state: snapshot freezes grid data so resets can't wipe it mid-animation
     const animatingRef = useRef(false)
     const snapshotCellsRef = useRef<CellData[] | null>(null)
@@ -396,9 +396,19 @@ setCells(blocksToGrid(d.blocks))
         return () => window.removeEventListener("autoMinerMode" as any, handleAutoMode)
         // eslint-disable-next-line react-hooks/exhaustive-deps -- setSelectedBlocks is stable, defined once per component
     }, [userDeployedBlocks])
+    useEffect(() => {
+        const handleActivated = () => setIsAutoMinerActive(true)
+        const handleStopped = () => setIsAutoMinerActive(false)
+        window.addEventListener("autoMinerActivated", handleActivated)
+        window.addEventListener("autoMinerStopped", handleStopped)
+        return () => {
+            window.removeEventListener("autoMinerActivated", handleActivated)
+            window.removeEventListener("autoMinerStopped", handleStopped)
+        }
+    }, [])
 
     const handleBlockClick = (index: number) => {
-        if (autoMode.enabled) return  // Disable clicks in any auto mode (both "all" and "random")
+        if (isAutoMinerActive) return  // Disable clicks when AutoMiner is active
         if (phase !== "counting") return
         if (hasDeployedThisRound) return
         if (userDeployedBlocks.has(index)) return
@@ -431,11 +441,9 @@ setCells(blocksToGrid(d.blocks))
                                 ...(isSelected && !isEliminated && !isDeployed ? styles.cellSelected : {}),
                                 ...(isEliminated ? styles.cellEliminated : {}),
                                 ...(isWinner && phase === "winner" ? styles.cellWinner : {}),
-                                ...(autoMode.enabled && autoMode.strategy === "random" && !isDeployed ? styles.cellDisabled : {}),
-                            }}
+...(isAutoMinerActive && !isDeployed ? styles.cellDisabled : {}),                            }}
                             onClick={() => handleBlockClick(index)}
-                            disabled={phase !== "counting" || isDeployed || hasDeployedThisRound || autoMode.enabled}
-                        >
+disabled={phase !== "counting" || isDeployed || hasDeployedThisRound || isAutoMinerActive}                        >
                             {!isEliminated && (
                                 <>
                                     <div className="cell-header" style={styles.cellHeader}>
