@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react'
 import confetti from 'canvas-confetti'
-
+import { useSSE } from '@/lib/SSEContext'
 function playCelebrationSound() {
   if (localStorage.getItem('bean_muted') === 'true') return
   try {
@@ -206,20 +206,16 @@ export default function BeanpotCelebration() {
   }, [])
 
   // Listen for real beanpot hits from the roundSettled window event
-  useEffect(() => {
-    const handleRoundSettled = (event: Event) => {
-      const detail = (event as CustomEvent).detail
-      if (!detail) return
-      
-      // Only trigger when beanpot is actually won (paid out), not just accumulated
-      const amount = detail.motherlodeAmount || detail.beanpotAmount || '0'
-      if (amount !== '0' && amount !== '') {
-        triggerCelebration()
-      }
+  const { subscribeGlobal } = useSSE()
+
+useEffect(() => {
+  return subscribeGlobal('roundSettled', (data: any) => {
+    const amount = data.motherlodeAmount || data.beanpotAmount || '0'
+    if (amount !== '0' && amount !== '') {
+      triggerCelebration()
     }
-    window.addEventListener('roundSettled', handleRoundSettled)
-    return () => window.removeEventListener('roundSettled', handleRoundSettled)
-  }, [triggerCelebration])
+  })
+}, [subscribeGlobal, triggerCelebration])
 
   return (
     <>
