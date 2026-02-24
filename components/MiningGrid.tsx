@@ -256,13 +256,7 @@ export default function MiningGrid({
         const unsubDeployed = subscribeGlobal('deployed', (data) => {
             if (animatingRef.current) return
             const d = data as DeployedEvent
-setCells(prev => {
-    const next = [...prev]
-    d.blocks.forEach(b => {
-        if (b.id >= 0 && b.id < 25) next[b.id] = { minerCount: b.minerCount, amount: parseFloat(b.deployedFormatted) }
-    })
-    return next
-})
+setCells(blocksToGrid(d.blocks))
             // If this is the connected user's AutoMiner deployment, fetch their blocks
             // This handles the race condition where user SSE may not be connected yet
             if (d.isAutoMine && userAddressRef.current &&
@@ -558,6 +552,7 @@ const styles: { [key: string]: React.CSSProperties } = {
         cursor: "not-allowed",
     },
     cellHeader: {
+        width: "100%",
         display: "flex",
         justifyContent: "space-between",
         alignItems: "flex-start",
