@@ -408,7 +408,7 @@ setCells(blocksToGrid(d.blocks))
     }, [])
 
     const handleBlockClick = (index: number) => {
-        if (isAutoMinerActive) return  // Disable clicks when AutoMiner is active
+        if (autoMode.enabled) return  // Disable clicks in any auto mode (both "all" and "random")
         if (phase !== "counting") return
         if (hasDeployedThisRound) return
         if (userDeployedBlocks.has(index)) return

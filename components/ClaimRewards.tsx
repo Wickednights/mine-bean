@@ -1,4 +1,5 @@
 'use client'
+import BeanLogo from './BeanLogo'
 
 import React from "react"
 import { useUserData } from '@/lib/UserDataContext'
@@ -17,11 +18,6 @@ const EthLogo = ({ size = 16 }: { size?: number }) => (
   />
 )
 
-const BeanIcon = ({ size = 16 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="#0052FF">
-    <ellipse cx="12" cy="12" rx="8" ry="10" />
-  </svg>
-)
 
 export default function ClaimRewards({ userAddress, onClaimETH, onClaimBEAN }: ClaimRewardsProps) {
   // Shared rewards data from context (no local fetching)
@@ -53,7 +49,7 @@ export default function ClaimRewards({ userAddress, onClaimETH, onClaimBEAN }: C
 
         <div style={styles.row}>
           <div style={styles.rowLabel}>
-            <BeanIcon size={16} />
+            <BeanLogo size={16} />
             <span>Unroasted BEAN</span>
           </div>
           <div style={{ ...styles.rowValue, color: hasUnroasted ? "#fff" : "#555" }}>
@@ -63,7 +59,7 @@ export default function ClaimRewards({ userAddress, onClaimETH, onClaimBEAN }: C
 
         <div style={styles.row}>
           <div style={styles.rowLabel}>
-            <BeanIcon size={16} />
+            <BeanLogo size={16} />
             <span>Roasted BEAN</span>
           </div>
           <div style={{ ...styles.rowValue, color: hasRoasted ? "#fff" : "#555" }}>

@@ -21,12 +21,7 @@ export default function Home() {
   const { data: balance } = useBalance({ address })
   const [isMobile, setIsMobile] = useState(false)
   const [showMining, setShowMining] = useState(false)
-
-  useEffect(() => {
-    if (sessionStorage.getItem('bean_visited') === 'true') {
-      setShowMining(true)
-    }
-  }, [])
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth <= 768)
@@ -34,7 +29,10 @@ export default function Home() {
     window.addEventListener('resize', checkMobile)
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
-
+useEffect(() => {
+  setShowMining(localStorage.getItem('bean_visited') === 'true')
+  setMounted(true)
+}, [])
   const { writeContract } = useWriteContract()
   const userBalance = balance ? parseFloat(balance.formatted) : 0
 
@@ -104,8 +102,9 @@ export default function Home() {
     })
   }, [isConnected, writeContract])
 
-  if (!showMining) {
-    return <LandingPage onStartMining={() => { sessionStorage.setItem('bean_visited', 'true'); setShowMining(true) }} />
+  if (!mounted) return null
+if (!showMining) {
+    return <LandingPage onStartMining={() => { localStorage.setItem('bean_visited', 'true'); sessionStorage.setItem('bean_visited', 'true'); setShowMining(true) }} />
   }
 
   if (isMobile) {
