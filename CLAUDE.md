@@ -53,7 +53,7 @@ components/
 lib/
   api.ts            — Backend API helpers (apiFetch, apiMutate). Base URL via NEXT_PUBLIC_API_URL env var (default https://api.minebean.com)
   SSEContext.tsx    — Centralized SSE provider (useSSE hook for subscribeGlobal/subscribeUser)
-  contracts.ts      — Contract addresses, ABIs, and constants (MIN_DEPLOY_PER_BLOCK, EXECUTOR_FEE_BPS)
+  contracts.ts      — Contract addresses, ABIs, and constants (MIN_DEPLOY_PER_BLOCK, EXECUTOR_FEE_BPS, EXECUTOR_FLAT_FEE)
   UserDataContext.tsx — Shared user data provider (rewards, staking, profile) with sessionStorage caching
   RoundTimerContext.tsx — Centralized round countdown timer with RPC block.timestamp calibration
   types.ts          — Typed window event interfaces and global WindowEventMap declarations
@@ -87,7 +87,7 @@ npx vitest run    # Run test suite
 |-------------|----------------------------------------------|
 | Bean        | `0xD8D2cbe5D3EB89Bf1974bd276b37574B4bBe5F2c` |
 | GridMining  | `0x854EeD669c32561Ab54cF3e9731FAbEE7890c0D3` |
-| AutoMiner   | `0x79Db4f7caF0a5E09f2E5B59815FBF21f3723B0DC` |
+| AutoMiner   | `0x38f9BDEE9f2b41e9E2a1E013a3dCCb9d519B0272` |
 | Treasury    | `0x4634846e66f5b8b0F8e9E7b30e31148b218E14e9` |
 | Staking     | `0x3Db46e2957F0B720D2dB3d5C3dc862083521C811` |
 | BEAN/ETH LP | `0x08e5e77763ba3deae8dd020e15727b06fe746a64fa562f66a66da3e38357b492` |
@@ -105,8 +105,8 @@ npx vitest run    # Run test suite
 - **MobileStatsBar.tsx** — Receives beanpot, total deployed, and user deployed via `roundData`/`roundDeployed` window events. Timer from `useRoundTimer()` context.
 - **ClaimRewards.tsx** — Uses shared `useUserData()` context for rewards data (no local fetching or SSE subscriptions). Shows ETH rewards, unroasted BEAN, roasted BEAN separately. Conditionally rendered — hidden when all rewards are zero. Claim buttons call `onClaimETH`/`onClaimBEAN` callbacks from page.tsx.
 - **MinersPanel.tsx** — Sliding left panel showing winning miners from the last settled round. Listens to `roundSettled` window event to capture the settled roundId (stored in a ref), then on `settlementComplete` (after 8s animation) fetches `GET /api/round/:id/miners` to get computed ETH and BEAN rewards per winner. Uses a consume-once ref pattern: `settledRoundIdRef` is set by `roundSettled` and cleared after consumption by `settlementComplete`, so empty rounds (no `roundSettled` event) don't re-trigger old data. Panel auto-opens when winners data arrives; collapsed state shows a trophy icon tab on the left edge. If the round had no deployments (empty miners response), keeps showing the previous round's data without re-opening.
-- **app/page.tsx** — Also handles AutoMiner contract interactions via `handleAutoActivate` (calls `AutoMiner.setConfig` payable) and `handleAutoStop` (calls `AutoMiner.stop`). Dispatches `autoMinerActivated`/`autoMinerStopped` window events on success.
-- **SidebarControls.tsx / MobileControls.tsx** — Support both Manual and Auto mining modes. Auto mode: fetches `GET /api/automine/:address` on mount, uses `useSSE()` to subscribe to `autoMineExecuted`/`configDeactivated`/`stopped` events for real-time updates. When AutoMiner is active, hides Manual tab and shows active status (balance, strategy, rounds executed/total, per block/round). Configure view validates per-block amount against `MIN_DEPLOY_PER_BLOCK` accounting for `EXECUTOR_FEE_BPS` (0.5%). Calls `onAutoActivate`/`onAutoStop` props from page.tsx.
+- **app/page.tsx** — Also handles AutoMiner contract interactions via `handleAutoActivate` (calls `AutoMiner.setConfig(strategyId, numRounds, numBlocks, blockMask)` payable) and `handleAutoStop` (calls `AutoMiner.stop`). Dispatches `autoMinerActivated`/`autoMinerStopped` window events on success.
+- **SidebarControls.tsx / MobileControls.tsx** — Support both Manual and Auto mining modes. Auto mode: fetches `GET /api/automine/:address` on mount, uses `useSSE()` to subscribe to `autoMineExecuted`/`configDeactivated`/`stopped` events for real-time updates. When AutoMiner is active, hides Manual tab and shows active status (balance, strategy, rounds executed/total, per block/round). Three strategies: **All** (all 25 blocks), **Random** (user-chosen count), **Select** (user picks specific blocks on grid, encoded as `blockMask` bitmask). Configure view validates per-block amount against `MIN_DEPLOY_PER_BLOCK` using hybrid fee calculation (see AutoMiner Integration). Calls `onAutoActivate`/`onAutoStop` props from page.tsx.
 - **MiningGrid.tsx** — Also uses `useSSE()` to subscribe to `autoMineExecuted` to highlight deployed blocks green. Additionally handles AutoMiner deployments in the global `deployed` SSE handler: when `isAutoMine === true` and user matches, fetches deployment history and decodes `blockMask` to mark deployed blocks.
 - **MiningTable.tsx** — Fetches `GET /api/rounds?page=N&limit=12&settled=true` on mount. Supports two tabs: "Rounds" (all settled rounds) and "Beanpot" (rounds where beanpot was won, via `&beanpot=true`). Server-side pagination. Displays: Round ID, winning block, BEAN winner (address or "Split" badge based on `isSplit`), winner count, ETH deployed/vaulted/winnings, beanpot amount (or dash if 0), relative time. **Clickable rows:** Each row links to the fulfilment transaction on BaseScan (`txHash` field from API).
 - **RevenueTable.tsx** — Fetches `GET /api/treasury/buybacks?page=N&limit=12` on mount. Server-side pagination. Displays buyback transactions: Time (relative), ETH Spent, BEAN Burned, Yield Generated (BEAN to stakers). No tabs — only Buybacks view. **Clickable rows:** Each row links to the buyback transaction on BaseScan (`txHash` field from API).
@@ -189,21 +189,30 @@ The GridMining contract enforces one deploy per round per user — calling `depl
 
 ### AutoMiner Integration
 
-The AutoMiner contract uses a single payable `setConfig(strategyId, numRounds, numBlocks)` to deposit ETH and configure in one transaction, and `stop()` to deactivate and refund remaining ETH.
+The AutoMiner contract uses a single payable `setConfig(strategyId, numRounds, numBlocks, blockMask)` to deposit ETH and configure in one transaction, and `stop()` to deactivate and refund remaining ETH.
+
+**Strategies:**
+- **All** (ID 1) — Deploy to all 25 blocks every round. `blockMask = 0`.
+- **Random** (ID 0) — Deploy to N random blocks every round. `blockMask = 0`.
+- **Select** (ID 2) — Deploy to user-chosen blocks every round. `blockMask` = bitmask of selected block IDs (uint32, bits 0-24 for the 5×5 grid). Computed as `selectedBlockIds.reduce((m, id) => m | (1 << id), 0)`.
 
 **Frontend constants in `lib/contracts.ts`:**
 - `MIN_DEPLOY_PER_BLOCK = 0.0000025` — minimum ETH per block
 - `EXECUTOR_FEE_BPS = 100` — 1% executor fee deducted from deposits
+- `EXECUTOR_FLAT_FEE = 0.000005` — ETH per round flat fee floor
 
-**Fee-adjusted validation:** Frontend mirrors contract formula to validate per-block amount:
+**Hybrid fee calculation:** The contract charges `max(percentageFee, flatFee)` per round. Frontend mirrors this to calculate the required deposit:
 ```typescript
-const effectiveAmountPerBlock = (deposit × 10000) / (numBlocks × numRounds × (10000 + EXECUTOR_FEE_BPS))
+const pctFeePerRound = perBlockAmount * numBlocks * EXECUTOR_FEE_BPS / 10000
+const deposit = pctFeePerRound >= EXECUTOR_FLAT_FEE
+  ? perBlockAmount * totalBlocks * (10000 + EXECUTOR_FEE_BPS) / 10000   // percentage path
+  : perBlockAmount * totalBlocks + EXECUTOR_FLAT_FEE * numRounds         // flat fee path
 ```
 
 **UI States:**
 1. **Manual mode** — Normal block selection and deploy flow
-2. **Auto Configure** — Input ETH deposit, strategy (All/Random), blocks (if random), rounds. Shows calculated per-block and per-round amounts.
-3. **Auto Active** — When `autoMinerState.active === true`. Hides Manual tab, shows status: balance (refundable), strategy, rounds executed/total, per block. Stop button triggers refund.
+2. **Auto Configure** — Input ETH per-block amount, strategy (All/Random/Select), blocks (if random; if select, user picks on grid), rounds. Shows calculated per-block, per-round, and total deposit amounts.
+3. **Auto Active** — When `autoMinerState.active === true`. Hides Manual tab, shows status: balance (refundable), strategy (All/Random/Select), rounds executed/total, per block. Stop button triggers refund.
 
 **Real-time updates via `useSSE()`:**
 - SidebarControls/MobileControls use `subscribeUser()` for `autoMineExecuted`, `configDeactivated`, `stopped` events
@@ -215,9 +224,10 @@ const effectiveAmountPerBlock = (deposit × 10000) / (numBlocks × numRounds × 
 - Also handles AutoMiner in global `deployed` SSE (via `subscribeGlobal`): when `isAutoMine === true` and user matches, fetches `/api/user/:address/history?type=deploy&roundId=X&limit=1`, decodes `blockMask`, and updates `userDeployedBlocks`
 - This dual approach handles the race condition where user SSE may not be connected for the first round
 
-**Grid lock in AutoMiner mode:**
-- When `autoMode.enabled === true`, all grid cell clicks are disabled
-- Prevents users from manually selecting/deselecting blocks while AutoMiner is active
+**Grid interaction in AutoMiner mode:**
+- When `autoMode.enabled === true` and strategy is All or Random, all grid cell clicks are disabled
+- When strategy is **Select**, grid cells remain clickable during configuration so the user can pick blocks. `autoMinerMode` event dispatched with `strategy: "select"` tells MiningGrid to allow selection.
+- Once AutoMiner is activated (`isAutoMinerActive === true`), grid is locked regardless of strategy
 
 **Window events:**
 | Event | Dispatched By | Consumed By |
@@ -731,6 +741,8 @@ User's AutoMiner configuration and state. Rate limited (5/min). **Connected by S
     "roundsExecuted": 0,
     "amountPerBlockFormatted": "string",
     "depositAmountFormatted": "string",
+    "selectedBlockMask": 0,
+    "selectedBlocks": [],
     "active": true
   },
   "costPerRoundFormatted": "string",

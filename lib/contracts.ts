@@ -14,11 +14,11 @@ export const CONTRACTS = {
     abi: BeanABI,
   },
   AutoMiner: {
-    address: '0x79Db4f7caF0a5E09f2E5B59815FBF21f3723B0DC' as `0x${string}`,
+    address: '0x38f9BDEE9f2b41e9E2a1E013a3dCCb9d519B0272' as `0x${string}`,
     abi: AutoMinerABI,
   },
   Treasury: {
-    address: '0x4634846e66f5b8b0F8e9E7b30e31148b218E14e9' as `0x${string}`,
+    address: '0x8ab9E48eB6e36ddd51dBD35628f5b9c78AEd3306' as `0x${string}`,
     abi: TreasuryABI,
   },
   LP: {
@@ -34,3 +34,4 @@ export const CONTRACTS = {
 // Make sure they reflect the true contract values.
 export const MIN_DEPLOY_PER_BLOCK = 0.0000025 // ETH
 export const EXECUTOR_FEE_BPS = 100 // 1% AutoMiner executor fee
+export const EXECUTOR_FLAT_FEE = 0.000006 // ETH per round — fee floor for AutoMiner

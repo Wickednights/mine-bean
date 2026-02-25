@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react"
 import { useConnectModal } from '@rainbow-me/rainbowkit'
-import { MIN_DEPLOY_PER_BLOCK, EXECUTOR_FEE_BPS } from '@/lib/contracts'
+import { MIN_DEPLOY_PER_BLOCK, EXECUTOR_FEE_BPS, EXECUTOR_FLAT_FEE } from '@/lib/contracts'
 import { apiFetch } from '@/lib/api'
 import { useSSE } from '@/lib/SSEContext'
 import { useRoundTimer } from '@/lib/RoundTimerContext'
@@ -19,6 +19,8 @@ interface AutoMinerState {
     costPerRoundFormatted: string
     roundsRemaining: number
     totalRefundableFormatted: string
+    selectedBlockMask: number
+    selectedBlocks: number[]
 }
 
 interface MobileControlsProps {
@@ -26,7 +28,7 @@ interface MobileControlsProps {
     isConnected?: boolean
     userAddress?: string
     onDeploy?: (amount: number, blockIds: number[]) => void
-    onAutoActivate?: (strategyId: number, numRounds: number, numBlocks: number, depositAmount: bigint) => void
+    onAutoActivate?: (strategyId: number, numRounds: number, numBlocks: number, depositAmount: bigint, blockMask: number) => void
     onAutoStop?: () => void
 }
 
@@ -49,7 +51,7 @@ export default function MobileControls({
     // Auto mode state
     const [autoBlocks, setAutoBlocks] = useState(1)
     const [autoRounds, setAutoRounds] = useState(1)
-    const [blockSelection, setBlockSelection] = useState<"all" | "random">("all")
+    const [blockSelection, setBlockSelection] = useState<"all" | "random" | "select">("all")
 
     // AutoMiner state from backend
     const [autoMinerState, setAutoMinerState] = useState<AutoMinerState | null>(null)
@@ -78,6 +80,8 @@ export default function MobileControls({
                     numRounds: number
                     roundsExecuted: number
                     depositAmountFormatted: string
+                    selectedBlockMask?: number
+                    selectedBlocks?: number[]
                 }
                 costPerRoundFormatted: string
                 roundsRemaining: number
@@ -95,6 +99,8 @@ export default function MobileControls({
                         costPerRoundFormatted: data.costPerRoundFormatted,
                         roundsRemaining: data.roundsRemaining,
                         totalRefundableFormatted: data.totalRefundableFormatted,
+                        selectedBlockMask: data.config.selectedBlockMask || 0,
+                        selectedBlocks: data.config.selectedBlocks || [],
                     })
                     if (data.config.active) {
                         setMode("auto")
@@ -130,6 +136,8 @@ export default function MobileControls({
                     numRounds: number
                     roundsExecuted: number
                     depositAmountFormatted: string
+                    selectedBlockMask?: number
+                    selectedBlocks?: number[]
                 }
                 costPerRoundFormatted: string
                 roundsRemaining: number
@@ -147,6 +155,8 @@ export default function MobileControls({
                         costPerRoundFormatted: data.costPerRoundFormatted,
                         roundsRemaining: data.roundsRemaining,
                         totalRefundableFormatted: data.totalRefundableFormatted,
+                        selectedBlockMask: data.config.selectedBlockMask || 0,
+                        selectedBlocks: data.config.selectedBlocks || [],
                     })
                     // If deactivated, switch back to allow manual mode
                     if (!data.config.active) {
@@ -213,18 +223,19 @@ export default function MobileControls({
     }
 
     const handleAllClick = () => {
-        if (mode === "manual") {
-            const newSelectAll = selectedBlockCount !== 25
-            window.dispatchEvent(new CustomEvent("selectAllBlocks", { detail: { selectAll: newSelectAll } }))
+        const newSelectAll = selectedBlockCount !== 25
+        window.dispatchEvent(new CustomEvent("selectAllBlocks", { detail: { selectAll: newSelectAll } }))
+    }
+
+    const handleStrategyChange = (strategy: "all" | "random" | "select") => {
+        setBlockSelection(strategy)
+        if (strategy === "all") {
+            setAutoBlocks(25)
+            window.dispatchEvent(new CustomEvent("autoMinerMode", { detail: { enabled: true, strategy: "all" } }))
+        } else if (strategy === "random") {
+            window.dispatchEvent(new CustomEvent("autoMinerMode", { detail: { enabled: true, strategy: "random" } }))
         } else {
-            if (blockSelection === "all") {
-                setBlockSelection("random")
-                window.dispatchEvent(new CustomEvent("autoMinerMode", { detail: { enabled: true, strategy: "random" } }))
-            } else {
-                setBlockSelection("all")
-                setAutoBlocks(25)
-                window.dispatchEvent(new CustomEvent("autoMinerMode", { detail: { enabled: true, strategy: "all" } }))
-            }
+            window.dispatchEvent(new CustomEvent("autoMinerMode", { detail: { enabled: true, strategy: "select" } }))
         }
     }
 
@@ -236,19 +247,23 @@ export default function MobileControls({
     const canDeploy = perBlockAmount >= MIN_DEPLOY_PER_BLOCK && selectedBlockCount > 0 && !exceedsBalance && timer > 0 && phase === "counting" && !hasDeployed
 
     // Auto mode calculations
-    const autoNumBlocks = blockSelection === "all" ? 25 : autoBlocks
+    const autoNumBlocks = blockSelection === "all" ? 25 : blockSelection === "select" ? selectedBlockCount : autoBlocks
     const autoTotalBlocks = autoNumBlocks * autoRounds
-    // Invert the fee formula to get required deposit from desired per-block
-    const autoTotalDeposit = (perBlockAmount * autoTotalBlocks * (10000 + EXECUTOR_FEE_BPS)) / 10000
+    // Hybrid fee: contract charges max(percentageFee, flatFee) per round
+    const pctFeePerRound = perBlockAmount * autoNumBlocks * EXECUTOR_FEE_BPS / 10000
+    const autoTotalDeposit = pctFeePerRound >= EXECUTOR_FLAT_FEE
+      ? (perBlockAmount * autoTotalBlocks * (10000 + EXECUTOR_FEE_BPS)) / 10000
+      : perBlockAmount * autoTotalBlocks + EXECUTOR_FLAT_FEE * autoRounds
     const autoPerRound = autoRounds > 0 ? autoTotalDeposit / autoRounds : 0
     const exceedsBalanceAuto = autoTotalDeposit > userBalance
-    const canActivate = perBlockAmount >= MIN_DEPLOY_PER_BLOCK && autoRounds >= 1 && !exceedsBalanceAuto
+    const canActivate = perBlockAmount >= MIN_DEPLOY_PER_BLOCK && autoRounds >= 1 && !exceedsBalanceAuto && (blockSelection !== "select" || selectedBlockCount > 0)
 
     const handleAutoActivateClick = () => {
         if (!canActivate) return
-        const strategyId = blockSelection === "all" ? 1 : 0
+        const strategyId = blockSelection === "all" ? 1 : blockSelection === "select" ? 2 : 0
+        const blockMask = blockSelection === "select" ? selectedBlockIds.reduce((m, id) => m | (1 << id), 0) : 0
         const depositAmount = parseEther(autoTotalDeposit.toFixed(18))
-        onAutoActivate?.(strategyId, autoRounds, autoNumBlocks, depositAmount)
+        onAutoActivate?.(strategyId, autoRounds, autoNumBlocks, depositAmount, blockMask)
     }
 
     return (
@@ -380,16 +395,25 @@ export default function MobileControls({
 
                         <div style={styles.row}>
                             <span style={styles.rowLabel}>Strategy</span>
-                            <div style={styles.rowRight}>
+                            <div style={styles.strategyToggle}>
                                 <button
-                                    style={{...styles.allBtn, ...(blockSelection === "all" ? styles.allBtnActive : {})}}
-                                    onClick={handleAllClick}
+                                    style={{ ...styles.strategyBtn, ...(blockSelection === "all" ? styles.strategyBtnActive : {}) }}
+                                    onClick={() => handleStrategyChange("all")}
                                 >
                                     All
                                 </button>
-                                <span style={{ ...styles.blockCount, minWidth: "55px", textAlign: "right" }}>
-                                    {blockSelection === "all" ? "x25" : "Select"}
-                                </span>
+                                <button
+                                    style={{ ...styles.strategyBtn, ...(blockSelection === "random" ? styles.strategyBtnActive : {}) }}
+                                    onClick={() => handleStrategyChange("random")}
+                                >
+                                    Random
+                                </button>
+                                <button
+                                    style={{ ...styles.strategyBtn, ...(blockSelection === "select" ? styles.strategyBtnActive : {}) }}
+                                    onClick={() => handleStrategyChange("select")}
+                                >
+                                    Select
+                                </button>
                             </div>
                         </div>
 
@@ -414,6 +438,23 @@ export default function MobileControls({
                                 onFocus={() => setAutoBlocks(0)}
                                 onBlur={() => { if (autoBlocks === 0) setAutoBlocks(1) }}
                             />
+                        </div>
+                        )}
+
+                        {blockSelection === "select" && (
+                        <div style={styles.autoRow}>
+                            <div style={styles.autoRowLeft}>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="#bbb">
+                                    <circle cx="7" cy="7" r="2.5" />
+                                    <circle cx="17" cy="7" r="2.5" />
+                                    <circle cx="7" cy="17" r="2.5" />
+                                    <circle cx="17" cy="17" r="2.5" />
+                                </svg>
+                                <span style={styles.autoRowLabel}>Blocks</span>
+                            </div>
+                            <span style={{ ...styles.blockCount, color: selectedBlockCount > 0 ? "#fff" : "#666" }}>
+                                {selectedBlockCount > 0 ? `x${selectedBlockCount}` : "Tap grid"}
+                            </span>
                         </div>
                         )}
 
@@ -480,7 +521,7 @@ export default function MobileControls({
                         <div style={styles.activeRow}>
                             <span style={styles.rowLabel}>Strategy</span>
                             <span style={styles.totalValue}>
-                                {autoMinerState.strategyId === 1 ? "All" : "Select"} x{autoMinerState.numBlocks}
+                                {autoMinerState.strategyId === 0 ? "Random" : autoMinerState.strategyId === 1 ? "All" : "Select"} x{autoMinerState.numBlocks}
                             </span>
                         </div>
 
@@ -639,6 +680,30 @@ const styles: { [key: string]: React.CSSProperties } = {
         background: "rgba(255, 255, 255, 0.15)",
         color: "#fff",
         borderColor: "#888",
+    },
+    strategyToggle: {
+        display: "flex",
+        alignItems: "center",
+        gap: "4px",
+        background: "rgba(255, 255, 255, 0.03)",
+        borderRadius: "6px",
+        padding: "2px",
+    },
+    strategyBtn: {
+        background: "transparent",
+        border: "none",
+        borderRadius: "4px",
+        padding: "5px 8px",
+        fontSize: "11px",
+        fontWeight: 600,
+        color: "#999",
+        cursor: "pointer",
+        fontFamily: "inherit",
+        transition: "all 0.15s",
+    },
+    strategyBtnActive: {
+        background: "rgba(255, 255, 255, 0.12)",
+        color: "#fff",
     },
     blockCount: {
         fontSize: "14px",

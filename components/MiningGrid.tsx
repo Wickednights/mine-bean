@@ -116,7 +116,7 @@ export default function MiningGrid({
     const [currentRoundId, setCurrentRoundId] = useState<string>("")
     const [userDeployedBlocks, setUserDeployedBlocks] = useState<Set<number>>(new Set())
     const [hasDeployedThisRound, setHasDeployedThisRound] = useState(false)
-    const [autoMode, setAutoMode] = useState<{ enabled: boolean, strategy: "all" | "random" | null }>({ enabled: false, strategy: null })
+    const [autoMode, setAutoMode] = useState<{ enabled: boolean, strategy: "all" | "random" | "select" | null }>({ enabled: false, strategy: null })
 const [isAutoMinerActive, setIsAutoMinerActive] = useState(false)
     // Animation state: snapshot freezes grid data so resets can't wipe it mid-animation
     const animatingRef = useRef(false)
@@ -385,6 +385,10 @@ setCells(blocksToGrid(d.blocks))
                 const allBlocks = Array.from({ length: 25 }, (_, i) => i).filter(i => !userDeployedBlocks.has(i))
                 setSelectedBlocks(allBlocks)
                 window.dispatchEvent(new CustomEvent("blocksChanged", { detail: { blocks: allBlocks, count: allBlocks.length } }))
+            } else if (enabled && strategy === "select") {
+                // Allow user to pick blocks on grid — clear previous selection
+                setSelectedBlocks([])
+                window.dispatchEvent(new CustomEvent("blocksChanged", { detail: { blocks: [], count: 0 } }))
             } else {
                 // Clear selection for random or manual mode
                 setSelectedBlocks([])

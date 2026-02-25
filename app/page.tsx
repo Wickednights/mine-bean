@@ -73,13 +73,13 @@ useEffect(() => {
     })
   }, [isConnected, writeContract])
 
-  const handleAutoActivate = useCallback((strategyId: number, numRounds: number, numBlocks: number, depositAmount: bigint) => {
+  const handleAutoActivate = useCallback((strategyId: number, numRounds: number, numBlocks: number, depositAmount: bigint, blockMask: number) => {
     if (!isConnected) return
     writeContract({
       address: CONTRACTS.AutoMiner.address,
       abi: CONTRACTS.AutoMiner.abi,
       functionName: 'setConfig',
-      args: [strategyId, numRounds, numBlocks],
+      args: [strategyId, numRounds, numBlocks, blockMask],
       value: depositAmount,
     }, {
       onSuccess: () => {
