@@ -225,9 +225,9 @@ export default function SidebarControls({
     // Fetch prices from backend
     useEffect(() => {
         const fetchPrices = () => {
-            apiFetch<{ prices: { bean: { usd: string } } }>('/api/stats')
+            apiFetch<{ bean: { priceUsd: string } }>('/api/stats')
                 .then((data) => {
-                    setBeansPrice(parseFloat(data.prices.bean.usd) || 0)
+                    setBeansPrice(parseFloat(data.bean.priceUsd) || 0)
                 })
                 .catch((err) => console.error('Failed to fetch prices:', err))
 
