@@ -13,6 +13,14 @@ interface LandingPageProps {
 export default function LandingPage({ onStartMining }: LandingPageProps) {
   const [beansPrice, setBeansPrice] = useState<string>('--')
   const [hoveredTab, setHoveredTab] = useState<string | null>(null)
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth <= 768)
+    check()
+    window.addEventListener("resize", check)
+    return () => window.removeEventListener("resize", check)
+  }, [])
 
   useEffect(() => {
     const fetchBeansPrice = async () => {
@@ -47,7 +55,7 @@ export default function LandingPage({ onStartMining }: LandingPageProps) {
             <BeansTextLogo height={22} />
           </Link>
 
-          <nav style={styles.nav}>
+          {!isMobile && <nav style={styles.nav}>
             {tabs.map((tab) => {
               const isHovered = hoveredTab === tab.id
               return (
@@ -72,10 +80,10 @@ export default function LandingPage({ onStartMining }: LandingPageProps) {
                 </Link>
               )
             })}
-          </nav>
+          </nav>}
         </div>
 
-        <div style={styles.headerRight}>
+        {!isMobile && <div style={styles.headerRight}>
           <div style={styles.priceTag}>
             <span style={styles.priceSymbol}>BEAN</span>
             <span style={styles.priceValue}>${beansPrice}</span>
@@ -101,7 +109,7 @@ export default function LandingPage({ onStartMining }: LandingPageProps) {
           </div>
 
           <WalletButton />
-        </div>
+        </div>}
       </header>
       
       <main style={styles.main}>
