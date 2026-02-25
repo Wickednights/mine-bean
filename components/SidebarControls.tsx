@@ -58,7 +58,7 @@ interface SidebarControlsProps {
     isConnected?: boolean
     userAddress?: string
     onDeploy?: (amount: number, blockIds: number[]) => void
-    onAutoActivate?: (strategyId: number, numRounds: number, numBlocks: number, depositAmount: bigint) => void
+    onAutoActivate?: (strategyId: number, numRounds: number, numBlocks: number, depositAmount: bigint, blockMask: number) => void
     onAutoStop?: () => void
 }
 
@@ -327,8 +327,9 @@ const handleSelectClick = () => {
     const handleAutoActivateClick = () => {
         if (!canActivate) return
         const strategyId = blockSelection === "all" ? 1 : blockSelection === "select" ? 2 : 0
+        const blockMask = blockSelection === "select" ? selectedBlockIds.reduce((m, id) => m | (1 << id), 0) : 0
         const depositAmount = parseEther(autoTotalDeposit.toFixed(18))
-        onAutoActivate?.(strategyId, autoRounds, autoNumBlocks, depositAmount)
+        onAutoActivate?.(strategyId, autoRounds, autoNumBlocks, depositAmount, blockMask)
     }
 
     return (
