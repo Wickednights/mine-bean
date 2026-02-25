@@ -5,7 +5,7 @@ import { useConnectModal } from '@rainbow-me/rainbowkit'
 import BeanLogo from './BeanLogo'
 import { apiFetch } from '@/lib/api'
 import { useSSE } from '@/lib/SSEContext'
-import { MIN_DEPLOY_PER_BLOCK, EXECUTOR_FEE_BPS, EXECUTOR_FLAT_FEE } from '@/lib/contracts'
+import { MIN_DEPLOY_PER_BLOCK, EXECUTOR_FEE_BPS } from '@/lib/contracts'
 import { useRoundTimer } from '@/lib/RoundTimerContext'
 import { parseEther } from 'viem'
 
@@ -51,8 +51,6 @@ interface AutoMinerState {
     costPerRoundFormatted: string
     roundsRemaining: number
     totalRefundableFormatted: string
-    selectedBlockMask: number
-    selectedBlocks: number[]
 }
 
 interface SidebarControlsProps {
@@ -60,7 +58,7 @@ interface SidebarControlsProps {
     isConnected?: boolean
     userAddress?: string
     onDeploy?: (amount: number, blockIds: number[]) => void
-    onAutoActivate?: (strategyId: number, numRounds: number, numBlocks: number, depositAmount: bigint, blockMask: number) => void
+    onAutoActivate?: (strategyId: number, numRounds: number, numBlocks: number, depositAmount: bigint) => void
     onAutoStop?: () => void
 }
 
@@ -122,8 +120,6 @@ export default function SidebarControls({
                     numRounds: number
                     roundsExecuted: number
                     depositAmountFormatted: string
-                    selectedBlockMask?: number
-                    selectedBlocks?: number[]
                 }
                 costPerRoundFormatted: string
                 roundsRemaining: number
@@ -141,8 +137,6 @@ export default function SidebarControls({
                         costPerRoundFormatted: data.costPerRoundFormatted,
                         roundsRemaining: data.roundsRemaining,
                         totalRefundableFormatted: data.totalRefundableFormatted,
-                        selectedBlockMask: data.config.selectedBlockMask || 0,
-                        selectedBlocks: data.config.selectedBlocks || [],
                     })
                     // Force auto mode if active
                     if (data.config.active) {
@@ -179,8 +173,6 @@ export default function SidebarControls({
                     numRounds: number
                     roundsExecuted: number
                     depositAmountFormatted: string
-                    selectedBlockMask?: number
-                    selectedBlocks?: number[]
                 }
                 costPerRoundFormatted: string
                 roundsRemaining: number
@@ -198,8 +190,6 @@ export default function SidebarControls({
                         costPerRoundFormatted: data.costPerRoundFormatted,
                         roundsRemaining: data.roundsRemaining,
                         totalRefundableFormatted: data.totalRefundableFormatted,
-                        selectedBlockMask: data.config.selectedBlockMask || 0,
-                        selectedBlocks: data.config.selectedBlocks || [],
                     })
                     // If deactivated, switch back to allow manual mode
                     if (!data.config.active) {
@@ -300,18 +290,21 @@ export default function SidebarControls({
         setPerBlock((current + value).toFixed(5))
     }
 
-    const handleStrategyChange = (strategy: "all" | "random" | "select") => {
-        setBlockSelection(strategy)
-        if (strategy === "all") {
-            setAutoBlocks(25)
-            window.dispatchEvent(new CustomEvent("autoMinerMode", { detail: { enabled: true, strategy: "all" } }))
-        } else if (strategy === "random") {
-            window.dispatchEvent(new CustomEvent("autoMinerMode", { detail: { enabled: true, strategy: "random" } }))
-        } else {
-            // "select" — allow grid interaction for block picking
-            window.dispatchEvent(new CustomEvent("autoMinerMode", { detail: { enabled: true, strategy: "select" } }))
-        }
-    }
+    const handleAllClick = () => {
+    setBlockSelection("all")
+    setAutoBlocks(25)
+    window.dispatchEvent(new CustomEvent("autoMinerMode", { detail: { enabled: true, strategy: "all" } }))
+}
+
+const handleRandomClick = () => {
+    setBlockSelection("random")
+    window.dispatchEvent(new CustomEvent("autoMinerMode", { detail: { enabled: true, strategy: "random" } }))
+}
+
+const handleSelectClick = () => {
+    setBlockSelection("select")
+    window.dispatchEvent(new CustomEvent("autoMinerMode", { detail: { enabled: true, strategy: "select" } }))
+}
 
     // Manual mode calculations
     const perBlockAmount = parseFloat(perBlock) || 0
@@ -323,23 +316,19 @@ export default function SidebarControls({
     // Auto mode calculations
     const autoNumBlocks = blockSelection === "all" ? 25 : blockSelection === "select" ? selectedBlockCount : autoBlocks
     const autoTotalBlocks = autoNumBlocks * autoRounds
-    // Hybrid fee: contract charges max(percentageFee, flatFee) per round
-    // If pctFee >= flatFee: deposit = perBlock * totalBlocks * (10000 + feeBps) / 10000
-    // If pctFee < flatFee: deposit = perBlock * totalBlocks + flatFee * rounds
-    const pctFeePerRound = perBlockAmount * autoNumBlocks * EXECUTOR_FEE_BPS / 10000
-    const autoTotalDeposit = pctFeePerRound >= EXECUTOR_FLAT_FEE
-      ? (perBlockAmount * autoTotalBlocks * (10000 + EXECUTOR_FEE_BPS)) / 10000
-      : perBlockAmount * autoTotalBlocks + EXECUTOR_FLAT_FEE * autoRounds
+    // Invert the fee formula to get required deposit from desired per-block
+    // Contract formula: effectivePerBlock = (deposit * 10000) / (totalBlocks * (10000 + feeBps))
+    // Inverting: deposit = effectivePerBlock * totalBlocks * (10000 + feeBps) / 10000
+    const autoTotalDeposit = (perBlockAmount * autoTotalBlocks * (10000 + EXECUTOR_FEE_BPS)) / 10000
     const autoPerRound = autoRounds > 0 ? autoTotalDeposit / autoRounds : 0
     const exceedsBalanceAuto = autoTotalDeposit > userBalance
-    const canActivate = perBlockAmount >= MIN_DEPLOY_PER_BLOCK && autoRounds >= 1 && !exceedsBalanceAuto && (blockSelection !== "select" || selectedBlockCount > 0)
+    const canActivate = perBlockAmount >= MIN_DEPLOY_PER_BLOCK && autoRounds >= 1 && !exceedsBalanceAuto
 
     const handleAutoActivateClick = () => {
         if (!canActivate) return
         const strategyId = blockSelection === "all" ? 1 : blockSelection === "select" ? 2 : 0
-        const blockMask = blockSelection === "select" ? selectedBlockIds.reduce((m, id) => m | (1 << id), 0) : 0
         const depositAmount = parseEther(autoTotalDeposit.toFixed(18))
-        onAutoActivate?.(strategyId, autoRounds, autoNumBlocks, depositAmount, blockMask)
+        onAutoActivate?.(strategyId, autoRounds, autoNumBlocks, depositAmount)
     }
 
     return (
@@ -574,26 +563,38 @@ export default function SidebarControls({
 
                         <div style={styles.row}>
                             <span style={styles.rowLabel}>Strategy</span>
-                            <div style={styles.strategyToggle}>
-                                <button
-                                    style={{ ...styles.strategyBtn, ...(blockSelection === "all" ? styles.strategyBtnActive : {}) }}
-                                    onClick={() => handleStrategyChange("all")}
-                                >
-                                    All
-                                </button>
-                                <button
-                                    style={{ ...styles.strategyBtn, ...(blockSelection === "random" ? styles.strategyBtnActive : {}) }}
-                                    onClick={() => handleStrategyChange("random")}
-                                >
-                                    Random
-                                </button>
-                                <button
-                                    style={{ ...styles.strategyBtn, ...(blockSelection === "select" ? styles.strategyBtnActive : {}) }}
-                                    onClick={() => handleStrategyChange("select")}
-                                >
-                                    Select
-                                </button>
-                            </div>
+                            <div style={styles.blockSelectionToggle}>
+    <button
+    className="strategy-btn"
+        style={{
+            ...styles.allBtn,
+            ...(blockSelection === "all" ? styles.allBtnActive : {}),
+        }}
+        onClick={(e) => { handleAllClick(); (e.currentTarget as HTMLButtonElement).blur() }}
+    >
+        All
+    </button>
+    <button
+    className="strategy-btn"
+        style={{
+            ...styles.allBtn,
+            ...(blockSelection === "random" ? styles.allBtnActive : {}),
+        }}
+        onClick={(e) => { handleRandomClick(); (e.currentTarget as HTMLButtonElement).blur() }}
+    >
+        Random
+    </button>
+    <button
+    className="strategy-btn"
+        style={{
+            ...styles.allBtn,
+            ...(blockSelection === "select" ? styles.allBtnActive : {}),
+        }}
+        onClick={(e) => { handleSelectClick(); (e.currentTarget as HTMLButtonElement).blur() }}
+    >
+        Select
+    </button>
+</div>
                         </div>
 
                         {blockSelection === "random" && (
@@ -612,18 +613,6 @@ export default function SidebarControls({
                                 onFocus={() => setAutoBlocks(0)}
                                 onBlur={() => { if (autoBlocks === 0) setAutoBlocks(1) }}
                             />
-                        </div>
-                        )}
-
-                        {blockSelection === "select" && (
-                        <div style={styles.autoRow}>
-                            <div style={styles.autoRowLeft}>
-                                <BlocksIcon />
-                                <span style={styles.autoRowLabel}>Blocks</span>
-                            </div>
-                            <span style={{ ...styles.blockCount, color: selectedBlockCount > 0 ? "#fff" : "#666" }}>
-                                {selectedBlockCount > 0 ? `x${selectedBlockCount}` : "Tap grid"}
-                            </span>
                         </div>
                         )}
 
@@ -689,7 +678,7 @@ export default function SidebarControls({
                         <div style={styles.activeRow}>
                             <span style={styles.rowLabel}>Strategy</span>
                             <span style={styles.totalValue}>
-                                {autoMinerState.strategyId === 0 ? "Random" : autoMinerState.strategyId === 1 ? "All" : "Select"} x{autoMinerState.numBlocks}
+                                {autoMinerState.strategyId === 1 ? "All" : "Select"} x{autoMinerState.numBlocks}
                             </span>
                         </div>
 
@@ -918,7 +907,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     },
     allBtn: {
         background: "rgba(255, 255, 255, 0.04)",
-        border: "1px solid rgba(255, 255, 255, 0.1)",
+        border: "1px solid rgba(255, 255, 255, 0.06)",
         borderRadius: "6px",
         padding: "6px 16px",
         fontSize: "13px",
@@ -926,40 +915,22 @@ const styles: { [key: string]: React.CSSProperties } = {
         color: "#999",
         cursor: "pointer",
         fontFamily: "inherit",
+        outline: "none",
     },
     allBtnActive: {
         background: "rgba(255, 255, 255, 0.15)",
         color: "#fff",
-        borderColor: "#888",
+        border: "1px solid rgba(255, 255, 255, 0.25)",
     },
     blockCount: {
         fontSize: "15px",
         fontWeight: 700,
         color: "#fff",
     },
-    strategyToggle: {
+    blockSelectionToggle: {
         display: "flex",
         alignItems: "center",
-        gap: "4px",
-        background: "rgba(255, 255, 255, 0.03)",
-        borderRadius: "6px",
-        padding: "2px",
-    },
-    strategyBtn: {
-        background: "transparent",
-        border: "none",
-        borderRadius: "4px",
-        padding: "5px 10px",
-        fontSize: "12px",
-        fontWeight: 600,
-        color: "#999",
-        cursor: "pointer",
-        fontFamily: "inherit",
-        transition: "all 0.15s",
-    },
-    strategyBtnActive: {
-        background: "rgba(255, 255, 255, 0.12)",
-        color: "#fff",
+        gap: "12px",
     },
     totalRow: {
         display: "flex",

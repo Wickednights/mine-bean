@@ -2,6 +2,7 @@
   box-sizing: border-box;
   padding: 0;
   margin: 0;
+  outline: none;
 }
 
 html,
@@ -225,4 +226,24 @@ body {
   background: rgba(255, 255, 255, 0.08) !important;
   transition: all 0.15s ease;
   cursor: pointer;
+}
+/* Remove focus ring from strategy toggle buttons */
+.strategy-btn:focus,
+.strategy-btn:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.strategy-btn:focus,
+.strategy-btn:focus-visible,
+.strategy-btn:focus-within {
+  outline: none !important;
+  box-shadow: none !important;
+  border-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+button {
+  -webkit-appearance: none;
+  appearance: none;
+  outline: none !important;
 }
