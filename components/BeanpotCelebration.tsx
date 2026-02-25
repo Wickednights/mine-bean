@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useCallback, useRef, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import confetti from 'canvas-confetti'
 import { useSSE } from '@/lib/SSEContext'
+
 function playCelebrationSound() {
   if (localStorage.getItem('bean_muted') === 'true') return
   try {
@@ -130,7 +131,7 @@ function playCelebrationSound() {
 export default function BeanpotCelebration() {
   const [showText, setShowText] = useState(false)
   const timeoutRef = useRef<NodeJS.Timeout[]>([])
-  const prevBeanpotPoolRef = useRef<number>(0)
+  const { subscribeGlobal } = useSSE()
 
   const triggerCelebration = useCallback(() => {
     timeoutRef.current.forEach(t => clearTimeout(t))
@@ -206,24 +207,21 @@ export default function BeanpotCelebration() {
     timeoutRef.current.push(setTimeout(() => setShowText(false), 6000))
   }, [])
 
-  // Listen for real beanpot hits from the roundSettled window event
-  const { subscribeGlobal } = useSSE()
+  // Subscribe to roundTransition SSE events to detect beanpot payouts
+  // beanpotAmount is only non-zero when someone actually wins the beanpot
+  useEffect(() => {
+    return subscribeGlobal('roundTransition', (data: any) => {
+      const settled = data.settled
+      if (!settled) return
+      // beanpotAmount arrives as hex string from backend (e.g. "0x0de0b6b3a7640000")
+      const raw = settled.beanpotAmount || '0'
+      const amount = typeof raw === 'string' && raw.startsWith('0x') ? Number(BigInt(raw)) : parseFloat(raw)
+      if (amount > 0) {
+        triggerCelebration()
+      }
+    })
+  }, [subscribeGlobal, triggerCelebration])
 
-
-useEffect(() => {
-  return subscribeGlobal('roundTransition', (data: any) => {
-    const settled = data.settled
-    if (!settled) return
-    const beanpotPaid = parseFloat(settled.beanpotAmount || '0')
-    const newPool = parseFloat(data.newRound?.beanpotPool || '0')
-    const prevPool = prevBeanpotPoolRef.current
-    prevBeanpotPoolRef.current = newPool
-    console.log("beanpot check:", beanpotPaid, newPool, prevPool)
-    if (beanpotPaid > 0 && newPool < prevPool) {
-      triggerCelebration()
-    }
-  })
-}, [subscribeGlobal, triggerCelebration])
   return (
     <>
 

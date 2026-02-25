@@ -20,6 +20,9 @@ app/
   about/page.tsx    — Protocol documentation
   global/page.tsx   — Global stats, mining tables, revenue, leaderboard
   stake/page.tsx    — Staking contract orchestrator (approve→deposit chain, withdraw, claim, compound)
+  profile/page.tsx  — User profile management
+  privacy/page.tsx  — Privacy Policy
+  terms/page.tsx    — Terms of Service
   layout.tsx        — Root layout with Web3Provider
   globals.css       — Global styles
 
@@ -34,7 +37,10 @@ components/
   MinersPanel.tsx     — Winning miners sliding panel (ETH + BEAN rewards per round)
   MobileMiners.tsx    — Mobile miners panel
   MobileStatsBar.tsx  — Mobile stats bar
+  BeanpotCelebration.tsx — Beanpot win celebration (confetti, sound, "BEANPOT HIT" overlay)
   CountdownCelebration.tsx — Countdown celebration overlay
+  HelpButton.tsx      — Help menu with how-to-play modal, sound mute toggle, links
+  ProfilePage.tsx     — User profile (avatar upload, username, bio, portfolio display)
   GlobalStats.tsx     — Protocol metrics (supply, burned, revenue)
   MiningTable.tsx     — Mining history table
   RevenueTable.tsx    — Protocol revenue breakdown
@@ -45,7 +51,7 @@ components/
   AboutPage.tsx       — About content with expandable sections
 
 lib/
-  api.ts            — Backend API helpers (apiFetch). Base URL via NEXT_PUBLIC_API_URL env var (default http://localhost:3001)
+  api.ts            — Backend API helpers (apiFetch, apiMutate). Base URL via NEXT_PUBLIC_API_URL env var (default https://api.minebean.com)
   SSEContext.tsx    — Centralized SSE provider (useSSE hook for subscribeGlobal/subscribeUser)
   contracts.ts      — Contract addresses, ABIs, and constants (MIN_DEPLOY_PER_BLOCK, EXECUTOR_FEE_BPS)
   UserDataContext.tsx — Shared user data provider (rewards, staking, profile) with sessionStorage caching
@@ -64,6 +70,7 @@ npm run dev       # Development server
 npm run build     # Production build
 npm start         # Production server
 npm run lint      # Linter
+npx vitest run    # Run test suite
 ```
 
 ## Conventions
@@ -78,20 +85,20 @@ npm run lint      # Linter
 
 | Contract    | Address                                      |
 |-------------|----------------------------------------------|
-| BEANS Token | `0x000Ae314E2A2172a039B26378814C252734f556A` |
-| Bean        | `0xDAB7B7B5f295F558dE32025873CA2F561c6512DE` |
-| GridMining  | `0xDC5E4327F8bCF1019bfBAEcf5f606db7Ecd44Ee3` |
-| Treasury    | `0x4A0BCc34287769f18DB27101cE41C8EF5a25fD43` |
-| AutoMiner   | `0x0C3cf6aA29B0e1cd5a05CB77448cC3A43BE4CAf2` |
-| Staking     | `0x4C95D7F61C8D259d1c0a9a4dA1D0d57D9388A0bB` |
-| BEAN/ETH LP | `0x3e9b01e1C30ea92Adc8B02C0BCf3f0DE509aCbD3` |
+| Bean        | `0xD8D2cbe5D3EB89Bf1974bd276b37574B4bBe5F2c` |
+| GridMining  | `0x854EeD669c32561Ab54cF3e9731FAbEE7890c0D3` |
+| AutoMiner   | `0x79Db4f7caF0a5E09f2E5B59815FBF21f3723B0DC` |
+| Treasury    | `0x4634846e66f5b8b0F8e9E7b30e31148b218E14e9` |
+| Staking     | `0x3Db46e2957F0B720D2dB3d5C3dc862083521C811` |
+| BEAN/ETH LP | `0x08e5e77763ba3deae8dd020e15727b06fe746a64fa562f66a66da3e38357b492` |
 
 **ABI source:** `lib/abis/GridMining.json` is extracted from Hardhat artifacts (`hardhat/artifacts/contracts/GridMining.sol/GridMining.json`). Includes `AlreadyDeployedThisRound` custom error, `ResetRequested` event, and `topMinerSeed`/`winnersDeployed` fields in `RoundSettled` event.
 
 ## Integration Status
 
 ### Connected to Backend + Smart Contract
-- **app/page.tsx** — Orchestrates deploy and claim flows. Uses wagmi `useWriteContract` to call `GridMining.deploy(uint8[] blockIds)` payable, `GridMining.claimETH()`, and `GridMining.claimBEAN()`. On deploy tx success, dispatches `userDeployed` window event for optimistic block tracking. Passes `onDeploy`, `onClaimETH`, `onClaimBEAN` callbacks to child components.
+- **app/page.tsx** — Orchestrates deploy and claim flows. Uses wagmi `useWriteContract` to call `GridMining.deploy(uint8[] blockIds)` payable, `GridMining.claimETH()`, and `GridMining.claimBEAN()`. On deploy tx success, dispatches `userDeployed` window event for optimistic block tracking. Passes `onDeploy`, `onClaimETH`, `onClaimBEAN` callbacks to child components. Mounts `<BeanpotCelebration />` and `<CountdownCelebration />` (desktop layout only). **Hydration-safe:** `showMining` state initializes as `false`, then reads `sessionStorage('bean_visited')` in a `useEffect` to avoid SSR/client mismatch.
+- **BeanpotCelebration.tsx** — Uses `subscribeGlobal('roundTransition')` via SSE directly (no window event dependency). Triggers celebration (canvas-confetti + Web Audio API sound + "BEANPOT HIT" text overlay) when `settled.beanpotAmount > 0`. Handles hex string amounts from backend via `BigInt()` conversion. Sound respects `bean_muted` localStorage flag. Text auto-hides after 6 seconds.
 - **MiningGrid.tsx** — Fetches `GET /api/round/current?user=` on mount (with wallet address when connected), uses `useSSE()` to subscribe to global events (`deployed`, `roundSettled`, `gameStarted`) and user events (`autoMineExecuted`). Dispatches `roundData`, `roundDeployed`, and `roundSettled` window events. Tracks `userDeployedBlocks` (blocks user already deployed to this round) via `GET /api/user/:address/history?type=deploy&roundId=X` on load and optimistic `userDeployed` events. Deployed blocks are visually marked (green border + ✓) and unclickable. **One deploy per round:** `hasDeployedThisRound` boolean locks ALL grid blocks after the first deploy — set `true` on `userDeployed` event or when backend history shows existing deploys, reset to `false` in `resetForNewRound()`. The `selectAllBlocks` listener is also ignored when `hasDeployedThisRound` is true. **AutoMiner grid lock:** When in auto mode (`autoMode.enabled`), all grid cells are disabled to prevent manual selection.
 - **SidebarControls.tsx** — Receives round data (beanpot, round number, total deployed, user deployed) via `roundData`/`roundDeployed`/`roundSettled` window events from MiningGrid. Timer from `useRoundTimer()` context. Uses `useSSE()` to subscribe to user events (`autoMineExecuted`, `configDeactivated`, `stopped`) for AutoMiner real-time updates. Fetches ETH and BEAN prices from `GET /api/stats` every 30s. Phase (counting/eliminating/winner) driven by backend events, not a local timer. Deploy button enabled only when `canDeploy` (perBlock >= MIN_DEPLOY_PER_BLOCK, blocks > 0, timer > 0, phase === "counting", `userDeployed === 0`). When `hasDeployed` (userDeployed > 0), button shows "✓ Deployed" and is disabled. **Input is per-block amount** — total is calculated as `perBlock × selectedBlocks`.
 - **MobileControls.tsx** — Same as SidebarControls but mobile layout. Uses `useSSE()` for user event subscriptions. Phase-aware deploy button with same `canDeploy` logic. Tracks `userDeployed` via `roundData` and `roundDeployed` window events (matches `user` field against connected `userAddress` prop). Shows "✓ Deployed" when locked.
@@ -108,10 +115,14 @@ npm run lint      # Linter
 - **app/stake/page.tsx** — Orchestrates staking contract interactions. Uses wagmi `useWriteContract` (2 instances) to handle the ERC20 approve→deposit chain: first `Bean.approve(Staking, amount)`, then `Staking.deposit(amount)` with optional `msg.value` for compound fee ETH. Chains transactions via `useWaitForTransactionReceipt` watching approval tx hash; on confirmation, fires deposit with stored `pendingApprovalAmount` and `pendingCompoundFee`. Also handles `Staking.withdraw(amount)`, `Staking.claimYield()`, and `Staking.compound()`. Reads BEAN balance via `useBalance({ token: CONTRACTS.Bean.address })`. Passes `onDeposit`, `onWithdraw`, `onClaimYield`, `onCompound` callbacks to StakePage component.
 - **StakePage.tsx** — Full staking interface connected to backend and smart contract. Fetches `GET /api/staking/stats` on mount for global stats (totalStaked, APR, TVL). Uses `useUserData()` for user stake info (`stakeInfo`, `refetchStakeInfo`) — no longer fetches `/api/staking/:address` directly. Uses `useSSE()` to subscribe to global `yieldDistributed` and user `stakeDeposited`/`stakeWithdrawn`/`yieldCompounded` events — triggers global stats re-fetch. Summary section shows Total Deposits, APR, TVL. Deposit/withdraw section shows BEAN balance, input field, and auto-compound settings (toggle + ETH input, default 0.006). User position card (visible when staked > 0) shows total staked, pending rewards, "Claim" and "Claim & Deposit" buttons. Info icons ('i') on all metrics open tooltip dialogues on hover (desktop) or click (mobile). Includes APR Calculator modal using real APR from backend. **Delayed re-fetch pattern:** Since `/api/staking/stats` is cached with 60s refresh on backend, SSE event handlers re-fetch immediately + again after 10s to catch cache updates.
 
-### Still Using Mock/Hardcoded Data
-- **Header.tsx** — Price feeds from DexScreener directly.
+### Client-Side External API Calls (Not Through Backend)
+- **Header.tsx** — BEAN price from DexScreener via `CONTRACTS.LP.address`. ETH price from Binance API.
+- **LandingPage.tsx** — BEAN price from DexScreener via `CONTRACTS.LP.address`.
+- **StakePage.tsx** — BEAN price for APR calculator from DexScreener via `CONTRACTS.LP.address`.
+- **WalletButton.tsx** — Wallet connection and balance reads via wagmi.
+
+### Not Yet Connected
 - **MobileMiners.tsx** — Hardcoded miner list (not yet connected to `/api/round/:id/miners`).
-- **WalletButton.tsx** — Wallet connection functional, balance reads via wagmi.
 
 ## Architecture Notes
 
@@ -142,7 +153,7 @@ Components communicate via `window.dispatchEvent` / `window.addEventListener`:
 |-------|--------------|-------------|---------|
 | `roundData` | MiningGrid | SidebarControls, MobileControls, MobileStatsBar | Full round metadata: `{ roundId, startTime, endTime, beanpotPoolFormatted, totalDeployedFormatted, userDeployedFormatted, ... }` |
 | `roundDeployed` | MiningGrid | SidebarControls, MobileControls, MobileStatsBar | Live deployment update: `{ totalDeployed, totalDeployedFormatted, user, userDeployedFormatted }` |
-| `roundSettled` | MiningGrid | SidebarControls, MobileControls, MinersPanel | Settlement data: `{ roundId, winningBlock, topMiner, totalWinnings, ... }` |
+| `roundSettled` | MiningGrid | SidebarControls, MobileControls, MinersPanel | Settlement data: `{ roundId, winningBlock, topMiner, totalWinnings, beanpotAmount (hex), ... }` |
 | `blocksChanged` | MiningGrid | SidebarControls, MobileControls | `{ blocks: number[], count: number }` |
 | `selectAllBlocks` | SidebarControls, MobileControls | MiningGrid | `{ selectAll: boolean }` |
 | `userDeployed` | app/page.tsx (on tx success) | MiningGrid | `{ blockIds: number[] }` — optimistically marks blocks as deployed |
@@ -252,7 +263,8 @@ The staking page (`/stake`) allows users to deposit BEAN tokens to earn yield fr
 
 ### `lib/api.ts` Helpers
 
-- **`apiFetch<T>(path)`** — Typed GET request to backend. Base URL from `NEXT_PUBLIC_API_URL` env var (default `http://localhost:3001`).
+- **`apiFetch<T>(path)`** — Typed GET request to backend. Base URL from `NEXT_PUBLIC_API_URL` env var (default `https://api.minebean.com`).
+- **`apiMutate<T>(path, method, body)`** — Typed POST/PUT/DELETE request to backend. Sends JSON body. Used by ProfilePage for profile updates.
 
 ### Centralized SSE Architecture (`lib/SSEContext.tsx`)
 
@@ -301,6 +313,7 @@ useEffect(() => {
 | Component | Global Events | User Events |
 |-----------|---------------|-------------|
 | MiningGrid | `deployed`, `roundSettled`, `gameStarted` | `autoMineExecuted` |
+| BeanpotCelebration | `roundTransition` | — |
 | SidebarControls | — | `autoMineExecuted`, `configDeactivated`, `stopped` |
 | MobileControls | — | `autoMineExecuted`, `configDeactivated`, `stopped` |
 | UserDataProvider | — | `stakeDeposited`, `stakeWithdrawn`, `yieldCompounded`, `yieldClaimed`, `claimedBEAN`, `claimedETH`, `profileUpdated` |

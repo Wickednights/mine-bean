@@ -20,7 +20,13 @@ export default function Home() {
   const { address, isConnected } = useAccount()
   const { data: balance } = useBalance({ address })
   const [isMobile, setIsMobile] = useState(false)
-  const [showMining, setShowMining] = useState(() => { if (typeof window !== 'undefined') return sessionStorage.getItem('bean_visited') === 'true'; return false; })
+  const [showMining, setShowMining] = useState(false)
+
+  useEffect(() => {
+    if (sessionStorage.getItem('bean_visited') === 'true') {
+      setShowMining(true)
+    }
+  }, [])
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth <= 768)
