@@ -303,10 +303,9 @@ export default function AboutPage({
                                 <tr><td style={isMobile ? styles.tableLabelMobile : styles.tableLabel}>Token Name</td><td style={isMobile ? styles.tableValueMobile : styles.tableValue}>BEAN</td></tr>
                                 <tr><td style={isMobile ? styles.tableLabelMobile : styles.tableLabel}>Network</td><td style={isMobile ? styles.tableValueMobile : styles.tableValue}>Base</td></tr>
                                 <tr><td style={isMobile ? styles.tableLabelMobile : styles.tableLabel}>Max Supply</td><td style={isMobile ? styles.tableValueMobile : styles.tableValue}>3,000,000 BEAN</td></tr>
-                                <tr><td style={isMobile ? styles.tableLabelMobile : styles.tableLabel}>Initial Supply</td><td style={isMobile ? styles.tableValueMobile : styles.tableValue}>0 (fair launch)</td></tr>
-                                <tr><td style={isMobile ? styles.tableLabelMobile : styles.tableLabel}>Emission</td><td style={isMobile ? styles.tableValueMobile : styles.tableValue}>1 BEAN per round</td></tr>
-                                <tr><td style={isMobile ? styles.tableLabelMobile : styles.tableLabel}>Round Duration</td><td style={isMobile ? styles.tableValueMobile : styles.tableValue}>60 seconds</td></tr>
-                            </tbody>
+                                <tr><td style={isMobile ? styles.tableLabelMobile : styles.tableLabel}>Initial Supply</td><td style={isMobile ? styles.tableValueMobile : styles.tableValue}>50,000 BEAN</td></tr>
+                                <tr><td style={isMobile ? styles.tableLabelMobile : styles.tableLabel}>Emission</td><td style={isMobile ? styles.tableValueMobile : styles.tableValue}>1.3 BEAN per round</td></tr>
+<tr><td style={isMobile ? styles.tableLabelMobile : styles.tableLabel}>Contract</td><td style={isMobile ? styles.tableValueMobile : styles.tableValue}><a href="https://basescan.org/token/0x5c72992b83E74c4D5200A8E8920fB946214a5A5D" target="_blank" rel="noopener noreferrer" style={{ color: '#fff', wordBreak: 'break-all' }}>0x5c72...A5A5D</a></td></tr>                            </tbody>
                         </table>
                     </div>
                     <div>
@@ -322,7 +321,7 @@ export default function AboutPage({
                     <div>
                         <h3 style={isMobile ? styles.h3Mobile : styles.h3}>Supply Timeline</h3>
                         <div style={isMobile ? styles.infoBoxMobile : styles.infoBox}>
-                            <p style={{ margin: 0 }}>At 1 BEAN per round and 1,440 rounds per day, raw emission is <strong>1,440 BEAN per day</strong>. However, the burn mechanism (90% of protocol buybacks are burned) works against emission. As mining activity increases and more ETH is deployed, the burn rate scales up — creating the potential for net deflation where more BEAN are burned than minted.</p>
+                            <p style={{ margin: 0 }}>At 1.3 BEAN per round and 1,440 rounds per day, raw emission is <strong>1,872 BEAN per day</strong>. However, the burn mechanism (90% of protocol buybacks are burned) works against emission. As mining activity increases and more ETH is deployed, the burn rate scales up — creating the potential for net deflation where more BEAN are burned than minted.</p>
                         </div>
                     </div>
                 </div>

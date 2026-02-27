@@ -131,10 +131,12 @@ export default function Header({
       </div>
 
       <div style={styles.headerRight}>
-        <div style={styles.priceTag}>
-          <span style={styles.priceSymbol}>BEAN</span>
-          <span style={styles.priceValue}>${beansPrice}</span>
-        </div>
+        <a href="https://dexscreener.com/base/0xd7e5522c9cc3682c960afada6adde0f8116580f2ad2cef08c197faf625e53842" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+  <div style={styles.priceTag}>
+    <span style={styles.priceSymbol}>BEAN</span>
+    <span style={styles.priceValue}>${beansPrice}</span>
+  </div>
+</a>
 
         <div style={styles.socials}>
           <a href="https://x.com/minebean_" style={styles.socialLink} target="_blank" rel="noopener noreferrer">

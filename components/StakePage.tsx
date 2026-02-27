@@ -1022,8 +1022,9 @@ const styles: { [key: string]: React.CSSProperties } = {
         color: "#aaa",
         lineHeight: 1.5,
         width: "220px",
-        zIndex: 100,
+        zIndex: 1000,
         pointerEvents: "none" as const,
+        backdropFilter: "blur(10px)",
     },
     tooltipMobile: {
         position: "absolute" as const,
@@ -1037,7 +1038,7 @@ const styles: { [key: string]: React.CSSProperties } = {
         color: "#aaa",
         lineHeight: 1.5,
         width: "200px",
-        zIndex: 100,
+        zIndex: 1000,
     },
     tooltipWide: {
         position: "absolute" as const,
@@ -1052,7 +1053,7 @@ const styles: { [key: string]: React.CSSProperties } = {
         color: "#aaa",
         lineHeight: 1.5,
         width: "280px",
-        zIndex: 100,
+        zIndex: 1000,
     },
     // Calculator
     calculatorBtn: {
