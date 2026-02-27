@@ -411,7 +411,6 @@ export default function AboutPage({
                     <div>
                         <h3 style={isMobile ? styles.h3Mobile : styles.h3}>APR Calculator</h3>
                         <p style={{ margin: 0 }}>The APR Calculator lets you estimate your potential staking returns before committing. Enter the amount of BEAN you plan to stake and it calculates your projected daily, weekly, monthly, and yearly yield based on the current APR and protocol activity. This helps you decide how much to stake and set realistic expectations for your earnings.</p>
-                        <SectionImage alt="APR Calculator" placeholder="apr.png" maxWidth="440px" />
                     </div>
                     <div style={isMobile ? styles.infoBoxMobile : styles.infoBox}>
                         <strong>Staking vs Roasting</strong>
