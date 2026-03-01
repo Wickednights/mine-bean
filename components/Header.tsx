@@ -5,6 +5,7 @@ import { ConnectButton } from '@rainbow-me/rainbowkit'
 import WalletButton from './WalletButton'
 import BeanLogo, { BeansTextLogo } from './BeanLogo'
 import Link from 'next/link'
+import { CONTRACTS } from '@/lib/contracts'
 
 interface HeaderProps {
   logoText?: string
@@ -46,7 +47,7 @@ export default function Header({
   useEffect(() => {
     const fetchBeansPrice = async () => {
       try {
-        const response = await fetch('https://api.dexscreener.com/latest/dex/tokens/0x3055913c90Fcc1A6CE9a358911721eEb942013A1', { cache: 'no-store' })
+        const response = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${CONTRACTS.Bean.address}`, { cache: 'no-store' })
         const data = await response.json()
         const pairs: Array<{ priceUsd: string; liquidity?: { usd: number } }> = data.pairs ?? []
         const best = pairs.sort((a, b) => (b.liquidity?.usd ?? 0) - (a.liquidity?.usd ?? 0))[0]
