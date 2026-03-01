@@ -218,7 +218,7 @@ function PnlCard({ round, pfpUrl, username, onClose }: { round: Round; pfpUrl: s
                     <span style={{ fontWeight: 800, fontSize: 26, letterSpacing: '-0.02em' }}>
                       <span style={{ color: '#fff' }}>BE</span><span style={{ color: '#0052FF' }}>AN</span><span style={{ color: '#fff' }}>.</span>
                     </span>
-                    <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', fontFamily: "'Space Mono', monospace" }}>@{username || 'anon'}</span>
+                    {username && <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', fontFamily: "'Space Mono', monospace" }}>@{username}</span>}
                   </div>
                 </div>
                 <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: 2, padding: '8px 20px', borderRadius: 50, background: ct === 'beanpot' ? 'rgba(255,215,0,0.1)' : ct === 'win' ? 'rgba(0,200,83,0.1)' : 'rgba(255,68,68,0.08)', border: `1px solid ${ct === 'beanpot' ? 'rgba(255,215,0,0.25)' : ct === 'win' ? 'rgba(0,200,83,0.2)' : 'rgba(255,68,68,0.15)'}`, color }}>
