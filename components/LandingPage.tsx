@@ -25,11 +25,13 @@ export default function LandingPage({ onStartMining }: LandingPageProps) {
   useEffect(() => {
     const fetchBeansPrice = async () => {
       try {
-        const response = await fetch(`https://api.dexscreener.com/latest/dex/pairs/base/${CONTRACTS.LP.address}`)
+        const response = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${CONTRACTS.Bean.address}`, { cache: 'no-store' })
         const data = await response.json()
-        if (data.pair?.priceUsd) setBeansPrice(parseFloat(data.pair.priceUsd).toFixed(4))
+        const pairs: Array<{ priceUsd: string; liquidity?: { usd: number } }> = data.pairs ?? []
+        const best = pairs.sort((a, b) => (b.liquidity?.usd ?? 0) - (a.liquidity?.usd ?? 0))[0]
+        if (best?.priceUsd) setBeansPrice(parseFloat(best.priceUsd).toFixed(2))
       } catch {
-        setBeansPrice('0.0264')
+        setBeansPrice('--')
       }
     }
     fetchBeansPrice()

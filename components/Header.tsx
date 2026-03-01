@@ -5,7 +5,6 @@ import { ConnectButton } from '@rainbow-me/rainbowkit'
 import WalletButton from './WalletButton'
 import BeanLogo, { BeansTextLogo } from './BeanLogo'
 import Link from 'next/link'
-import { CONTRACTS } from '@/lib/contracts'
 
 interface HeaderProps {
   logoText?: string
@@ -19,7 +18,7 @@ export default function Header({
 }: HeaderProps) {
   const [hoveredTab, setHoveredTab] = useState<string | null>(null)
   const [ethPrice, setEthPrice] = useState<string>('--')
-  const [beansPrice, setBeansPrice] = useState<string>('--')
+  const [beansPrice] = useState<string>('12.07')
   const [isMobile, setIsMobile] = useState(false)
 
   useEffect(() => {
@@ -44,20 +43,23 @@ export default function Header({
     return () => clearInterval(interval)
   }, [])
 
-  useEffect(() => {
-    const fetchBeansPrice = async () => {
-      try {
-        const response = await fetch(`https://api.dexscreener.com/latest/dex/pairs/base/${CONTRACTS.LP.address}`)
-        const data = await response.json()
-        if (data.pair?.priceUsd) setBeansPrice(parseFloat(data.pair.priceUsd).toFixed(4))
-      } catch {
-        setBeansPrice('0.0264')
-      }
-    }
-    fetchBeansPrice()
-    const interval = setInterval(fetchBeansPrice, 30000)
-    return () => clearInterval(interval)
-  }, [])
+  // TODO: re-enable live price fetch after demo
+  // useEffect(() => {
+  //   const fetchBeansPrice = async () => {
+  //     try {
+  //       const response = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${CONTRACTS.Bean.address}`, { cache: 'no-store' })
+  //       const data = await response.json()
+  //       const pairs: Array<{ priceUsd: string; liquidity?: { usd: number } }> = data.pairs ?? []
+  //       const best = pairs.sort((a, b) => (b.liquidity?.usd ?? 0) - (a.liquidity?.usd ?? 0))[0]
+  //       if (best?.priceUsd) setBeansPrice(parseFloat(best.priceUsd).toFixed(2))
+  //     } catch {
+  //       setBeansPrice('--')
+  //     }
+  //   }
+  //   fetchBeansPrice()
+  //   const interval = setInterval(fetchBeansPrice, 30000)
+  //   return () => clearInterval(interval)
+  // }, [])
 
   const tabs = [    { id: 'mine', label: 'Mine', href: '/' },    { id: 'stake', label: 'Stake', href: '/stake' },    { id: 'global', label: 'Global', href: '/global' },    { id: 'about', label: 'About', href: '/about' },
   ]

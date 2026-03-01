@@ -3,681 +3,865 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { useAccount, useBalance, useReadContract, useSignMessage } from 'wagmi'
 import BeanLogo from './BeanLogo'
+import { apiFetch } from '@/lib/api'
+import { supabase } from '@/lib/supabase'
 import { CONTRACTS } from '@/lib/contracts'
-import { useUserData } from '@/lib/UserDataContext'
-import { apiMutate } from '@/lib/api'
 
-// ── Image resize utility ─────────────────────────────────────────────
+// ── Types ─────────────────────────────────────────────────
 
-const resizeImage = (file: File, maxSize: number = 200): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const img = new Image()
-    img.onload = () => {
-      const canvas = document.createElement('canvas')
-      canvas.width = maxSize
-      canvas.height = maxSize
-      const ctx = canvas.getContext('2d')!
-      // Center-crop: use the smaller dimension as source square
-      const min = Math.min(img.width, img.height)
-      const sx = (img.width - min) / 2
-      const sy = (img.height - min) / 2
-      ctx.drawImage(img, sx, sy, min, min, 0, 0, maxSize, maxSize)
-      resolve(canvas.toDataURL('image/jpeg', 0.85))
-    }
-    img.onerror = reject
-    img.src = URL.createObjectURL(file)
-  })
+interface Round {
+  id: number; block: number; yourBlocks: number[]; deployed: number; won: number;
+  netPnl: number; pctChange: number; beansEarned: number; beanpotAmount: number | null;
+  isWin: boolean; isBeanpot: boolean; timestamp: string;
 }
 
-// ── Component ─────────────────────────────────────────────────────────
+interface ProfileData {
+  username: string | null; bio: string | null; pfpUrl: string | null; bannerUrl: string | null;
+}
 
-export default function ProfilePage() {
-  const { address, isConnected, isReconnecting, isConnecting } = useAccount()
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const { signMessageAsync } = useSignMessage()
-
-  // Shared user data from context
-  const { rewards, stakeInfo, profile: profileData, refetchProfile } = useUserData()
-
-  // Local edit state
-  const [username, setUsername] = useState('')
-  const [bio, setBio] = useState('')
-  const [pfpUrl, setPfpUrl] = useState<string | null>(null)
-  const [discordConnected, setDiscordConnected] = useState(false)
-  const [discordUsername, setDiscordUsername] = useState<string | null>(null)
-  const [isEditingUsername, setIsEditingUsername] = useState(false)
-  const [isEditingBio, setIsEditingBio] = useState(false)
-  const [copied, setCopied] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [saveError, setSaveError] = useState<string | null>(null)
-
-  // Pre-populate fields from context when profile loads
-  const profileLoadedRef = useRef(false)
-  useEffect(() => {
-    if (profileData && !profileLoadedRef.current) {
-      profileLoadedRef.current = true
-      if (profileData.username) setUsername(profileData.username)
-      if (profileData.bio) setBio(profileData.bio)
-      if (profileData.pfpUrl) setPfpUrl(profileData.pfpUrl)
-      if (profileData.discord) {
-        setDiscordConnected(true)
-        setDiscordUsername(profileData.discord)
-      }
-    }
-  }, [profileData])
-
-  // Reset loaded ref when address changes
-  useEffect(() => {
-    profileLoadedRef.current = false
-  }, [address])
-
-  const { data: ethBalance } = useBalance({
-    address: address as `0x${string}` | undefined,
-  })
-
-  const { data: beansBalanceRaw } = useReadContract({
-    address: CONTRACTS.Bean.address,
-    abi: CONTRACTS.Bean.abi,
-    functionName: 'balanceOf',
-    args: address ? [address as `0x${string}`] : undefined,
-  })
-
-  const beansBalance = beansBalanceRaw ? Number(beansBalanceRaw) / 1e18 : 0
-
-  // Real portfolio data from shared context
-  const stakedBalance = stakeInfo ? parseFloat(stakeInfo.balanceFormatted) : 0
-  const roastedBalance = rewards ? parseFloat(rewards.pendingBEAN.roastedFormatted) : 0
-  const unroastedBalance = rewards ? parseFloat(rewards.pendingBEAN.unroastedFormatted) : 0
-
-  const portfolio = {
-    wallet: beansBalance,
-    staked: stakedBalance,
-    roasted: roastedBalance,
-    unroasted: unroastedBalance,
+interface RewardsData {
+  pendingETH: string
+  pendingETHFormatted: string
+  pendingBEAN: {
+    unroasted: string; unroastedFormatted: string
+    roasted: string; roastedFormatted: string
+    gross: string; grossFormatted: string
+    fee: string; feeFormatted: string
+    net: string; netFormatted: string
   }
+  uncheckpointedRound: string
+}
 
-  const total = portfolio.wallet + portfolio.staked + portfolio.roasted + portfolio.unroasted
+interface StakeInfo {
+  balance: string
+  balanceFormatted: string
+  pendingRewards: string
+  pendingRewardsFormatted: string
+}
 
-  // ── Save profile with wallet signature ──────────────────────────────
 
-  const saveProfile = useCallback(async (fields: { username?: string; bio?: string; pfpUrl?: string | null }) => {
-    if (!address) return
-    setSaving(true)
-    setSaveError(null)
+const ROWS_PER_PAGE = 8
+
+// ── Icons ─────────────────────────────────────────────────
+
+const XIcon = ({ size = 18 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
+    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+  </svg>
+)
+const DiscordIcon = ({ size = 18 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" style={{ display: 'block' }}>
+    <path d="M20.317 4.492c-1.53-.69-3.17-1.2-4.885-1.49a.075.075 0 0 0-.079.036c-.21.369-.444.85-.608 1.23a18.566 18.566 0 0 0-5.487 0 12.36 12.36 0 0 0-.617-1.23A.077.077 0 0 0 8.562 3c-1.714.29-3.354.8-4.885 1.491a.07.07 0 0 0-.032.027C.533 9.093-.32 13.555.099 17.961a.08.08 0 0 0 .031.055 20.03 20.03 0 0 0 5.993 2.98.078.078 0 0 0 .084-.026c.462-.62.874-1.275 1.226-1.963a.074.074 0 0 0-.041-.104 13.201 13.201 0 0 1-1.872-.878.075.075 0 0 1-.008-.125c.126-.093.252-.19.372-.287a.075.075 0 0 1 .078-.01c3.927 1.764 8.18 1.764 12.061 0a.075.075 0 0 1 .079.009c.12.098.245.195.372.288a.075.075 0 0 1-.006.125c-.598.344-1.22.635-1.873.877a.075.075 0 0 0-.041.105c.36.687.772 1.341 1.225 1.962a.077.077 0 0 0 .084.028 19.963 19.963 0 0 0 6.002-2.981.076.076 0 0 0 .032-.054c.5-5.094-.838-9.52-3.549-13.442a.06.06 0 0 0-.031-.028zM8.02 15.278c-1.182 0-2.157-1.069-2.157-2.38 0-1.312.956-2.38 2.157-2.38 1.21 0 2.176 1.077 2.157 2.38 0 1.312-.956 2.38-2.157 2.38zm7.975 0c-1.183 0-2.157-1.069-2.157-2.38 0-1.312.955-2.38 2.157-2.38 1.21 0 2.176 1.077 2.157 2.38 0 1.312-.946 2.38-2.157 2.38z"/>
+  </svg>
+)
+const EditIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+  </svg>
+)
+const CopyIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+  </svg>
+)
+const CheckIcon = ({ color = 'currentColor' }: { color?: string }) => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5">
+    <polyline points="20 6 9 17 4 12"/>
+  </svg>
+)
+const DownloadIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+  </svg>
+)
+
+// ── PnL Card Modal ────────────────────────────────────────
+
+function PnlCard({ round, pfpUrl, username, onClose }: { round: Round; pfpUrl: string | null; username: string; onClose: () => void }) {
+  const cardRef = useRef<HTMLDivElement>(null)
+  const [downloading, setDownloading] = useState(false)
+
+  const ct = round.isBeanpot ? 'beanpot' : round.isWin ? 'win' : 'loss'
+  const color = round.isBeanpot ? '#FFD700' : round.isWin ? '#00C853' : '#FF4444'
+  const glow = round.isBeanpot ? 'rgba(255,215,0,0.3)' : round.isWin ? 'rgba(0,200,83,0.15)' : 'rgba(255,50,50,0.08)'
+  const sub = round.isBeanpot ? 'rgba(255,215,0,0.7)' : round.isWin ? 'rgba(0,200,83,0.7)' : 'rgba(255,68,68,0.6)'
+  const bgs: Record<string, string> = {
+    win: 'radial-gradient(ellipse 70% 60% at 75% 15%, rgba(0,200,83,0.2), transparent), radial-gradient(ellipse 50% 40% at 20% 85%, rgba(0,200,83,0.06), transparent), #050810',
+    loss: 'radial-gradient(ellipse 60% 50% at 75% 20%, rgba(255,50,50,0.1), transparent), radial-gradient(ellipse 40% 30% at 20% 80%, rgba(255,50,50,0.04), transparent), #050810',
+    beanpot: 'radial-gradient(ellipse 80% 70% at 70% 10%, rgba(255,180,0,0.25), transparent), radial-gradient(ellipse 50% 40% at 20% 90%, rgba(255,215,0,0.12), transparent), #050810',
+  }
+  const heroText = round.isBeanpot ? `+${round.beanpotAmount?.toFixed(3)}` : `${round.pctChange >= 0 ? '+' : ''}${round.pctChange}%`
+
+  const handleDownload = async () => {
+    if (!cardRef.current) return
+    setDownloading(true)
     try {
-      const timestamp = Math.floor(Date.now() / 1000)
-      const message = `BEAN Protocol Profile Update\nAddress: ${address.toLowerCase()}\nTimestamp: ${timestamp}`
-      const signature = await signMessageAsync({ message })
-      await apiMutate(`/api/user/${address.toLowerCase()}/profile`, 'PUT', {
-        ...fields,
-        signature,
-        message,
-        timestamp,
-      })
-      refetchProfile()
-    } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to save'
-      setSaveError(errorMessage)
-    } finally {
-      setSaving(false)
+      const html2canvas = (await import('html2canvas')).default
+      const canvas = await html2canvas(cardRef.current, { scale: 2, useCORS: true, backgroundColor: null, logging: false })
+      const link = document.createElement('a')
+      link.download = `bean-round-${round.id}.png`
+      link.href = canvas.toDataURL('image/png')
+      link.click()
+    } catch (err) { console.error(err) }
+    setDownloading(false)
+  }
+
+  const handleShare = async () => {
+    const text = round.isBeanpot
+      ? `Just hit the BEANPOT for ${round.beanpotAmount?.toFixed(3)} $BEAN on @minebean_`
+      : round.isWin
+      ? `${round.pctChange >= 0 ? '+' : ''}${round.pctChange}% on Round #${round.id} — @minebean_ is live on Base`
+      : `Round #${round.id} on @minebean_ — the grind continues`
+    const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent('https://minebean.com')}`
+    // Copy card image to clipboard so user can paste it into the tweet
+    if (cardRef.current) {
+      try {
+        const html2canvas = (await import('html2canvas')).default
+        const canvas = await html2canvas(cardRef.current, { scale: 2, useCORS: true, backgroundColor: null, logging: false })
+        canvas.toBlob(async blob => {
+          if (blob) {
+            try {
+              await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
+            } catch {}
+          }
+        }, 'image/png')
+      } catch {}
     }
-  }, [address, signMessageAsync, refetchProfile])
-
-  // ── Handlers ────────────────────────────────────────────────────────
-
-  const handlePfpUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    try {
-      const base64 = await resizeImage(file, 200)
-      setPfpUrl(base64)
-      saveProfile({ pfpUrl: base64 })
-    } catch {
-      setSaveError('Failed to process image')
-    }
-  }
-
-  const handleRemovePfp = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    setPfpUrl(null)
-    if (fileInputRef.current) fileInputRef.current.value = ''
-    saveProfile({ pfpUrl: null })
-  }
-
-  const handleSaveUsername = () => {
-    setIsEditingUsername(false)
-    saveProfile({ username: username || '' })
-  }
-
-  const handleSaveBio = () => {
-    setIsEditingBio(false)
-    saveProfile({ bio: bio || '' })
-  }
-
-  const handleCopyAddress = () => {
-    if (address) {
-      navigator.clipboard.writeText(address)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    }
-  }
-
-  const truncateAddress = (addr: string) => {
-    return `${addr.slice(0, 6)}...${addr.slice(-4)}`
-  }
-
-  // Show loading state while wagmi rehydrates wallet from localStorage
-  if (isReconnecting || isConnecting) {
-    return (
-      <div style={styles.container}>
-        <div style={styles.notConnected}>
-          <p style={styles.notConnectedText}>Loading...</p>
-        </div>
-      </div>
-    )
-  }
-
-  if (!isConnected || !address) {
-    return (
-      <div style={styles.container}>
-        <div style={styles.notConnected}>
-          <div style={styles.notConnectedIcon}>
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="1.5">
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-            </svg>
-          </div>
-          <h2 style={styles.notConnectedTitle}>Connect Your Wallet</h2>
-          <p style={styles.notConnectedText}>Connect a wallet to view and edit your profile.</p>
-        </div>
-      </div>
-    )
+    window.open(tweetUrl, '_blank')
   }
 
   return (
-    <div style={styles.container}>
-      <div style={styles.page}>
-        {/* Save Error Banner */}
-        {saveError && (
-          <div style={styles.errorBanner}>
-            <span>{saveError}</span>
-            <button onClick={() => setSaveError(null)} style={styles.errorClose}>✕</button>
-          </div>
-        )}
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(16px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, padding: 20, fontFamily: "'Inter', -apple-system, sans-serif" }}>
+      <div onClick={e => e.stopPropagation()} style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: '100%' }}>
 
-        {/* Profile Card */}
-        <div style={styles.card}>
-          {/* PFP Section */}
-          <div style={styles.pfpSection}>
-            <div style={{ position: 'relative' as const, display: 'inline-block' }}>
-              <div
-                style={styles.pfpContainer}
-                onClick={() => fileInputRef.current?.click()}
-              >
-                {pfpUrl ? (
-                  <img src={pfpUrl} alt="Profile" style={styles.pfpImage} />
-                ) : (
-                  <div style={styles.pfpPlaceholder}>
-                    <svg width="36" height="36" viewBox="0 0 24 24" fill="#666" stroke="none">
-                      <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z" />
-                    </svg>
+        {/* Card */}
+        <div ref={cardRef} style={{ width: 1200, maxWidth: '100%', aspectRatio: '1200/630', borderRadius: 24, position: 'relative', overflow: 'hidden', display: 'flex', background: bgs[ct], border: ct === 'beanpot' ? '1px solid rgba(255,215,0,0.2)' : '1px solid rgba(255,255,255,0.06)', boxShadow: `0 0 100px ${glow}, 0 0 40px ${glow}` }}>
+          <div style={{ position: 'absolute', inset: 0, opacity: 0.018, backgroundImage: 'linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)', backgroundSize: '80px 80px', zIndex: 0 }} />
+          <div style={{ position: 'relative', zIndex: 1, width: '100%', height: '100%', display: 'flex', padding: '48px 56px', gap: 48, fontFamily: "'Inter', -apple-system, sans-serif" }}>
+
+            {/* Left */}
+            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', flex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                  <div style={{ width: 50, height: 50, borderRadius: '50%', background: 'linear-gradient(135deg,#0052FF,#3B7BFF)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 24px rgba(0,82,255,0.3)', overflow: 'hidden', flexShrink: 0 }}>
+                    {pfpUrl ? <img src={pfpUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} crossOrigin="anonymous" /> : <BeanLogo size={28} />}
                   </div>
-                )}
-                <div style={styles.pfpOverlay}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2">
-                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-                    <circle cx="12" cy="13" r="4" />
-                  </svg>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <span style={{ fontWeight: 800, fontSize: 26, letterSpacing: '-0.02em' }}>
+                      <span style={{ color: '#fff' }}>BE</span><span style={{ color: '#0052FF' }}>AN</span><span style={{ color: '#fff' }}>.</span>
+                    </span>
+                    <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', fontFamily: "'Space Mono', monospace" }}>@{username || 'anon'}</span>
+                  </div>
                 </div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handlePfpUpload}
-                  style={{ display: 'none' }}
-                />
+                <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: 2, padding: '8px 20px', borderRadius: 50, background: ct === 'beanpot' ? 'rgba(255,215,0,0.1)' : ct === 'win' ? 'rgba(0,200,83,0.1)' : 'rgba(255,68,68,0.08)', border: `1px solid ${ct === 'beanpot' ? 'rgba(255,215,0,0.25)' : ct === 'win' ? 'rgba(0,200,83,0.2)' : 'rgba(255,68,68,0.15)'}`, color }}>
+                  {round.isBeanpot ? '☕ BEANPOT' : round.isWin ? '↑ WIN' : '↓ LOSS'}
+                </div>
               </div>
-              {pfpUrl && (
-                <button
-                  onClick={handleRemovePfp}
-                  style={styles.pfpRemoveButton}
-                >
-                  ✕
-                </button>
-              )}
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <div style={{ fontSize: 13, fontWeight: 500, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase' as const, letterSpacing: 2 }}>Round #{round.id} · Block #{round.block}</div>
+                <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 'clamp(56px,8vw,96px)', fontWeight: 700, lineHeight: 1, letterSpacing: '-0.04em', color, textShadow: `0 0 80px ${glow}, 0 0 40px ${glow}` }}>
+                  {heroText}{round.isBeanpot && <span style={{ fontSize: 'clamp(28px,4vw,48px)', marginLeft: 12, opacity: 0.8 }}>BEAN</span>}
+                </div>
+                <div style={{ fontSize: 17, fontWeight: 600, fontFamily: "'Space Mono', monospace", color: sub }}>
+                  {round.isBeanpot ? `+${round.netPnl.toFixed(4)} ETH profit` : `${round.netPnl >= 0 ? '+' : ''}${round.netPnl.toFixed(4)} ETH`}
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+                <div style={{ display: 'flex', gap: 36 }}>
+                  {([
+                    ['Deployed', `Ξ ${round.deployed.toFixed(4)}`, '#fff'],
+                    ['Won', `Ξ ${round.won.toFixed(4)}`, round.isWin ? '#00C853' : '#FF4444'],
+                    ...(round.beansEarned > 0 ? [[round.isBeanpot ? 'Beanpot' : 'BEAN', `${round.beansEarned.toFixed(3)}`, round.isBeanpot ? '#FFD700' : '#3B7BFF']] : []),
+                  ] as [string, string, string][]).map(([label, val, c], i) => (
+                    <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase' as const, letterSpacing: 1 }}>{label}</span>
+                      <span style={{ fontSize: 16, fontWeight: 700, color: c, fontFamily: "'Space Mono', monospace" }}>{val}</span>
+                    </div>
+                  ))}
+                </div>
+                <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.15)', fontWeight: 600 }}>minebean.com</span>
+              </div>
+            </div>
+
+            {/* Right: glass stats panel */}
+            <div style={{ width: 300, flexShrink: 0, background: 'rgba(255,255,255,0.025)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 20, padding: '28px 24px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 2 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase' as const, letterSpacing: 1.5, marginBottom: 8 }}>Round Details</div>
+              {([
+                ['Round', `#${round.id}`],
+                ['Winner', `Block #${round.block}`],
+                ['Deployed', `Ξ ${round.deployed.toFixed(4)}`],
+                ['Won', `Ξ ${round.won.toFixed(4)}`],
+                ...(round.beansEarned > 0 ? [[round.isBeanpot ? 'Beanpot' : 'BEAN', `${round.beansEarned.toFixed(3)}`]] : []),
+              ] as [string, string][]).map(([label, value], i) => (
+                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                  <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)' }}>{label}</span>
+                  <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, fontWeight: 700, color: label === 'Won' ? (round.isWin ? '#00C853' : '#FF4444') : label === 'Beanpot' ? '#FFD700' : label === 'BEAN' ? '#3B7BFF' : '#fff' }}>{value}</span>
+                </div>
+              ))}
+              {/* Your Picks — stacked with wrapping chips */}
+              <div style={{ padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', display: 'block', marginBottom: 8 }}>Your Picks</span>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                  {round.yourBlocks.map(b => (
+                    <span key={b} style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, fontWeight: 700, color: b === round.block ? '#00C853' : 'rgba(255,255,255,0.6)', background: b === round.block ? 'rgba(0,200,83,0.12)' : 'rgba(255,255,255,0.06)', border: `1px solid ${b === round.block ? 'rgba(0,200,83,0.3)' : 'rgba(255,255,255,0.08)'}`, borderRadius: 5, padding: '2px 6px' }}>#{b}</span>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
-
-          {/* Username */}
-          <div style={styles.fieldGroup}>
-            <label style={styles.fieldLabel}>Username</label>
-            {isEditingUsername ? (
-              <div>
-                <div style={styles.editRow}>
-                  <input
-                    type="text"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    placeholder="Enter username"
-                    maxLength={20}
-                    style={{
-                      ...styles.textInput,
-                      ...(username && !/^[a-zA-Z0-9_]{1,20}$/.test(username) ? { borderColor: '#ff6b6b' } : {}),
-                    }}
-                    autoFocus
-                  />
-                  <button
-                    onClick={handleSaveUsername}
-                    style={{
-                      ...styles.saveButton,
-                      ...((saving || (username && !/^[a-zA-Z0-9_]{1,20}$/.test(username))) ? { opacity: 0.6, cursor: 'not-allowed' } : {}),
-                    }}
-                    disabled={saving || !!(username && !/^[a-zA-Z0-9_]{1,20}$/.test(username))}
-                  >
-                    {saving ? '...' : 'Save'}
-                  </button>
-                </div>
-                {username && !/^[a-zA-Z0-9_]{1,20}$/.test(username) && (
-                  <div style={{ fontSize: '12px', color: '#ff6b6b', marginTop: '6px' }}>
-                    Letters, numbers, and underscores only
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div style={styles.displayRow}>
-                <span style={styles.fieldValue}>
-                  {username || 'Not set'}
-                </span>
-                <button
-                  onClick={() => setIsEditingUsername(true)}
-                  style={styles.editButton}
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                  </svg>
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Bio */}
-          <div style={styles.fieldGroup}>
-            <label style={styles.fieldLabel}>Bio</label>
-            {isEditingBio ? (
-              <div style={styles.editRow}>
-                <textarea
-                  value={bio}
-                  onChange={(e) => setBio(e.target.value)}
-                  placeholder="Tell the world about yourself"
-                  maxLength={160}
-                  rows={3}
-                  style={{ ...styles.textInput, resize: 'none' as const, minHeight: '72px' }}
-                  autoFocus
-                />
-                <button
-                  onClick={handleSaveBio}
-                  style={{
-                    ...styles.saveButton,
-                    ...(saving ? { opacity: 0.6, cursor: 'not-allowed' } : {}),
-                  }}
-                  disabled={saving}
-                >
-                  {saving ? '...' : 'Save'}
-                </button>
-              </div>
-            ) : (
-              <div style={styles.displayRow}>
-                <span style={{ ...styles.fieldValue, ...(bio ? {} : { fontStyle: 'italic' }) }}>
-                  {bio || 'Not set'}
-                </span>
-                <button
-                  onClick={() => setIsEditingBio(true)}
-                  style={styles.editButton}
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                  </svg>
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Address */}
-          <div style={styles.fieldGroup}>
-            <label style={styles.fieldLabel}>Address</label>
-            <div style={styles.displayRow}>
-              <span style={{ ...styles.fieldValue, fontFamily: 'monospace' }}>
-                {truncateAddress(address)}
-              </span>
-              <button
-                onClick={handleCopyAddress}
-                style={styles.editButton}
-              >
-                {copied ? (
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0052FF" strokeWidth="2">
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
-                ) : (
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                  </svg>
-                )}
-              </button>
-            </div>
-          </div>
-
         </div>
 
-        {/* Portfolio Card */}
-        <div style={styles.card}>
-          <h3 style={styles.cardTitle}>Portfolio</h3>
-
-          <div style={styles.ethRow}>
-            <span style={styles.ethRowLabel}>ETH Balance</span>
-            <span style={styles.ethRowValue}>
-              <img
-                src="https://imagedelivery.net/GyRgSdgDhHz2WNR4fvaN-Q/f9461cf2-aacc-4c59-8b9d-59ade3c46c00/public"
-                alt="ETH"
-                style={{ width: 16, height: 16 }}
-              />
-              {ethBalance ? parseFloat(ethBalance.formatted).toFixed(4) : '0.0000'}
-            </span>
+        {/* Action buttons */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
+          <div style={{ display: 'flex', gap: 12 }}>
+          <button onClick={handleDownload} disabled={downloading} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.08)', color: '#fff', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 50, padding: '14px 28px', fontSize: 14, fontWeight: 700, cursor: downloading ? 'wait' : 'pointer', opacity: downloading ? 0.6 : 1, fontFamily: "'Inter', sans-serif" }}>
+            <DownloadIcon /> {downloading ? 'Saving...' : 'Save Image'}
+          </button>
+          <button onClick={handleShare} style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#fff', color: '#000', border: 'none', borderRadius: 50, padding: '14px 28px', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: "'Inter', sans-serif" }}>
+            <XIcon size={14} /> Share to X
+          </button>
           </div>
-
-          <div style={styles.divider} />
-
-          <div style={styles.portfolioGrid}>
-            {[
-              { label: 'Wallet', value: portfolio.wallet },
-              { label: 'Staked', value: portfolio.staked },
-              { label: 'Roasted', value: portfolio.roasted },
-              { label: 'Unroasted', value: portfolio.unroasted },
-            ].map((item) => (
-              <div key={item.label} style={styles.portfolioItem}>
-                <span style={styles.portfolioItemLabel}>{item.label}</span>
-                <span style={styles.portfolioItemValue}>
-                  <BeanLogo size={16} /> {item.value.toFixed(4)}
-                </span>
-              </div>
-            ))}
-          </div>
-
-          <div style={styles.divider} />
-
-          <div style={styles.totalRow}>
-            <span style={styles.totalLabel}>Total</span>
-            <span style={styles.totalValue}>
-              <BeanLogo size={18} /> {total.toFixed(4)}
-            </span>
-          </div>
+          <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.5)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 50, padding: '14px 28px', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: "'Inter', sans-serif" }}>Close</button>
         </div>
       </div>
     </div>
   )
 }
 
-const styles: { [key: string]: React.CSSProperties } = {
-  container: {
-    minHeight: '100vh',
-    background: 'transparent',
-    padding: '40px 20px 80px',
-    fontFamily: "'Inter', -apple-system, sans-serif",
-  },
-  page: {
-    maxWidth: '480px',
-    margin: '0 auto',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '16px',
-  },
-  notConnected: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: '60vh',
-    gap: '16px',
-  },
-  notConnectedIcon: {
-    marginBottom: '8px',
-  },
-  notConnectedTitle: {
-    fontSize: '20px',
-    fontWeight: 600,
-    color: '#fff',
-    margin: 0,
-  },
-  notConnectedText: {
-    fontSize: '14px',
-    color: '#999',
-    margin: 0,
-  },
-  errorBanner: {
-    background: '#2a1515',
-    border: '1px solid #4a2020',
-    borderRadius: '10px',
-    padding: '12px 16px',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    color: '#ff6b6b',
-    fontSize: '13px',
-  },
-  errorClose: {
-    background: 'transparent',
-    border: 'none',
-    color: '#ff6b6b',
-    cursor: 'pointer',
-    fontSize: '14px',
-    padding: '0 4px',
-  },
-  card: {
-    background: 'rgba(255,255,255,0.03)',
-    border: '1px solid rgba(255,255,255,0.06)',
-    borderRadius: '16px',
-    backdropFilter: 'blur(20px)',
-    padding: '24px',
-  },
-  cardTitle: {
-    fontSize: '16px',
-    fontWeight: 600,
-    color: '#fff',
-    margin: '0 0 20px 0',
-  },
-  pfpSection: {
-    display: 'flex',
-    justifyContent: 'center',
-    marginBottom: '24px',
-  },
-  pfpContainer: {
-    position: 'relative',
-    width: '88px',
-    height: '88px',
-    borderRadius: '50%',
-    cursor: 'pointer',
-    overflow: 'hidden',
-  },
-  pfpImage: {
-    width: '100%',
-    height: '100%',
-    objectFit: 'cover' as const,
-    borderRadius: '50%',
-  },
-  pfpPlaceholder: {
-    width: '100%',
-    height: '100%',
-    background: 'rgba(255,255,255,0.04)',
-    border: '2px solid rgba(255,255,255,0.08)',
-    borderRadius: '50%',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  pfpOverlay: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: '32px',
-    background: 'rgba(0,0,0,0.7)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  pfpRemoveButton: {
-    position: 'absolute',
-    top: '-4px',
-    right: '-4px',
-    width: '24px',
-    height: '24px',
-    borderRadius: '50%',
-    background: '#444',
-    border: '2px solid #0a0a0a',
-    color: '#fff',
-    fontSize: '12px',
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 0,
-    zIndex: 10,
-  },
-  fieldGroup: {
-    marginBottom: '20px',
-  },
-  fieldLabel: {
-    fontSize: '12px',
-    color: '#999',
-    display: 'block',
-    marginBottom: '8px',
-    textTransform: 'uppercase' as const,
-    letterSpacing: '0.5px',
-  },
-  displayRow: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  fieldValue: {
-    fontSize: '15px',
-    color: '#fff',
-  },
-  editRow: {
-    display: 'flex',
-    gap: '8px',
-    alignItems: 'flex-start',
-  },
-  textInput: {
-    flex: 1,
-    background: 'transparent',
-    border: '1px solid #444',
-    borderRadius: '8px',
-    padding: '10px 12px',
-    color: '#fff',
-    fontSize: '14px',
-    fontFamily: 'inherit',
-    outline: 'none',
-  },
-  editButton: {
-    background: 'transparent',
-    border: 'none',
-    color: '#999',
-    cursor: 'pointer',
-    padding: '4px',
-    display: 'flex',
-    alignItems: 'center',
-    transition: 'color 0.2s',
-  },
-  saveButton: {
-    background: '#0052FF',
-    border: 'none',
-    color: '#000',
-    fontWeight: 600,
-    padding: '10px 16px',
-    borderRadius: '8px',
-    cursor: 'pointer',
-    fontSize: '13px',
-    whiteSpace: 'nowrap' as const,
-  },
-  discordButton: {
-    background: '#5865F2',
-    border: 'none',
-    color: '#fff',
-    fontWeight: 500,
-    padding: '8px 16px',
-    borderRadius: '8px',
-    cursor: 'pointer',
-    fontSize: '13px',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-  },
-  ethRow: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: '12px 0',
-  },
-  ethRowLabel: {
-    fontSize: '14px',
-    color: '#bbb',
-  },
-  ethRowValue: {
-    fontSize: '14px',
-    color: '#fff',
-    fontFamily: 'monospace',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-  },
-  divider: {
-    height: '1px',
-    background: 'rgba(255,255,255,0.04)',
-    margin: '4px 0',
-  },
-  portfolioGrid: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '0',
-  },
-  portfolioItem: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: '12px 0',
-    borderBottom: '1px solid #151515',
-  },
-  portfolioItemLabel: {
-    fontSize: '14px',
-    color: '#bbb',
-  },
-  portfolioItemValue: {
-    fontSize: '14px',
-    color: '#fff',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-  },
-  totalRow: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: '16px 0 0 0',
-  },
-  totalLabel: {
-    fontSize: '15px',
-    fontWeight: 600,
-    color: '#fff',
-  },
-  totalValue: {
-    fontSize: '15px',
-    fontWeight: 600,
-    color: '#fff',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-  },
+// ── Main Component ─────────────────────────────────────────────────
+
+export default function ProfilePage() {
+  const { address, isConnected } = useAccount()
+  const { signMessageAsync } = useSignMessage()
+
+  // Profile state
+  const [username, setUsername] = useState('')
+  const [usernameInput, setUsernameInput] = useState('')
+  const [bio, setBio] = useState('')
+  const [bioInput, setBioInput] = useState('')
+  const [pfpUrl, setPfpUrl] = useState<string | null>(null)
+  const [bannerUrl, setBannerUrl] = useState<string | null>(null)
+  const [isEditingUsername, setIsEditingUsername] = useState(false)
+  const [isEditingBio, setIsEditingBio] = useState(false)
+  const [copied, setCopied] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const bannerFileInputRef = useRef<HTMLInputElement>(null)
+  const [cropState, setCropState] = useState<{ src: string; type: 'pfp' | 'banner'; scale: number; ox: number; oy: number } | null>(null)
+  const [pfpHovered, setPfpHovered] = useState(false)
+  const cropCanvasRef = useRef<HTMLCanvasElement>(null)
+  const cropDragging = useRef(false)
+  const cropDragStart = useRef({ x: 0, y: 0, ox: 0, oy: 0 })
+
+  // Social connections state
+  const [discordUsername, setDiscordUsername] = useState<string | null>(null)
+  const [twitterHandle, setTwitterHandle] = useState<string | null>(null)
+  const [socialToast, setSocialToast] = useState<string | null>(null)
+
+  // Round history state
+  const [rounds, setRounds] = useState<Round[]>([])
+  const [expandedRound, setExpandedRound] = useState<Round | null>(null)
+  const [page, setPage] = useState(0)
+
+  // Portfolio state (from API)
+  const [stakeInfo, setStakeInfo] = useState<StakeInfo | null>(null)
+  const [rewards, setRewards] = useState<RewardsData | null>(null)
+
+  // On-chain balances
+  const { data: ethBalance } = useBalance({ address })
+  const { data: beansBalanceRaw } = useReadContract({
+    address: CONTRACTS.Bean.address,
+    abi: CONTRACTS.Bean.abi,
+    functionName: 'balanceOf',
+    args: address ? [address] : undefined,
+  })
+  const beansBalance = beansBalanceRaw ? Number(beansBalanceRaw) / 1e18 : 0
+
+  // Track address for profile load (prevent re-loading on same address)
+  const profileLoadedForRef = useRef<string | undefined>(undefined)
+
+  // Fetch profile + portfolio data when address changes
+  useEffect(() => {
+    if (!address || profileLoadedForRef.current === address) return
+    profileLoadedForRef.current = address
+    const addr = address.toLowerCase()
+
+    fetch(`/api/user/${addr}/profile`)
+      .then(r => r.json())
+      .then((data: ProfileData) => {
+        if (data.username) { setUsername(data.username); setUsernameInput(data.username) }
+        if (data.bio) { setBio(data.bio); setBioInput(data.bio) }
+        // Use Supabase value if present, otherwise fall back to localStorage cache
+        const pfp = data.pfpUrl || localStorage.getItem(`pfp_${addr}`)
+        if (pfp) setPfpUrl(pfp)
+        const banner = data.bannerUrl || localStorage.getItem(`banner_${addr}`)
+        if (banner) setBannerUrl(banner)
+      })
+      .catch(() => {
+        const pfp = localStorage.getItem(`pfp_${addr}`)
+        if (pfp) setPfpUrl(pfp)
+        const banner = localStorage.getItem(`banner_${addr}`)
+        if (banner) setBannerUrl(banner)
+      })
+
+    apiFetch<StakeInfo>(`/api/staking/${addr}`)
+      .then(data => setStakeInfo(data))
+      .catch(() => {})
+
+    apiFetch<RewardsData>(`/api/user/${addr}/rewards`)
+      .then(data => setRewards(data))
+      .catch(() => {})
+
+  }, [address])
+
+  // Fetch round history separately so it retries on every address change
+  useEffect(() => {
+    if (!address) return
+    const addr = address.toLowerCase()
+    fetch(`/api/user/${addr}/rounds`)
+      .then(r => r.json())
+      .then((data: Round[]) => { if (Array.isArray(data)) setRounds(data) })
+      .catch(() => {})
+  }, [address])
+
+  // Fetch social connections from Supabase
+  const fetchSocial = useCallback(async (addr: string) => {
+    const { data } = await supabase
+      .from('social_connections')
+      .select('discord_username, twitter_handle')
+      .eq('wallet_address', addr.toLowerCase())
+      .single()
+    if (data) {
+      setDiscordUsername(data.discord_username)
+      setTwitterHandle(data.twitter_handle)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (address) fetchSocial(address)
+  }, [address, fetchSocial])
+
+  // Handle OAuth redirect params (?discord=connected, ?twitter=connected, etc.)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const discord = params.get('discord')
+    const twitter = params.get('twitter')
+    if (discord === 'connected') {
+      setSocialToast('Discord connected!')
+      if (address) fetchSocial(address)
+    } else if (discord === 'error') {
+      setSocialToast('Discord connection failed — try again')
+    }
+    if (twitter === 'connected') {
+      setSocialToast('X connected!')
+      if (address) fetchSocial(address)
+    } else if (twitter === 'error') {
+      setSocialToast('X connection failed — try again')
+    }
+    if (discord || twitter) {
+      window.history.replaceState({}, '', '/profile')
+      setTimeout(() => setSocialToast(null), 4000)
+    }
+  }, [address, fetchSocial])
+
+  // Clear state when wallet disconnects
+  useEffect(() => {
+    if (!address) {
+      profileLoadedForRef.current = undefined
+      setUsername(''); setUsernameInput('')
+      setBio(''); setBioInput('')
+      setPfpUrl(null); setBannerUrl(null)
+      setStakeInfo(null); setRewards(null)
+      setRounds([])
+      setDiscordUsername(null); setTwitterHandle(null)
+    }
+  }, [address])
+
+  // Redraw crop canvas when cropState changes
+  useEffect(() => {
+    if (!cropState || !cropCanvasRef.current) return
+    const isPfp = cropState.type === 'pfp'
+    const CW = isPfp ? 280 : 420, CH = isPfp ? 280 : 140
+    const canvas = cropCanvasRef.current
+    canvas.width = CW; canvas.height = CH
+    const ctx = canvas.getContext('2d')!
+    const img = new Image()
+    img.onload = () => {
+      ctx.clearRect(0, 0, CW, CH)
+      const fit = Math.max(CW / img.naturalWidth, CH / img.naturalHeight)
+      const ts = fit * cropState.scale
+      const w = img.naturalWidth * ts, h = img.naturalHeight * ts
+      ctx.drawImage(img, CW/2 - w/2 + cropState.ox, CH/2 - h/2 + cropState.oy, w, h)
+      if (isPfp) {
+        ctx.fillStyle = 'rgba(0,0,0,0.6)'
+        ctx.beginPath()
+        ctx.rect(0, 0, CW, CH)
+        ctx.arc(CW/2, CH/2, CW/2 - 1, 0, Math.PI * 2, true)
+        ctx.fill('evenodd')
+        ctx.strokeStyle = 'rgba(255,255,255,0.3)'
+        ctx.lineWidth = 1.5
+        ctx.beginPath()
+        ctx.arc(CW/2, CH/2, CW/2 - 1, 0, Math.PI * 2)
+        ctx.stroke()
+      }
+    }
+    img.src = cropState.src
+  }, [cropState])
+
+  // Save profile to API with wallet signature
+  const saveProfile = useCallback(async (fields: { username?: string; bio?: string; pfpUrl?: string | null; bannerUrl?: string | null }) => {
+    if (!address) return
+    setSaving(true); setSaveError(null)
+    try {
+      const timestamp = Math.floor(Date.now() / 1000)
+      const message = `BEAN Protocol Profile Update\nAddress: ${address.toLowerCase()}\nTimestamp: ${timestamp}`
+      const signature = await signMessageAsync({ message })
+      const res = await fetch(`/api/user/${address.toLowerCase()}/profile`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...fields, signature, message, timestamp }),
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'Failed to save' }))
+        throw new Error(err.error || 'Failed to save')
+      }
+    } catch (err: unknown) {
+      setSaveError(err instanceof Error ? err.message : 'Failed to save')
+    } finally {
+      setSaving(false)
+    }
+  }, [address, signMessageAsync])
+
+  const handleBannerUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = ev => { if (ev.target?.result) setCropState({ src: ev.target.result as string, type: 'banner', scale: 1, ox: 0, oy: 0 }) }
+    reader.readAsDataURL(file)
+    e.target.value = ''
+  }
+
+  const handlePfpUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = ev => { if (ev.target?.result) setCropState({ src: ev.target.result as string, type: 'pfp', scale: 1, ox: 0, oy: 0 }) }
+    reader.readAsDataURL(file)
+    e.target.value = ''
+  }
+
+  const confirmCrop = useCallback(() => {
+    if (!cropState) return
+    const isPfp = cropState.type === 'pfp'
+    const CW = isPfp ? 280 : 420, CH = isPfp ? 280 : 140
+    const OUT_W = isPfp ? 400 : 1500, OUT_H = isPfp ? 400 : 500
+    const img = new Image()
+    img.onload = () => {
+      const fit = Math.max(CW / img.naturalWidth, CH / img.naturalHeight)
+      const ts = fit * cropState.scale
+      const dx = CW/2 - (img.naturalWidth * ts)/2 + cropState.ox
+      const dy = CH/2 - (img.naturalHeight * ts)/2 + cropState.oy
+      const canvas = document.createElement('canvas')
+      canvas.width = OUT_W; canvas.height = OUT_H
+      const ctx = canvas.getContext('2d')!
+      ctx.drawImage(img, -dx/ts, -dy/ts, CW/ts, CH/ts, 0, 0, OUT_W, OUT_H)
+      const url = canvas.toDataURL('image/jpeg', 0.92)
+      const addr = address?.toLowerCase()
+      if (isPfp) {
+        setPfpUrl(url)
+        if (addr) localStorage.setItem(`pfp_${addr}`, url)
+        saveProfile({ pfpUrl: url })
+      } else {
+        setBannerUrl(url)
+        if (addr) localStorage.setItem(`banner_${addr}`, url)
+        saveProfile({ bannerUrl: url })
+      }
+      setCropState(null)
+    }
+    img.src = cropState.src
+  }, [cropState, saveProfile, address])
+
+  const handleCropMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    cropDragging.current = true
+    cropDragStart.current = { x: e.clientX, y: e.clientY, ox: cropState?.ox ?? 0, oy: cropState?.oy ?? 0 }
+    e.preventDefault()
+  }
+  const handleCropMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!cropDragging.current) return
+    const dx = e.clientX - cropDragStart.current.x
+    const dy = e.clientY - cropDragStart.current.y
+    setCropState(s => s ? { ...s, ox: cropDragStart.current.ox + dx, oy: cropDragStart.current.oy + dy } : s)
+  }
+  const handleCropMouseUp = () => { cropDragging.current = false }
+
+  const handleSaveUsername = () => {
+    setUsername(usernameInput)
+    setIsEditingUsername(false)
+    saveProfile({ username: usernameInput })
+  }
+
+  const handleSaveBio = () => {
+    setBio(bioInput)
+    setIsEditingBio(false)
+    saveProfile({ bio: bioInput })
+  }
+
+  // Portfolio calculations
+  const stakedBalance = stakeInfo ? parseFloat(stakeInfo.balanceFormatted) : 0
+  const roastedBalance = rewards ? parseFloat(rewards.pendingBEAN.roastedFormatted) : 0
+  const unroastedBalance = rewards ? parseFloat(rewards.pendingBEAN.unroastedFormatted) : 0
+  const portfolio = { wallet: beansBalance, staked: stakedBalance, roasted: roastedBalance, unroasted: unroastedBalance }
+  const total = portfolio.wallet + portfolio.staked + portfolio.roasted + portfolio.unroasted
+
+  // Round history stats
+  const totalPnl = rounds.reduce((sum, r) => sum + r.netPnl, 0)
+  const totalBean = rounds.reduce((sum, r) => sum + r.beansEarned, 0)
+  const winCount = rounds.filter(r => r.isWin).length
+  const winRate = rounds.length > 0 ? Math.round((winCount / rounds.length) * 100) : 0
+  const totalPages = Math.ceil(rounds.length / ROWS_PER_PAGE)
+  const pageRounds = rounds.slice(page * ROWS_PER_PAGE, (page + 1) * ROWS_PER_PAGE)
+
+  const truncatedAddress = address ? `${address.slice(0, 6)}...${address.slice(-4)}` : ''
+
+  const s = {
+    card: { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.09)', borderRadius: 20, backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)', padding: 24 } as React.CSSProperties,
+    label: { fontSize: 11, color: '#999', display: 'block', marginBottom: 5, textTransform: 'uppercase' as const, letterSpacing: '0.5px' } as React.CSSProperties,
+    fieldVal: { fontSize: 15, color: '#fff' } as React.CSSProperties,
+    editBtn: { background: 'transparent', border: 'none', color: '#999', cursor: 'pointer', padding: 4, display: 'flex', alignItems: 'center' } as React.CSSProperties,
+    row: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' } as React.CSSProperties,
+    input: { flex: 1, background: 'transparent', border: '1px solid #444', borderRadius: 8, padding: '10px 12px', color: '#fff', fontSize: 14, fontFamily: 'inherit', outline: 'none' } as React.CSSProperties,
+    saveBtn: { background: '#0052FF', border: 'none', color: '#fff', fontWeight: 600, padding: '10px 16px', borderRadius: 8, cursor: 'pointer', fontSize: 13, whiteSpace: 'nowrap' as const } as React.CSSProperties,
+    divider: { height: 1, background: 'rgba(255,255,255,0.04)', margin: '4px 0' } as React.CSSProperties,
+  }
+
+  return (
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', fontFamily: "'Inter', -apple-system, sans-serif" }}>
+
+      {saveError && (
+        <div style={{ margin: '16px 40px 0', background: '#2a1515', border: '1px solid #4a2020', borderRadius: 10, padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#ff6b6b', fontSize: 13 }}>
+          <span>{saveError}</span>
+          <button onClick={() => setSaveError(null)} style={{ background: 'transparent', border: 'none', color: '#ff6b6b', cursor: 'pointer', fontSize: 14, padding: '0 4px' }}>✕</button>
+        </div>
+      )}
+
+      {socialToast && (() => {
+        const isErr = socialToast.includes('failed')
+        return (
+          <div style={{ margin: '16px 40px 0', background: isErr ? '#2a1515' : '#0d1f0d', border: `1px solid ${isErr ? '#4a2020' : '#1a3a1a'}`, borderRadius: 10, padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: isErr ? '#ff6b6b' : '#4ade80', fontSize: 13 }}>
+            <span>{socialToast}</span>
+            <button onClick={() => setSocialToast(null)} style={{ background: 'transparent', border: 'none', color: isErr ? '#ff6b6b' : '#4ade80', cursor: 'pointer', fontSize: 14, padding: '0 4px' }}>✕</button>
+          </div>
+        )
+      })()}
+
+      {!isConnected ? (
+        /* ── Not connected ─────────────────────────────────────── */
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 24, padding: '48px 56px', maxWidth: 380, textAlign: 'center' }}>
+            <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'rgba(0,82,255,0.1)', border: '1px solid rgba(0,82,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 40px rgba(0,82,255,0.15)' }}>
+              <BeanLogo size={32} />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <h2 style={{ fontSize: 22, fontWeight: 700, color: '#fff', margin: 0, letterSpacing: '-0.02em' }}>Connect Your Wallet</h2>
+              <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', margin: 0, lineHeight: 1.6 }}>Connect a wallet to view your BEAN profile and round history.</p>
+            </div>
+          </div>
+        </div>
+      ) : (
+        /* ── Connected ─────────────────────────────────────────── */
+        <div style={{ flex: 1, display: 'flex', gap: 32, padding: '28px 40px 32px', width: '100%', alignItems: 'flex-start' }}>
+
+          {/* ── Left: Profile + Portfolio ── */}
+          <div style={{ width: 480, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
+
+            {/* Profile Card */}
+            <div style={{ ...s.card, padding: 0 }}>
+              <div
+                onClick={() => bannerFileInputRef.current?.click()}
+                onMouseEnter={e => { const ov = (e.currentTarget as HTMLDivElement).querySelector('.banner-ov') as HTMLElement; if (ov) ov.style.opacity = '1' }}
+                onMouseLeave={e => { const ov = (e.currentTarget as HTMLDivElement).querySelector('.banner-ov') as HTMLElement; if (ov) ov.style.opacity = '0' }}
+                style={{ height: 110, borderRadius: '20px 20px 0 0', borderBottom: '1px solid rgba(255,255,255,0.07)', cursor: 'pointer', position: 'relative', overflow: 'hidden' }}
+              >
+                {bannerUrl
+                  ? <img src={bannerUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  : <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, rgba(0,82,255,0.18) 0%, rgba(59,123,255,0.05) 60%, rgba(0,0,0,0) 100%)' }} />
+                }
+                <div className="banner-ov" style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0, transition: 'opacity 0.15s', pointerEvents: 'none' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#fff', fontSize: 12, fontWeight: 600 }}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                    Upload Banner
+                  </div>
+                </div>
+                <input ref={bannerFileInputRef} type="file" accept="image/*" hidden onChange={handleBannerUpload} />
+              </div>
+              <div style={{ padding: '0 24px 14px' }}>
+              {/* PFP */}
+              <div style={{ display: 'flex', justifyContent: 'center', marginTop: -28, marginBottom: 6 }}>
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  onMouseEnter={() => setPfpHovered(true)}
+                  onMouseLeave={() => setPfpHovered(false)}
+                  style={{ position: 'relative', width: 76, height: 76, borderRadius: '50%', cursor: 'pointer', overflow: 'hidden', border: '3px solid #080910', boxShadow: '0 0 0 1px rgba(0,82,255,0.3), 0 8px 24px rgba(0,0,0,0.5)' }}>
+                  {pfpUrl
+                    ? <img src={pfpUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    : <div style={{ width: '100%', height: '100%', background: 'rgba(255,255,255,0.04)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth="1.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                      </div>
+                  }
+                  {pfpUrl && pfpHovered && (
+                    <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                    </div>
+                  )}
+                  <input ref={fileInputRef} type="file" accept="image/*" hidden onChange={handlePfpUpload} />
+                </div>
+              </div>
+
+              {/* Username */}
+              <div style={{ marginBottom: 8 }}>
+                <label style={s.label}>Username</label>
+                {isEditingUsername ? (
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    <input value={usernameInput} onChange={e => setUsernameInput(e.target.value)} autoFocus style={s.input} maxLength={20} />
+                    <button onClick={handleSaveUsername} disabled={saving} style={{ ...s.saveBtn, ...(saving ? { opacity: 0.6, cursor: 'not-allowed' } : {}) }}>{saving ? '...' : 'Save'}</button>
+                  </div>
+                ) : (
+                  <div style={s.row}>
+                    <span style={s.fieldVal}>{username || 'Not set'}</span>
+                    <button onClick={() => setIsEditingUsername(true)} style={s.editBtn}><EditIcon /></button>
+                  </div>
+                )}
+              </div>
+
+              {/* Bio */}
+              <div style={{ marginBottom: 8 }}>
+                <label style={s.label}>Bio</label>
+                {isEditingBio ? (
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                    <textarea value={bioInput} onChange={e => setBioInput(e.target.value)} autoFocus maxLength={160} rows={3} style={{ ...s.input, resize: 'none', minHeight: 72 }} />
+                    <button onClick={handleSaveBio} disabled={saving} style={{ ...s.saveBtn, ...(saving ? { opacity: 0.6, cursor: 'not-allowed' } : {}) }}>{saving ? '...' : 'Save'}</button>
+                  </div>
+                ) : (
+                  <div style={s.row}>
+                    <span style={{ ...s.fieldVal, ...(!bio ? { fontStyle: 'italic', color: '#666' } : {}) }}>{bio || 'Not set'}</span>
+                    <button onClick={() => setIsEditingBio(true)} style={s.editBtn}><EditIcon /></button>
+                  </div>
+                )}
+              </div>
+
+              {/* Address */}
+              <div>
+                <label style={s.label}>Address</label>
+                <div style={s.row}>
+                  <span style={{ ...s.fieldVal, fontFamily: 'monospace' }}>{truncatedAddress}</span>
+                  <button onClick={() => { navigator.clipboard.writeText(address!); setCopied(true); setTimeout(() => setCopied(false), 2000) }} style={s.editBtn}>
+                    {copied ? <CheckIcon color="#0052FF" /> : <CopyIcon />}
+                  </button>
+                </div>
+              </div>
+
+              <div style={s.divider} />
+
+              {/* Socials */}
+              <div style={{ marginTop: 2 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {discordUsername ? (
+                    <div style={{ display: 'inline-flex', alignSelf: 'flex-start', alignItems: 'center', gap: 10, padding: '10px 14px', background: 'rgba(88,101,242,0.1)', border: '1px solid rgba(88,101,242,0.2)', borderRadius: 10 }}>
+                      <DiscordIcon size={16} />
+                      <span style={{ fontSize: 14, color: '#fff' }}>@{discordUsername}</span>
+                      <button onClick={async () => {
+                        await fetch('/api/auth/discord/disconnect', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ wallet: address }) })
+                        setDiscordUsername(null)
+                        setSocialToast('Discord disconnected')
+                      }} style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', color: 'rgba(255,255,255,0.4)', lineHeight: 1 }}>
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 1l10 10M11 1L1 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                      </button>
+                    </div>
+                  ) : (
+                    <a href={`/api/auth/discord?wallet=${address}`} style={{ display: 'inline-flex', alignSelf: 'flex-start', alignItems: 'center', gap: 10, padding: '10px 14px', background: 'rgba(88,101,242,0.08)', border: '1px solid rgba(88,101,242,0.15)', borderRadius: 10, textDecoration: 'none', color: '#fff', fontSize: 14, fontWeight: 500 }}>
+                      <DiscordIcon size={16} />
+                      Connect Discord
+                    </a>
+                  )}
+
+                  {twitterHandle ? (
+                    <div style={{ display: 'inline-flex', alignSelf: 'flex-start', alignItems: 'center', gap: 10, padding: '10px 14px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10 }}>
+                      <XIcon size={16} />
+                      <span style={{ fontSize: 14, color: '#fff' }}>@{twitterHandle}</span>
+                      <button onClick={async () => {
+                        await fetch('/api/auth/twitter/disconnect', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ wallet: address }) })
+                        setTwitterHandle(null)
+                        setSocialToast('X disconnected')
+                      }} style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', color: 'rgba(255,255,255,0.4)', lineHeight: 1 }}>
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 1l10 10M11 1L1 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                      </button>
+                    </div>
+                  ) : (
+                    <a href={`/api/auth/twitter?wallet=${address}`} style={{ display: 'inline-flex', alignSelf: 'flex-start', alignItems: 'center', gap: 10, padding: '10px 14px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, textDecoration: 'none', color: '#fff', fontSize: 14, fontWeight: 500 }}>
+                      <XIcon size={16} />
+                      Connect X
+                    </a>
+                  )}
+                </div>
+              </div>
+              </div>
+            </div>
+
+            {/* Portfolio Card */}
+            <div style={{ ...s.card, padding: 18 }}>
+              <h3 style={{ fontSize: 16, fontWeight: 600, color: '#fff', margin: '0 0 10px' }}>Portfolio</h3>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '7px 0' }}>
+                <span style={{ fontSize: 14, color: '#bbb' }}>ETH Balance</span>
+                <span style={{ fontSize: 14, color: '#fff', fontFamily: 'monospace', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <img src="https://imagedelivery.net/GyRgSdgDhHz2WNR4fvaN-Q/f9461cf2-aacc-4c59-8b9d-59ade3c46c00/public" alt="ETH" style={{ width: 16, height: 16 }} />
+                  {ethBalance ? (Number(ethBalance.value) / 10 ** ethBalance.decimals).toFixed(4) : '0.0000'}
+                </span>
+              </div>
+
+              <div style={s.divider} />
+
+              {([['Wallet', portfolio.wallet], ['Staked', portfolio.staked], ['Roasted', portfolio.roasted], ['Unroasted', portfolio.unroasted]] as [string, number][]).map(([label, val]) => (
+                <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '7px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                  <span style={{ fontSize: 14, color: '#bbb' }}>{label}</span>
+                  <span style={{ fontSize: 14, color: '#fff', display: 'flex', alignItems: 'center', gap: 8 }}><BeanLogo size={16} />{val.toFixed(4)}</span>
+                </div>
+              ))}
+
+              <div style={s.divider} />
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0 0' }}>
+                <span style={{ fontSize: 15, fontWeight: 600, color: '#fff' }}>Total</span>
+                <span style={{ fontSize: 15, fontWeight: 600, color: '#fff', display: 'flex', alignItems: 'center', gap: 8 }}><BeanLogo size={18} />{total.toFixed(4)}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Right: Round History ── */}
+          <div style={{ ...s.card, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', alignSelf: 'flex-start', padding: 0, maxHeight: 'calc(100vh - 132px)' }}>
+
+            {/* Header */}
+            <div style={{ padding: '28px 32px 0', flexShrink: 0 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
+                <div>
+                  <h2 style={{ fontSize: 22, fontWeight: 700, color: '#fff', margin: '0 0 4px' }}>Round History</h2>
+                  <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.25)', margin: 0 }}>{rounds.length} rounds played</p>
+                </div>
+                <div style={{ display: 'flex', gap: 28 }}>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', marginBottom: 4 }}>Win Rate</div>
+                    <div style={{ fontSize: 22, fontWeight: 700, color: '#fff' }}>{winRate}%</div>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', marginBottom: 4 }}>Total BEAN</div>
+                    <div style={{ fontSize: 22, fontWeight: 700, color: '#fff' }}>{totalBean.toFixed(2)}</div>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', marginBottom: 4 }}>Total P&amp;L</div>
+                    <div style={{ fontSize: 22, fontWeight: 700, color: '#fff' }}>{totalPnl >= 0 ? '+' : ''}{totalPnl.toFixed(4)} ETH</div>
+                  </div>
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 130px 110px 110px 130px', padding: '10px 12px', borderTop: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+                {['Round', 'Deployed', 'Won', 'BEAN', 'P&L'].map(h => (
+                  <span key={h} style={{ fontSize: 12, fontWeight: 500, color: 'rgba(255,255,255,0.35)', textAlign: h === 'Round' ? 'left' : 'right' }}>{h}</span>
+                ))}
+              </div>
+            </div>
+
+            {/* Rows */}
+            <div style={{ flex: 1, overflow: 'auto', padding: '0 32px' }}>
+              {rounds.length === 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, padding: '60px 0', textAlign: 'center' }}>
+                  <BeanLogo size={36} />
+                  <p style={{ fontSize: 15, fontWeight: 500, color: 'rgba(255,255,255,0.5)', margin: 0 }}>You haven&apos;t participated in any rounds yet</p>
+                  <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.2)', margin: 0 }}>Start mining to see your stats here</p>
+                </div>
+              )}
+              {pageRounds.map(round => (
+                <div key={round.id} onClick={() => setExpandedRound(round)}
+                  onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.background = round.isBeanpot ? 'rgba(255,200,0,0.06)' : 'rgba(255,255,255,0.03)' }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.background = round.isBeanpot ? 'rgba(255,180,0,0.03)' : 'transparent' }}
+                  style={{ display: 'grid', gridTemplateColumns: '1fr 130px 110px 110px 130px', alignItems: 'center', padding: '14px 12px', cursor: 'pointer', transition: 'background 0.15s', background: round.isBeanpot ? 'rgba(255,180,0,0.03)' : 'transparent', borderBottom: round.isBeanpot ? '1px solid rgba(255,180,0,0.15)' : '1px solid rgba(255,255,255,0.05)', borderLeft: round.isBeanpot ? '2px solid rgba(255,200,0,0.6)' : '2px solid transparent', paddingLeft: 10 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <div>
+                      <div style={{ fontSize: 14, fontWeight: 500, color: round.isBeanpot ? '#FFD700' : '#fff', display: 'flex', alignItems: 'center', gap: 6 }}>
+                        #{round.id}
+                        {round.isBeanpot && <span style={{ fontSize: 9, fontWeight: 700, color: '#FFD700', background: 'rgba(255,215,0,0.1)', border: '1px solid rgba(255,215,0,0.3)', padding: '1px 6px', borderRadius: 50, letterSpacing: 0.5 }}>BEANPOT</span>}
+                      </div>
+                      <div style={{ fontSize: 11, color: round.isBeanpot ? 'rgba(255,215,0,0.45)' : 'rgba(255,255,255,0.25)', marginTop: 2 }}>{round.timestamp}</div>
+                    </div>
+                  </div>
+                  <div style={{ textAlign: 'right', fontSize: 14, color: '#fff' }}>Ξ {round.deployed.toFixed(4)}</div>
+                  <div style={{ textAlign: 'right', fontSize: 14, color: round.won > 0 ? '#fff' : 'rgba(255,255,255,0.2)' }}>{round.won > 0 ? `Ξ ${round.won.toFixed(4)}` : '–'}</div>
+                  <div style={{ textAlign: 'right', fontSize: 14, color: round.beansEarned > 0 ? '#fff' : 'rgba(255,255,255,0.2)' }}>{round.beansEarned > 0 ? round.beansEarned.toFixed(3) : '–'}</div>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: 14, fontWeight: 500, color: '#fff' }}>{round.netPnl >= 0 ? '+' : ''}{round.netPnl.toFixed(4)}</div>
+                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', marginTop: 1 }}>{round.pctChange >= 0 ? '+' : ''}{round.pctChange}%</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Pagination */}
+            {rounds.length > 0 && <div style={{ padding: '16px 32px', flexShrink: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+              <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0} style={{ width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', background: page === 0 ? 'transparent' : 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, cursor: page === 0 ? 'default' : 'pointer', color: page === 0 ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.6)', padding: 0 }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M15 18l-6-6 6-6"/></svg>
+              </button>
+              <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', fontFamily: "'Space Mono', monospace", minWidth: 48, textAlign: 'center' }}>{page + 1} / {totalPages}</span>
+              <button onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1} style={{ width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', background: page >= totalPages - 1 ? 'transparent' : 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, cursor: page >= totalPages - 1 ? 'default' : 'pointer', color: page >= totalPages - 1 ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.6)', padding: 0 }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
+              </button>
+            </div>}
+          </div>
+
+        </div>
+      )}
+
+      {expandedRound && (
+        <PnlCard
+          round={expandedRound}
+          pfpUrl={pfpUrl}
+          username={username}
+          onClose={() => setExpandedRound(null)}
+        />
+      )}
+
+      {/* Crop Modal */}
+      {cropState && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.88)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, backdropFilter: 'blur(10px)' }}>
+          <div style={{ background: '#111', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 24, padding: 28, display: 'flex', flexDirection: 'column', gap: 20, width: cropState.type === 'pfp' ? 340 : 480 }}>
+            <h3 style={{ fontSize: 16, fontWeight: 600, color: '#fff', margin: 0 }}>
+              {cropState.type === 'pfp' ? 'Adjust profile photo' : 'Adjust banner'}
+            </h3>
+            <canvas
+              ref={cropCanvasRef}
+              style={{ display: 'block', margin: '0 auto', borderRadius: cropState.type === 'pfp' ? '50%' : 10, cursor: cropDragging.current ? 'grabbing' : 'grab', userSelect: 'none' }}
+              onMouseDown={handleCropMouseDown}
+              onMouseMove={handleCropMouseMove}
+              onMouseUp={handleCropMouseUp}
+              onMouseLeave={handleCropMouseUp}
+            />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', minWidth: 34 }}>Zoom</span>
+              <input
+                type="range" min="1" max="4" step="0.01"
+                value={cropState.scale}
+                onChange={e => setCropState(s => s ? { ...s, scale: parseFloat(e.target.value) } : s)}
+                style={{ flex: 1, accentColor: '#0052FF' }}
+              />
+            </div>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+              <button onClick={() => setCropState(null)} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.6)', padding: '10px 20px', borderRadius: 10, cursor: 'pointer', fontSize: 14 }}>Cancel</button>
+              <button onClick={confirmCrop} style={{ background: '#0052FF', border: 'none', color: '#fff', padding: '10px 24px', borderRadius: 10, cursor: 'pointer', fontSize: 14, fontWeight: 600 }}>Apply</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
 }
