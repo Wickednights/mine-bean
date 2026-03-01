@@ -39,14 +39,25 @@ export default function BottomNav({ currentPage }: BottomNavProps) {
                 </svg>
             )
         },
-        { 
-            id: 'stake', 
-            label: 'Stake', 
+        {
+            id: 'stake',
+            label: 'Stake',
             href: '/stake',
             icon: (active: boolean) => (
                 <svg width="22" height="22" viewBox="0 0 24 24" fill={active ? "#0052FF" : "#666"}>
                     <path d="M12 2L4 7v10l8 5 8-5V7l-8-5zm0 2.18l6 3.75v7.14l-6 3.75-6-3.75V7.93l6-3.75z" />
                     <path d="M12 6.5L8 9v6l4 2.5 4-2.5V9l-4-2.5z" />
+                </svg>
+            )
+        },
+        {
+            id: 'profile',
+            label: 'Profile',
+            href: '/profile',
+            icon: (active: boolean) => (
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? "#0052FF" : "#666"} strokeWidth="1.8">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                    <circle cx="12" cy="7" r="4"/>
                 </svg>
             )
         },

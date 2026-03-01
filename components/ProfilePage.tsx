@@ -271,6 +271,15 @@ export default function ProfilePage() {
   const [stakeInfo, setStakeInfo] = useState<StakeInfo | null>(null)
   const [rewards, setRewards] = useState<RewardsData | null>(null)
 
+  // Mobile detection
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth <= 768)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
+
   // On-chain balances
   const { data: ethBalance } = useBalance({ address })
   const { data: beansBalanceRaw } = useReadContract({
@@ -542,7 +551,7 @@ export default function ProfilePage() {
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', fontFamily: "'Inter', -apple-system, sans-serif" }}>
 
       {saveError && (
-        <div style={{ margin: '16px 40px 0', background: '#2a1515', border: '1px solid #4a2020', borderRadius: 10, padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#ff6b6b', fontSize: 13 }}>
+        <div style={{ margin: isMobile ? '16px 16px 0' : '16px 40px 0', background: '#2a1515', border: '1px solid #4a2020', borderRadius: 10, padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#ff6b6b', fontSize: 13 }}>
           <span>{saveError}</span>
           <button onClick={() => setSaveError(null)} style={{ background: 'transparent', border: 'none', color: '#ff6b6b', cursor: 'pointer', fontSize: 14, padding: '0 4px' }}>✕</button>
         </div>
@@ -551,7 +560,7 @@ export default function ProfilePage() {
       {socialToast && (() => {
         const isErr = socialToast.includes('failed')
         return (
-          <div style={{ margin: '16px 40px 0', background: isErr ? '#2a1515' : '#0d1f0d', border: `1px solid ${isErr ? '#4a2020' : '#1a3a1a'}`, borderRadius: 10, padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: isErr ? '#ff6b6b' : '#4ade80', fontSize: 13 }}>
+          <div style={{ margin: isMobile ? '16px 16px 0' : '16px 40px 0', background: isErr ? '#2a1515' : '#0d1f0d', border: `1px solid ${isErr ? '#4a2020' : '#1a3a1a'}`, borderRadius: 10, padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: isErr ? '#ff6b6b' : '#4ade80', fontSize: 13 }}>
             <span>{socialToast}</span>
             <button onClick={() => setSocialToast(null)} style={{ background: 'transparent', border: 'none', color: isErr ? '#ff6b6b' : '#4ade80', cursor: 'pointer', fontSize: 14, padding: '0 4px' }}>✕</button>
           </div>
@@ -573,10 +582,10 @@ export default function ProfilePage() {
         </div>
       ) : (
         /* ── Connected ─────────────────────────────────────────── */
-        <div style={{ flex: 1, display: 'flex', gap: 32, padding: '28px 40px 32px', width: '100%', alignItems: 'flex-start' }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: isMobile ? 16 : 32, padding: isMobile ? '16px 16px 100px' : '28px 40px 32px', width: '100%', alignItems: 'flex-start' }}>
 
           {/* ── Left: Profile + Portfolio ── */}
-          <div style={{ width: 480, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ width: isMobile ? '100%' : 480, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
 
             {/* Profile Card */}
             <div style={{ ...s.card, padding: 0 }}>
@@ -742,39 +751,39 @@ export default function ProfilePage() {
           </div>
 
           {/* ── Right: Round History ── */}
-          <div style={{ ...s.card, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', alignSelf: 'flex-start', padding: 0, maxHeight: 'calc(100vh - 132px)' }}>
+          <div style={{ ...s.card, flex: 1, width: isMobile ? '100%' : undefined, display: 'flex', flexDirection: 'column', overflow: 'hidden', alignSelf: 'flex-start', padding: 0, maxHeight: isMobile ? 'none' : 'calc(100vh - 132px)' }}>
 
             {/* Header */}
-            <div style={{ padding: '28px 32px 0', flexShrink: 0 }}>
+            <div style={{ padding: isMobile ? '20px 16px 0' : '28px 32px 0', flexShrink: 0 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
                 <div>
-                  <h2 style={{ fontSize: 22, fontWeight: 700, color: '#fff', margin: '0 0 4px' }}>Round History</h2>
+                  <h2 style={{ fontSize: isMobile ? 18 : 22, fontWeight: 700, color: '#fff', margin: '0 0 4px' }}>Round History</h2>
                   <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.25)', margin: 0 }}>{rounds.length} rounds played</p>
                 </div>
-                <div style={{ display: 'flex', gap: 28 }}>
+                <div style={{ display: 'flex', gap: isMobile ? 16 : 28 }}>
                   <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', marginBottom: 4 }}>Win Rate</div>
-                    <div style={{ fontSize: 22, fontWeight: 700, color: '#fff' }}>{winRate}%</div>
+                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', marginBottom: 4 }}>Win Rate</div>
+                    <div style={{ fontSize: isMobile ? 16 : 22, fontWeight: 700, color: '#fff' }}>{winRate}%</div>
                   </div>
                   <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', marginBottom: 4 }}>Total BEAN</div>
-                    <div style={{ fontSize: 22, fontWeight: 700, color: '#fff' }}>{totalBean.toFixed(2)}</div>
+                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', marginBottom: 4 }}>Total BEAN</div>
+                    <div style={{ fontSize: isMobile ? 16 : 22, fontWeight: 700, color: '#fff' }}>{totalBean.toFixed(2)}</div>
                   </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', marginBottom: 4 }}>Total P&amp;L</div>
+                  {!isMobile && <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', marginBottom: 4 }}>Total P&amp;L</div>
                     <div style={{ fontSize: 22, fontWeight: 700, color: '#fff' }}>{totalPnl >= 0 ? '+' : ''}{totalPnl.toFixed(4)} ETH</div>
-                  </div>
+                  </div>}
                 </div>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 130px 110px 110px 130px', padding: '10px 12px', borderTop: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
-                {['Round', 'Deployed', 'Won', 'BEAN', 'P&L'].map(h => (
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 80px 100px' : '1fr 130px 110px 110px 130px', padding: '10px 12px', borderTop: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+                {(isMobile ? ['Round', 'BEAN', 'P&L'] : ['Round', 'Deployed', 'Won', 'BEAN', 'P&L']).map(h => (
                   <span key={h} style={{ fontSize: 12, fontWeight: 500, color: 'rgba(255,255,255,0.35)', textAlign: h === 'Round' ? 'left' : 'right' }}>{h}</span>
                 ))}
               </div>
             </div>
 
             {/* Rows */}
-            <div style={{ flex: 1, overflow: 'auto', padding: '0 32px' }}>
+            <div style={{ flex: 1, overflow: 'auto', padding: isMobile ? '0 8px' : '0 32px' }}>
               {rounds.length === 0 && (
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, padding: '60px 0', textAlign: 'center' }}>
                   <BeanLogo size={36} />
@@ -786,7 +795,7 @@ export default function ProfilePage() {
                 <div key={round.id} onClick={() => setExpandedRound(round)}
                   onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.background = round.isBeanpot ? 'rgba(255,200,0,0.06)' : 'rgba(255,255,255,0.03)' }}
                   onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.background = round.isBeanpot ? 'rgba(255,180,0,0.03)' : 'transparent' }}
-                  style={{ display: 'grid', gridTemplateColumns: '1fr 130px 110px 110px 130px', alignItems: 'center', padding: '14px 12px', cursor: 'pointer', transition: 'background 0.15s', background: round.isBeanpot ? 'rgba(255,180,0,0.03)' : 'transparent', borderBottom: round.isBeanpot ? '1px solid rgba(255,180,0,0.15)' : '1px solid rgba(255,255,255,0.05)', borderLeft: round.isBeanpot ? '2px solid rgba(255,200,0,0.6)' : '2px solid transparent', paddingLeft: 10 }}>
+                  style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 80px 100px' : '1fr 130px 110px 110px 130px', alignItems: 'center', padding: '14px 12px', cursor: 'pointer', transition: 'background 0.15s', background: round.isBeanpot ? 'rgba(255,180,0,0.03)' : 'transparent', borderBottom: round.isBeanpot ? '1px solid rgba(255,180,0,0.15)' : '1px solid rgba(255,255,255,0.05)', borderLeft: round.isBeanpot ? '2px solid rgba(255,200,0,0.6)' : '2px solid transparent', paddingLeft: 10 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <div>
                       <div style={{ fontSize: 14, fontWeight: 500, color: round.isBeanpot ? '#FFD700' : '#fff', display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -796,8 +805,8 @@ export default function ProfilePage() {
                       <div style={{ fontSize: 11, color: round.isBeanpot ? 'rgba(255,215,0,0.45)' : 'rgba(255,255,255,0.25)', marginTop: 2 }}>{round.timestamp}</div>
                     </div>
                   </div>
-                  <div style={{ textAlign: 'right', fontSize: 14, color: '#fff' }}>Ξ {round.deployed.toFixed(4)}</div>
-                  <div style={{ textAlign: 'right', fontSize: 14, color: round.won > 0 ? '#fff' : 'rgba(255,255,255,0.2)' }}>{round.won > 0 ? `Ξ ${round.won.toFixed(4)}` : '–'}</div>
+                  {!isMobile && <div style={{ textAlign: 'right', fontSize: 14, color: '#fff' }}>Ξ {round.deployed.toFixed(4)}</div>}
+                  {!isMobile && <div style={{ textAlign: 'right', fontSize: 14, color: round.won > 0 ? '#fff' : 'rgba(255,255,255,0.2)' }}>{round.won > 0 ? `Ξ ${round.won.toFixed(4)}` : '–'}</div>}
                   <div style={{ textAlign: 'right', fontSize: 14, color: round.beansEarned > 0 ? '#fff' : 'rgba(255,255,255,0.2)' }}>{round.beansEarned > 0 ? round.beansEarned.toFixed(3) : '–'}</div>
                   <div style={{ textAlign: 'right' }}>
                     <div style={{ fontSize: 14, fontWeight: 500, color: '#fff' }}>{round.netPnl >= 0 ? '+' : ''}{round.netPnl.toFixed(4)}</div>
