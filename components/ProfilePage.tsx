@@ -9,6 +9,35 @@ import { CONTRACTS } from '@/lib/contracts'
 
 // ── Types ─────────────────────────────────────────────────
 
+interface DeployEntry {
+  roundId: number
+  totalAmount: string
+  blockMask: string
+  txHash: string
+  isAutoMine: boolean
+  timestamp: string
+  roundResult: {
+    settled: boolean
+    wonWinningBlock: boolean
+    beanpotHit: boolean
+    winningBlock: number
+    ethWon: string
+    ethWonFormatted: string
+    beanWon: string
+    beanWonFormatted: string
+    pnl: string
+  }
+}
+
+interface HistoryTotals {
+  totalETHWonFormatted: string
+  totalBEANWonFormatted: string
+  totalETHDeployedFormatted: string
+  totalPNL: string
+  roundsPlayed: number
+  roundsWon: number
+}
+
 interface Round {
   id: number; block: number; yourBlocks: number[]; deployed: number; won: number;
   netPnl: number; pctChange: number; beansEarned: number; beanpotAmount: number | null;
@@ -41,6 +70,44 @@ interface StakeInfo {
 
 
 const ROWS_PER_PAGE = 8
+
+function getRelativeTime(timestamp: string): string {
+  const seconds = Math.floor((Date.now() - new Date(timestamp).getTime()) / 1000)
+  if (seconds < 0) return 'just now'
+  if (seconds < 60) return `${seconds}s ago`
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`
+  return `${Math.floor(seconds / 86400)}d ago`
+}
+
+function decodeBlockMask(mask: string): number[] {
+  const n = BigInt(mask)
+  const blocks: number[] = []
+  for (let i = 0; i < 25; i++) {
+    if ((n >> BigInt(i)) & BigInt(1)) blocks.push(i)
+  }
+  return blocks
+}
+
+function entryToRound(entry: DeployEntry): Round {
+  const deployed = parseFloat(entry.totalAmount) / 1e18
+  const pnl = parseFloat(entry.roundResult.pnl) || 0
+  const pctChange = deployed > 0 ? Math.round((pnl / deployed) * 10000) / 100 : 0
+  return {
+    id: entry.roundId,
+    block: entry.roundResult.winningBlock,
+    yourBlocks: decodeBlockMask(entry.blockMask),
+    deployed,
+    won: parseFloat(entry.roundResult.ethWonFormatted) || 0,
+    netPnl: pnl,
+    pctChange,
+    beansEarned: parseFloat(entry.roundResult.beanWonFormatted) || 0,
+    beanpotAmount: entry.roundResult.beanpotHit ? parseFloat(entry.roundResult.beanWonFormatted) || 0 : null,
+    isWin: entry.roundResult.wonWinningBlock,
+    isBeanpot: entry.roundResult.beanpotHit,
+    timestamp: getRelativeTime(entry.timestamp),
+  }
+}
 
 // ── Icons ─────────────────────────────────────────────────
 
@@ -263,7 +330,8 @@ export default function ProfilePage() {
   const [socialToast, setSocialToast] = useState<string | null>(null)
 
   // Round history state
-  const [rounds, setRounds] = useState<Round[]>([])
+  const [deployHistory, setDeployHistory] = useState<DeployEntry[]>([])
+  const [historyTotals, setHistoryTotals] = useState<HistoryTotals | null>(null)
   const [expandedRound, setExpandedRound] = useState<Round | null>(null)
   const [page, setPage] = useState(0)
 
@@ -327,13 +395,15 @@ export default function ProfilePage() {
 
   }, [address])
 
-  // Fetch round history separately so it retries on every address change
+  // Fetch deploy history with round results
   useEffect(() => {
     if (!address) return
     const addr = address.toLowerCase()
-    fetch(`/api/user/${addr}/rounds`)
-      .then(r => r.json())
-      .then((data: Round[]) => { if (Array.isArray(data)) setRounds(data) })
+    apiFetch<{ history: DeployEntry[]; totals: HistoryTotals }>(`/api/user/${addr}/history?type=deploy&limit=500`)
+      .then(data => {
+        if (Array.isArray(data.history)) setDeployHistory(data.history)
+        if (data.totals) setHistoryTotals(data.totals)
+      })
       .catch(() => {})
   }, [address])
 
@@ -385,7 +455,7 @@ export default function ProfilePage() {
       setBio(''); setBioInput('')
       setPfpUrl(null); setBannerUrl(null)
       setStakeInfo(null); setRewards(null)
-      setRounds([])
+      setDeployHistory([]); setHistoryTotals(null)
       setDiscordUsername(null); setTwitterHandle(null)
     }
   }, [address])
@@ -526,11 +596,12 @@ export default function ProfilePage() {
   const portfolio = { wallet: beansBalance, staked: stakedBalance, roasted: roastedBalance, unroasted: unroastedBalance }
   const total = portfolio.wallet + portfolio.staked + portfolio.roasted + portfolio.unroasted
 
-  // Round history stats
-  const totalPnl = rounds.reduce((sum, r) => sum + r.netPnl, 0)
-  const totalBean = rounds.reduce((sum, r) => sum + r.beansEarned, 0)
-  const winCount = rounds.filter(r => r.isWin).length
-  const winRate = rounds.length > 0 ? Math.round((winCount / rounds.length) * 100) : 0
+  // Round history stats (from backend totals)
+  const rounds = deployHistory.map(entryToRound)
+  const totalPnl = historyTotals ? parseFloat(historyTotals.totalPNL) || 0 : 0
+  const totalBean = historyTotals ? parseFloat(historyTotals.totalBEANWonFormatted) || 0 : 0
+  const winRate = historyTotals && historyTotals.roundsPlayed > 0
+    ? Math.round((historyTotals.roundsWon / historyTotals.roundsPlayed) * 100) : 0
   const totalPages = Math.ceil(rounds.length / ROWS_PER_PAGE)
   const pageRounds = rounds.slice(page * ROWS_PER_PAGE, (page + 1) * ROWS_PER_PAGE)
 
@@ -758,7 +829,7 @@ export default function ProfilePage() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
                 <div>
                   <h2 style={{ fontSize: isMobile ? 18 : 22, fontWeight: 700, color: '#fff', margin: '0 0 4px' }}>Round History</h2>
-                  <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.25)', margin: 0 }}>{rounds.length} rounds played</p>
+                  <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.25)', margin: 0 }}>{historyTotals?.roundsPlayed ?? rounds.length} rounds played</p>
                 </div>
                 <div style={{ display: 'flex', gap: isMobile ? 16 : 28 }}>
                   <div style={{ textAlign: 'right' }}>
