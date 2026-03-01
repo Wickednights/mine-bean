@@ -95,8 +95,8 @@ function entryToRound(entry: DeployEntry): Round {
   const pctChange = deployed > 0 ? Math.round((pnl / deployed) * 10000) / 100 : 0
   return {
     id: entry.roundId,
-    block: entry.roundResult.winningBlock,
-    yourBlocks: decodeBlockMask(entry.blockMask),
+    block: entry.roundResult.winningBlock + 1,
+    yourBlocks: decodeBlockMask(entry.blockMask).map(b => b + 1),
     deployed,
     won: parseFloat(entry.roundResult.ethWonFormatted) || 0,
     netPnl: pnl,
