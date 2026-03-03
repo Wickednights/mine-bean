@@ -7,6 +7,16 @@ export default function HelpButton() {
   const [isMobile, setIsMobile] = useState(false)
   const [muted, setMuted] = useState(false)
   const [showHowTo, setShowHowTo] = useState(false)
+  const [showAgentModal, setShowAgentModal] = useState(false)
+  const [copied, setCopied] = useState(false)
+
+  const skillUrl = 'https://www.minebean.com/skill.md'
+
+  function handleCopy() {
+    navigator.clipboard.writeText(skillUrl)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
 
   useEffect(() => {
     const stored = localStorage.getItem('bean_muted')
@@ -28,7 +38,101 @@ export default function HelpButton() {
   }, [])
 
   return (
-    <div style={{ position: 'fixed', bottom: isMobile ? 75 : 20, left: isMobile ? 12 : 20, zIndex: 1000 }}>
+    <div style={{ position: 'fixed', bottom: isMobile ? 75 : 20, left: isMobile ? 12 : 20, zIndex: 1000, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+      {/* Agent modal */}
+      {showAgentModal && (
+        <div onClick={() => setShowAgentModal(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(12px)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: 'rgba(18,22,35,0.98)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 20, padding: '28px', width: '100%', maxWidth: 460, boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
+            {/* Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(0,82,255,0.15)', border: '1px solid rgba(0,82,255,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(0,82,255,0.9)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="4" y="8" width="16" height="12" rx="2"/>
+                    <circle cx="9" cy="13" r="1.5" fill="rgba(0,82,255,0.9)" stroke="none"/>
+                    <circle cx="15" cy="13" r="1.5" fill="rgba(0,82,255,0.9)" stroke="none"/>
+                    <path d="M9 17h6"/>
+                    <path d="M12 8V5"/>
+                    <circle cx="12" cy="4" r="1.5" fill="rgba(0,82,255,0.9)" stroke="none"/>
+                    <path d="M4 12H2M22 12h-2"/>
+                  </svg>
+                </div>
+                <div>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: '#fff' }}>Deploy a Mining Agent</div>
+                  <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', marginTop: 1 }}>Automate your BEAN mining with an AI agent</div>
+                </div>
+              </div>
+              <button onClick={() => setShowAgentModal(false)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', display: 'flex', padding: 4 }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+              </button>
+            </div>
+
+            {/* Skill URL */}
+            <div style={{ marginTop: 20, marginBottom: 16 }}>
+              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', marginBottom: 8 }}>Give your agent this URL — it contains everything it needs to start mining:</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ flex: 1, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, padding: '10px 14px', fontFamily: 'monospace', fontSize: 13, color: 'rgba(255,255,255,0.7)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {skillUrl}
+                </div>
+                <button onClick={handleCopy} style={{ flexShrink: 0, width: 40, height: 40, borderRadius: 10, background: copied ? 'rgba(0,200,83,0.15)' : 'rgba(0,82,255,0.15)', border: copied ? '1px solid rgba(0,200,83,0.3)' : '1px solid rgba(0,82,255,0.3)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }}>
+                  {copied
+                    ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(0,200,83,0.9)" strokeWidth="2"><path d="M20 6L9 17l-5-5"/></svg>
+                    : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(0,82,255,0.9)" strokeWidth="1.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                  }
+                </button>
+              </div>
+            </div>
+
+            {/* What agents can do */}
+            <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: '16px 18px', marginBottom: 16 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: '#fff', marginBottom: 12 }}>Once deployed, your agent can:</div>
+              {[
+                'Pick blocks and deploy ETH every round without you lifting a finger',
+                'Run any strategy — conservative, degen, spread across blocks, and more',
+                'React to round outcomes and refine its approach over time',
+                'Accumulate ETH winnings and BEAN rewards autonomously',
+              ].map((item, i) => (
+                <div key={i} style={{ display: 'flex', gap: 8, marginBottom: i < 3 ? 8 : 0 }}>
+                  <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: 13, flexShrink: 0 }}>—</span>
+                  <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', lineHeight: 1.5 }}>{item}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* View skill file */}
+            <a href={skillUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', padding: '13px', background: 'rgba(0,82,255,0.18)', border: '1px solid rgba(0,82,255,0.35)', borderRadius: 12, color: '#fff', fontSize: 14, fontWeight: 600, textDecoration: 'none', transition: 'background 0.15s' }}
+              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(0,82,255,0.28)')}
+              onMouseLeave={e => (e.currentTarget.style.background = 'rgba(0,82,255,0.18)')}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/></svg>
+              Open Agent Docs
+            </a>
+          </div>
+        </div>
+      )}
+
+      {/* Bot button */}
+      <button onClick={() => setShowAgentModal(true)} style={{
+        width: isMobile ? 28 : 36, height: isMobile ? 28 : 36, borderRadius: '50%',
+        background: 'rgba(0,82,255,0.1)',
+        border: '1px solid rgba(0,82,255,0.25)',
+        color: 'rgba(0,82,255,0.8)', cursor: 'pointer',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        transition: 'all 0.15s',
+        backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+      }}
+        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,82,255,0.2)'; e.currentTarget.style.borderColor = 'rgba(0,82,255,0.5)' }}
+        onMouseLeave={e => { e.currentTarget.style.background = 'rgba(0,82,255,0.1)'; e.currentTarget.style.borderColor = 'rgba(0,82,255,0.25)' }}>
+        <svg width={isMobile ? 13 : 16} height={isMobile ? 13 : 16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="4" y="8" width="16" height="12" rx="2"/>
+          <circle cx="9" cy="13" r="1.5" fill="currentColor" stroke="none"/>
+          <circle cx="15" cy="13" r="1.5" fill="currentColor" stroke="none"/>
+          <path d="M9 17h6"/>
+          <path d="M12 8V5"/>
+          <circle cx="12" cy="4" r="1.5" fill="currentColor" stroke="none"/>
+          <path d="M4 12H2M22 12h-2"/>
+        </svg>
+      </button>
+
       {open && (
         <div style={{
           position: 'absolute', bottom: 52, left: 0,
