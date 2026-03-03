@@ -262,7 +262,14 @@ export default function MobileControls({
         if (!canActivate) return
         const strategyId = blockSelection === "all" ? 1 : blockSelection === "select" ? 2 : 0
         const blockMask = blockSelection === "select" ? selectedBlockIds.reduce((m, id) => m | (1 << id), 0) : 0
-        const depositAmount = parseEther(autoTotalDeposit.toFixed(18))
+        // Use BigInt arithmetic to mirror the contract's integer math exactly,
+        // avoiding floating-point rounding that can cause off-by-one-wei reverts.
+        const perBlockWei = parseEther(perBlockAmount.toString())
+        const flatFeeWei = BigInt(Math.round(EXECUTOR_FLAT_FEE * 1e18))
+        const pctFeeWei = perBlockWei * BigInt(autoNumBlocks) * BigInt(EXECUTOR_FEE_BPS) / BigInt(10000)
+        const depositAmount = pctFeeWei >= flatFeeWei
+            ? perBlockWei * BigInt(autoTotalBlocks) * BigInt(10000 + EXECUTOR_FEE_BPS) / BigInt(10000)
+            : perBlockWei * BigInt(autoTotalBlocks) + flatFeeWei * BigInt(autoRounds)
         onAutoActivate?.(strategyId, autoRounds, autoNumBlocks, depositAmount, blockMask)
     }
 

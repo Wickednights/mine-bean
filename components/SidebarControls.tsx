@@ -5,7 +5,7 @@ import { useConnectModal } from '@rainbow-me/rainbowkit'
 import BeanLogo from './BeanLogo'
 import { apiFetch } from '@/lib/api'
 import { useSSE } from '@/lib/SSEContext'
-import { MIN_DEPLOY_PER_BLOCK, EXECUTOR_FEE_BPS } from '@/lib/contracts'
+import { MIN_DEPLOY_PER_BLOCK, EXECUTOR_FEE_BPS, EXECUTOR_FLAT_FEE } from '@/lib/contracts'
 import { useRoundTimer } from '@/lib/RoundTimerContext'
 import { parseEther } from 'viem'
 
@@ -316,10 +316,13 @@ const handleSelectClick = () => {
     // Auto mode calculations
     const autoNumBlocks = blockSelection === "all" ? 25 : blockSelection === "select" ? selectedBlockCount : autoBlocks
     const autoTotalBlocks = autoNumBlocks * autoRounds
-    // Invert the fee formula to get required deposit from desired per-block
-    // Contract formula: effectivePerBlock = (deposit * 10000) / (totalBlocks * (10000 + feeBps))
-    // Inverting: deposit = effectivePerBlock * totalBlocks * (10000 + feeBps) / 10000
-    const autoTotalDeposit = (perBlockAmount * autoTotalBlocks * (10000 + EXECUTOR_FEE_BPS)) / 10000
+    // Hybrid fee: contract charges max(percentageFee, flatFee) per round.
+    // If pctFee >= flatFee: deposit = perBlock * totalBlocks * (10000 + feeBps) / 10000
+    // If pctFee < flatFee:  deposit = perBlock * totalBlocks + flatFee * rounds
+    const pctFeePerRound = perBlockAmount * autoNumBlocks * EXECUTOR_FEE_BPS / 10000
+    const autoTotalDeposit = pctFeePerRound >= EXECUTOR_FLAT_FEE
+      ? (perBlockAmount * autoTotalBlocks * (10000 + EXECUTOR_FEE_BPS)) / 10000
+      : perBlockAmount * autoTotalBlocks + EXECUTOR_FLAT_FEE * autoRounds
     const autoPerRound = autoRounds > 0 ? autoTotalDeposit / autoRounds : 0
     const exceedsBalanceAuto = autoTotalDeposit > userBalance
     const canActivate = perBlockAmount >= MIN_DEPLOY_PER_BLOCK && autoRounds >= 1 && !exceedsBalanceAuto
@@ -328,7 +331,14 @@ const handleSelectClick = () => {
         if (!canActivate) return
         const strategyId = blockSelection === "all" ? 1 : blockSelection === "select" ? 2 : 0
         const blockMask = blockSelection === "select" ? selectedBlockIds.reduce((m, id) => m | (1 << id), 0) : 0
-        const depositAmount = parseEther(autoTotalDeposit.toFixed(18))
+        // Use BigInt arithmetic to mirror the contract's integer math exactly,
+        // avoiding floating-point rounding that can cause off-by-one-wei reverts.
+        const perBlockWei = parseEther(perBlockAmount.toString())
+        const flatFeeWei = BigInt(Math.round(EXECUTOR_FLAT_FEE * 1e18))
+        const pctFeeWei = perBlockWei * BigInt(autoNumBlocks) * BigInt(EXECUTOR_FEE_BPS) / BigInt(10000)
+        const depositAmount = pctFeeWei >= flatFeeWei
+            ? perBlockWei * BigInt(autoTotalBlocks) * BigInt(10000 + EXECUTOR_FEE_BPS) / BigInt(10000)
+            : perBlockWei * BigInt(autoTotalBlocks) + flatFeeWei * BigInt(autoRounds)
         onAutoActivate?.(strategyId, autoRounds, autoNumBlocks, depositAmount, blockMask)
     }
 
