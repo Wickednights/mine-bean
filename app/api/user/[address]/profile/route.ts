@@ -23,7 +23,7 @@ export async function PUT(req: Request, { params }: { params: { address: string 
   const address = (await params).address.toLowerCase()
 
   const body = await req.json()
-  const { username, bio, pfpUrl, bannerUrl, signature, message, timestamp } = body
+  const { username, bio, pfpUrl, bannerUrl, signature, timestamp } = body
 
   // Reject stale requests (>5 min old)
   const now = Math.floor(Date.now() / 1000)
@@ -31,16 +31,44 @@ export async function PUT(req: Request, { params }: { params: { address: string 
     return NextResponse.json({ error: 'Expired timestamp' }, { status: 401 })
   }
 
-  // Verify the wallet signature
+  // Verify the wallet signature — reconstruct expected message server-side
   try {
+    const expectedMessage = `BEAN Protocol Profile Update\nAddress: ${address}\nTimestamp: ${timestamp}`
     const valid = await verifyMessage({
       address: address as `0x${string}`,
-      message,
+      message: expectedMessage,
       signature,
     })
     if (!valid) return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
   } catch {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
+  }
+
+  // Validate image fields
+  const validateImage = (val: unknown, field: string) => {
+    if (val === undefined || val === null) return null
+    if (typeof val !== 'string') return `${field}: must be a string`
+    if (val.length > 200_000) return `${field}: image too large (max 200KB)`
+    if (!val.startsWith('data:image/jpeg') && !val.startsWith('data:image/png')) {
+      return `${field}: only JPEG and PNG allowed`
+    }
+    return null
+  }
+
+  const pfpError = validateImage(pfpUrl, 'pfpUrl')
+  if (pfpError) return NextResponse.json({ error: pfpError }, { status: 400 })
+
+  const bannerError = validateImage(bannerUrl, 'bannerUrl')
+  if (bannerError) return NextResponse.json({ error: bannerError }, { status: 400 })
+
+  // Validate text fields
+  if (username !== undefined && username !== null) {
+    if (typeof username !== 'string') return NextResponse.json({ error: 'username: must be a string' }, { status: 400 })
+    if (username.length > 20) return NextResponse.json({ error: 'username: max 20 characters' }, { status: 400 })
+  }
+  if (bio !== undefined && bio !== null) {
+    if (typeof bio !== 'string') return NextResponse.json({ error: 'bio: must be a string' }, { status: 400 })
+    if (bio.length > 160) return NextResponse.json({ error: 'bio: max 160 characters' }, { status: 400 })
   }
 
   // Only upsert fields that were provided
@@ -58,5 +86,22 @@ export async function PUT(req: Request, { params }: { params: { address: string 
     .upsert(row, { onConflict: 'wallet_address' })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // Notify backend to emit profileUpdated SSE — fire-and-forget
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'https://api.minebean.com'
+  fetch(`${apiUrl}/internal/notify/profile-updated`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-internal-secret': process.env.INTERNAL_SECRET ?? '',
+    },
+    body: JSON.stringify({
+      address,
+      username: username ?? null,
+      bio: bio ?? null,
+      pfpUrl: pfpUrl ?? null,
+    }),
+  }).catch(() => {})
+
   return NextResponse.json({ ok: true })
 }
