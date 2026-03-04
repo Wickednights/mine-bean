@@ -58,6 +58,7 @@ lib/
   RoundTimerContext.tsx — Centralized round countdown timer with RPC block.timestamp calibration
   types.ts          — Typed window event interfaces and global WindowEventMap declarations
   useProfileResolver.ts — Hook for batch-resolving wallet addresses to profile data (username, pfp)
+  supabase.ts       — Supabase client (anon key, cache: 'no-store' to bypass Next.js fetch cache). Used only by Next.js API routes for profile storage.
   providers.tsx     — Web3Provider (Wagmi, RainbowKit, React Query, SSEProvider, UserDataProvider, RoundTimerProvider)
   wagmi.ts          — Chain config (Base mainnet + testnet)
   abis/             — Contract ABI JSON files (GridMining, AutoMiner, Bean, Treasury, ERC20, Staking)
@@ -274,7 +275,24 @@ The staking page (`/stake`) allows users to deposit BEAN tokens to earn yield fr
 ### `lib/api.ts` Helpers
 
 - **`apiFetch<T>(path)`** — Typed GET request to backend. Base URL from `NEXT_PUBLIC_API_URL` env var (default `https://api.minebean.com`).
-- **`apiMutate<T>(path, method, body)`** — Typed POST/PUT/DELETE request to backend. Sends JSON body. Used by ProfilePage for profile updates.
+- **`apiMutate<T>(path, method, body)`** — Typed POST/PUT/DELETE request to backend. Sends JSON body.
+
+### Profile Storage (`lib/supabase.ts` + `app/api/user/[address]/profile/route.ts`)
+
+Profile data (`username`, `bio`, `pfp_url`, `banner_url`) is stored in **Supabase** (separate from MongoDB game data). All reads and writes go through a Next.js API route — the Express backend is not involved in profile operations.
+
+**`lib/supabase.ts`** — exports a single `supabase` client (anon key) with `cache: 'no-store'` passed via the `global.fetch` option to bypass Next.js data cache on all Supabase calls.
+
+**`GET /api/user/[address]/profile`** — reads `username`, `bio`, `pfp_url`, `banner_url` from Supabase `profiles` table. Called by ProfilePage on mount (relative URL, hits the Next.js route) and by `useUserData` on mount (via `apiFetch` to Express backend, which proxies to the same data).
+
+**`PUT /api/user/[address]/profile`** — writes profile updates. Security:
+- Timestamp validation (rejects requests older than 5 minutes)
+- Wallet signature verification — server reconstructs the expected message (`BEAN Protocol Profile Update\nAddress: {addr}\nTimestamp: {ts}`) rather than trusting the client
+- Image validation: data URL only, JPEG/PNG only, max 200KB
+- Text validation: username max 20 chars, bio max 160 chars
+- Only upserts fields that were provided (partial update)
+
+After a successful PUT, **ProfilePage calls `patchProfile(fields)`** from `useUserData()` to update WalletButton immediately without a re-fetch.
 
 ### Centralized SSE Architecture (`lib/SSEContext.tsx`)
 
@@ -317,7 +335,7 @@ useEffect(() => {
 
 **Connection lifecycle:**
 - **Global connection** (`/api/events/rounds`) — Opens on app mount, never closes. Listens for: `gameStarted`, `deployed`, `roundSettled`, `roundTransition`, `yieldDistributed`
-- **User connection** (`/api/user/{address}/events`) — Opens when wallet connects, closes on disconnect. Listens for: `autoMineExecuted`, `configDeactivated`, `stopped`, `claimedETH`, `claimedBEAN`, `checkpointed`, `stakeDeposited`, `stakeWithdrawn`, `yieldClaimed`, `yieldCompounded`, `profileUpdated`
+- **User connection** (`/api/user/{address}/events`) — Opens when wallet connects, closes on disconnect. Listens for: `autoMineExecuted`, `configDeactivated`, `stopped`, `claimedETH`, `claimedBEAN`, `checkpointed`, `stakeDeposited`, `stakeWithdrawn`, `yieldClaimed`, `yieldCompounded`
 
 **Components using `useSSE()`:**
 | Component | Global Events | User Events |
@@ -326,7 +344,7 @@ useEffect(() => {
 | BeanpotCelebration | `roundTransition` | — |
 | SidebarControls | — | `autoMineExecuted`, `configDeactivated`, `stopped` |
 | MobileControls | — | `autoMineExecuted`, `configDeactivated`, `stopped` |
-| UserDataProvider | — | `stakeDeposited`, `stakeWithdrawn`, `yieldCompounded`, `yieldClaimed`, `claimedBEAN`, `claimedETH`, `profileUpdated` |
+| UserDataProvider | — | `stakeDeposited`, `stakeWithdrawn`, `yieldCompounded`, `yieldClaimed`, `claimedBEAN`, `claimedETH` |
 | StakePage | `yieldDistributed` | `stakeDeposited`, `stakeWithdrawn`, `yieldCompounded` |
 
 ### Shared User Data (`lib/UserDataContext.tsx`)
@@ -340,13 +358,14 @@ Centralized provider for user-specific data that multiple components need. Elimi
 |------|-------------|-----------|
 | `rewards` | `GET /api/user/:address/rewards` | ClaimRewards |
 | `stakeInfo` | `GET /api/staking/:address` | StakePage |
-| `profile` | `GET /api/user/:address/profile` | (available via context) |
+| `profile` | `GET /api/user/:address/profile` (Express backend) | WalletButton |
 
 **Lifecycle:**
 1. On mount / address change: loads from sessionStorage (instant), then fetches fresh data from API
 2. On wallet disconnect: clears all state
 3. SSE events update state in-place (e.g. `claimedBEAN` zeros out pending BEAN rewards)
 4. `settlementComplete` window event triggers rewards re-fetch
+5. `patchProfile(patch)` — directly merges a `Partial<ProfileData>` into profile state and sessionStorage cache; called by ProfilePage after a successful save so WalletButton updates immediately without a re-fetch
 
 **SessionStorage caching:** Address-scoped keys (`beans_rewards_{addr}`, `beans_stake_{addr}`, `beans_profile_{addr}`). Survives page refresh but not tab close. API responses are written to cache on success; on 429/network error, cached values are preserved.
 
