@@ -13,7 +13,7 @@ interface SSEContextValue {
 const SSEContext = createContext<SSEContextValue | null>(null)
 
 const GLOBAL_EVENTS = ['gameStarted', 'deployed', 'roundSettled', 'roundTransition', 'yieldDistributed']
-const USER_EVENTS = ['autoMineExecuted', 'configDeactivated', 'stopped', 'claimedETH', 'claimedBEAN', 'checkpointed', 'stakeDeposited', 'stakeWithdrawn', 'yieldClaimed', 'yieldCompounded', 'profileUpdated']
+const USER_EVENTS = ['autoMineExecuted', 'configDeactivated', 'stopped', 'claimedETH', 'claimedBEAN', 'checkpointed', 'stakeDeposited', 'stakeWithdrawn', 'yieldClaimed', 'yieldCompounded']
 
 export function SSEProvider({
     children,

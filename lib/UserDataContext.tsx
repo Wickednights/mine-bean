@@ -72,6 +72,7 @@ interface UserDataContextValue {
     refetchRewards: () => void
     refetchStakeInfo: () => void
     refetchProfile: () => void
+    patchProfile: (patch: Partial<ProfileData>) => void
 }
 
 const UserDataContext = createContext<UserDataContextValue | null>(null)
@@ -160,6 +161,17 @@ export function UserDataProvider({
             // 429 or network error — state keeps current value (from sessionStorage or previous fetch)
         }
     }, [userAddress, setProfileAndCache])
+
+    const patchProfile = useCallback((patch: Partial<ProfileData>) => {
+        setProfile(prev => {
+            const updated: ProfileData = {
+                ...(prev ?? { username: null, bio: null, pfpUrl: null, discord: null }),
+                ...patch,
+            }
+            if (addressRef.current) writeCache(PROFILE_KEY(addressRef.current), updated)
+            return updated
+        })
+    }, [])
 
     // ── Fetch on mount / address change ────────────────────────────
 
@@ -276,22 +288,7 @@ export function UserDataProvider({
             })
         })
 
-        // profileUpdated: user updated their profile
-        const unsub7 = subscribeUser('profileUpdated', (data: unknown) => {
-            const d = data as { username?: string | null; bio?: string | null; pfpUrl?: string | null }
-            setProfile(prev => {
-                const updated: ProfileData = {
-                    username: d.username !== undefined ? d.username : (prev?.username ?? null),
-                    bio: d.bio !== undefined ? d.bio : (prev?.bio ?? null),
-                    pfpUrl: d.pfpUrl !== undefined ? d.pfpUrl : (prev?.pfpUrl ?? null),
-                    discord: prev?.discord ?? null,
-                }
-                if (addressRef.current) writeCache(PROFILE_KEY(addressRef.current), updated)
-                return updated
-            })
-        })
-
-        return () => { unsub1(); unsub2(); unsub3(); unsub4(); unsub5(); unsub6(); unsub7() }
+        return () => { unsub1(); unsub2(); unsub3(); unsub4(); unsub5(); unsub6() }
     }, [subscribeUser])
 
     // settlementComplete window event — new mining rewards may be available
@@ -311,6 +308,7 @@ export function UserDataProvider({
             refetchRewards: fetchRewards,
             refetchStakeInfo: fetchStakeInfo,
             refetchProfile: fetchProfile,
+            patchProfile,
         }}>
             {children}
         </UserDataContext.Provider>

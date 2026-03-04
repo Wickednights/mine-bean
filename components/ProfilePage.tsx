@@ -6,6 +6,7 @@ import BeanLogo from './BeanLogo'
 import { apiFetch } from '@/lib/api'
 import { supabase } from '@/lib/supabase'
 import { CONTRACTS } from '@/lib/contracts'
+import { useUserData } from '@/lib/UserDataContext'
 
 // ── Types ─────────────────────────────────────────────────
 
@@ -303,6 +304,7 @@ function PnlCard({ round, pfpUrl, username, onClose }: { round: Round; pfpUrl: s
 export default function ProfilePage() {
   const { address, isConnected } = useAccount()
   const { signMessageAsync } = useSignMessage()
+  const { patchProfile } = useUserData()
 
   // Profile state
   const [username, setUsername] = useState('')
@@ -502,18 +504,24 @@ export default function ProfilePage() {
       const res = await fetch(`/api/user/${address.toLowerCase()}/profile`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...fields, signature, message, timestamp }),
+        body: JSON.stringify({ ...fields, signature, timestamp }),
       })
       if (!res.ok) {
         const err = await res.json().catch(() => ({ error: 'Failed to save' }))
         throw new Error(err.error || 'Failed to save')
       }
+      // Patch context so WalletButton updates immediately
+      const profilePatch: { username?: string; bio?: string; pfpUrl?: string | null } = {}
+      if (fields.username !== undefined) profilePatch.username = fields.username
+      if (fields.bio !== undefined) profilePatch.bio = fields.bio
+      if (fields.pfpUrl !== undefined) profilePatch.pfpUrl = fields.pfpUrl
+      patchProfile(profilePatch)
     } catch (err: unknown) {
       setSaveError(err instanceof Error ? err.message : 'Failed to save')
     } finally {
       setSaving(false)
     }
-  }, [address, signMessageAsync])
+  }, [address, signMessageAsync, patchProfile])
 
   const handleBannerUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]

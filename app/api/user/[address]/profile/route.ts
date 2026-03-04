@@ -87,28 +87,5 @@ export async function PUT(req: Request, { params }: { params: { address: string 
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  // Notify backend to emit profileUpdated SSE
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'https://api.minebean.com'
-  try {
-    const notifyRes = await fetch(`${apiUrl}/internal/notify/profile-updated`, {
-      method: 'POST',
-      cache: 'no-store',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-internal-secret': process.env.INTERNAL_SECRET ?? '',
-      },
-      body: JSON.stringify({
-        address,
-        username: username ?? null,
-        bio: bio ?? null,
-        pfpUrl: pfpUrl ?? null,
-        bannerUrl: bannerUrl ?? null,
-      }),
-    })
-    console.log('Notify response:', notifyRes.status, await notifyRes.text())
-  } catch (err: unknown) {
-    console.error('Notify fetch failed:', err instanceof Error ? err.message : err)
-  }
-
   return NextResponse.json({ ok: true })
 }
