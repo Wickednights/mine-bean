@@ -89,7 +89,7 @@ export async function PUT(req: Request, { params }: { params: { address: string 
 
   // Notify backend to emit profileUpdated SSE — fire-and-forget
   const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'https://api.minebean.com'
-  fetch(`${apiUrl}/internal/notify/profile-updated`, {
+  await fetch(`${apiUrl}/internal/notify/profile-updated`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
