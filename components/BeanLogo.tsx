@@ -2,17 +2,12 @@
 
 export default function BeanLogo({ size = 32 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <ellipse cx="50" cy="50" rx="38" ry="45" fill="url(#beanGradient)" />
-      <path d="M50 20C45 35 45 65 50 80" stroke="#C4940A" strokeWidth="4" strokeLinecap="round" fill="none" opacity="0.6" />
-      <ellipse cx="38" cy="35" rx="8" ry="6" fill="white" opacity="0.3" />
-      <defs>
-        <linearGradient id="beanGradient" x1="50" y1="5" x2="50" y2="95" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#3B7BFF" />
-          <stop offset="100%" stopColor="#0052FF" />
-        </linearGradient>
-      </defs>
-    </svg>
+    <img 
+      src="https://imagedelivery.net/GyRgSdgDhHz2WNR4fvaN-Q/b2af3765-f7ce-4727-063f-01b23ac8a500/public"
+      height={size}
+      alt="BEAN"
+      style={{ display: 'block', height: size, width: 'auto' }}
+    />
   )
 }
 
