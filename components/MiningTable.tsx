@@ -251,7 +251,7 @@ export default function MiningTable() {
                                 onClick={() => window.open(`https://basescan.org/tx/${round.txHash}`, '_blank')}
                             >
                                 <td style={styles.td}>#{round.round.toLocaleString()}</td>
-                                <td style={styles.td}>#{round.block}</td>
+                                <td style={styles.td}>#{round.block + 1}</td>
                                 <td style={styles.td}>
                                     {round.winner === "Split" ? (
                                         <span style={styles.splitBadge}>Split</span>
