@@ -6,7 +6,7 @@ import StakePage from '@/components/StakePage'
 import { useAccount, useBalance, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
 import { useState, useEffect, useCallback } from 'react'
 import { maxUint256 } from 'viem'
-import { CONTRACTS } from '@/lib/contracts'
+import { CONTRACTS, BUILDER_CODE_SUFFIX } from '@/lib/contracts'
 
 export default function Stake() {
   const { address, isConnected } = useAccount()
@@ -45,6 +45,7 @@ export default function Stake() {
         functionName: 'deposit',
         args: [pendingApprovalAmount],
         value: pendingCompoundFee ?? BigInt(0),
+        dataSuffix: BUILDER_CODE_SUFFIX,
       })
       setPendingApprovalAmount(undefined)
       setPendingCompoundFee(undefined)
@@ -66,6 +67,7 @@ export default function Stake() {
         functionName: 'deposit',
         args: [amount],
         value: compoundFeeBnb ?? BigInt(0),
+        dataSuffix: BUILDER_CODE_SUFFIX,
       })
     } else {
       // Need approval first — store for the approval->deposit chain
@@ -76,6 +78,7 @@ export default function Stake() {
         abi: CONTRACTS.Bean.abi,
         functionName: 'approve',
         args: [CONTRACTS.Staking.address, maxUint256],
+        dataSuffix: BUILDER_CODE_SUFFIX,
       })
     }
   }, [isConnected, allowance, writeContract, writeContract2])
@@ -87,6 +90,7 @@ export default function Stake() {
       abi: CONTRACTS.Staking.abi,
       functionName: 'withdraw',
       args: [amount],
+      dataSuffix: BUILDER_CODE_SUFFIX,
     })
   }, [isConnected, writeContract2])
 
@@ -97,6 +101,7 @@ export default function Stake() {
       abi: CONTRACTS.Staking.abi,
       functionName: 'claimYield',
       args: [],
+      dataSuffix: BUILDER_CODE_SUFFIX,
     })
   }, [isConnected, writeContract2])
 
@@ -107,6 +112,7 @@ export default function Stake() {
       abi: CONTRACTS.Staking.abi,
       functionName: 'compound',
       args: [],
+      dataSuffix: BUILDER_CODE_SUFFIX,
     })
   }, [isConnected, writeContract2])
 

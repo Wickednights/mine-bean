@@ -27,7 +27,7 @@ export default function Privacy() {
         <h1 style={{ fontSize: isMobile ? 28 : 36, fontWeight: 700, color: '#fff', margin: '0 0 8px' }}>Privacy Policy</h1>
         <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.3)', margin: '0 0 40px' }}>Effective Date: February 18, 2026</p>
 
-        <p style={text}>This Privacy Policy (the <span style={bold}>&quot;Policy&quot;</span>) explains how BEAN Protocol (<span style={bold}>&quot;we,&quot; &quot;our,&quot;</span> or <span style={bold}>&quot;us&quot;</span>) collects, uses, discloses, and protects your information when you use the website at minebean.com (the <span style={bold}>&quot;Website&quot;</span>) and the associated BEAN mining protocol services (the <span style={bold}>&quot;Services&quot;</span>). By accessing or using the Website or Services, you agree to this Privacy Policy. If you do not agree, you must not use the Services.</p>
+        <p style={text}>This Privacy Policy (the <span style={bold}>&quot;Policy&quot;</span>) explains how NU11 LABS LLC (<span style={bold}>&quot;we,&quot; &quot;our,&quot;</span> or <span style={bold}>&quot;us&quot;</span>) collects, uses, discloses, and protects your information when you use the website at minebean.com (the <span style={bold}>&quot;Website&quot;</span>) and the associated BEAN mining protocol services (the <span style={bold}>&quot;Services&quot;</span>). By accessing or using the Website or Services, you agree to this Privacy Policy. If you do not agree, you must not use the Services.</p>
 
         <p style={text}>The Services are permissionless and wallet-based, requiring no user registration, account creation, or personally identifiable information (PII) such as names or email addresses to participate in mining. Privacy is central to everything we do, and we minimize data collection wherever possible.</p>
 
@@ -81,7 +81,7 @@ export default function Privacy() {
         <p style={text}>(e) <span style={bold}>Vercel</span> — Website hosting and deployment</p>
         <p style={text}>These providers may process data in accordance with their own privacy policies.</p>
         <p style={text}><span style={bold}>Legal Compliance:</span> We may disclose information to comply with laws, respond to legal processes (e.g., subpoenas), or protect our rights, property, or safety.</p>
-        <p style={text}><span style={bold}>Business Transfers:</span> If BEAN Protocol undergoes a merger, acquisition, or asset sale, your information may be transferred as part of the transaction, subject to confidentiality obligations.</p>
+        <p style={text}><span style={bold}>Business Transfers:</span> If NU11 LABS LLC undergoes a merger, acquisition, or asset sale, your information may be transferred as part of the transaction, subject to confidentiality obligations.</p>
 
         <h2 style={heading}>4. Data We Do Not Collect</h2>
         <p style={text}>We want to be transparent about what we do <span style={bold}>not</span> collect:</p>

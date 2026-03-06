@@ -12,7 +12,7 @@ import ClaimRewards from '@/components/ClaimRewards'
 import { useAccount, useBalance, useWriteContract } from 'wagmi'
 import { parseEther } from 'viem'
 import { useState, useEffect, useCallback } from 'react'
-import { CONTRACTS } from '@/lib/contracts'
+import { CONTRACTS, BUILDER_CODE_SUFFIX } from '@/lib/contracts'
 import BeanpotCelebration from '@/components/BeanpotCelebration'
 import CountdownCelebration from '@/components/CountdownCelebration'
 
@@ -44,6 +44,7 @@ useEffect(() => {
       functionName: 'deploy',
       args: [blockIds],
       value: parseEther(amount.toString()),
+      dataSuffix: BUILDER_CODE_SUFFIX,
     }, {
       onSuccess: () => {
         window.dispatchEvent(new CustomEvent("userDeployed", {
@@ -60,6 +61,7 @@ useEffect(() => {
       abi: CONTRACTS.GridMining.abi,
       functionName: 'claimETH',
       args: [],
+      dataSuffix: BUILDER_CODE_SUFFIX,
     })
   }, [isConnected, writeContract])
 
@@ -70,6 +72,7 @@ useEffect(() => {
       abi: CONTRACTS.GridMining.abi,
       functionName: 'claimBEAN',
       args: [],
+      dataSuffix: BUILDER_CODE_SUFFIX,
     })
   }, [isConnected, writeContract])
 
@@ -81,6 +84,7 @@ useEffect(() => {
       functionName: 'setConfig',
       args: [strategyId, numRounds, numBlocks, blockMask],
       value: depositAmount,
+      dataSuffix: BUILDER_CODE_SUFFIX,
     }, {
       onSuccess: () => {
         window.dispatchEvent(new CustomEvent("autoMinerActivated"))
@@ -95,6 +99,7 @@ useEffect(() => {
       abi: CONTRACTS.AutoMiner.abi,
       functionName: 'stop',
       args: [],
+      dataSuffix: BUILDER_CODE_SUFFIX,
     }, {
       onSuccess: () => {
         window.dispatchEvent(new CustomEvent("autoMinerStopped"))
