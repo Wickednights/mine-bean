@@ -1,8 +1,8 @@
-# BEANS Protocol — Frontend
+# BEAN Protocol — Frontend
 
 ## Overview
 
-Gamified mining protocol on Base. Users compete in 60-second rounds on a 5×5 grid of blocks, deploying ETH to earn BEANS tokens and ETH rewards. Built with Next.js 14 (App Router), React 18, TypeScript, and Wagmi/RainbowKit for wallet integration.
+Gamified mining protocol on Base. Users compete in 60-second rounds on a 5×5 grid of blocks, deploying ETH to earn BEAN tokens and ETH rewards. Built with Next.js 14 (App Router), React 18, TypeScript, and Wagmi/RainbowKit for wallet integration.
 
 ## Tech Stack
 
@@ -86,12 +86,12 @@ npx vitest run    # Run test suite
 
 | Contract    | Address                                      |
 |-------------|----------------------------------------------|
-| Bean        | `0xD8D2cbe5D3EB89Bf1974bd276b37574B4bBe5F2c` |
-| GridMining  | `0x854EeD669c32561Ab54cF3e9731FAbEE7890c0D3` |
-| AutoMiner   | `0x38f9BDEE9f2b41e9E2a1E013a3dCCb9d519B0272` |
-| Treasury    | `0x4634846e66f5b8b0F8e9E7b30e31148b218E14e9` |
-| Staking     | `0x3Db46e2957F0B720D2dB3d5C3dc862083521C811` |
-| BEAN/ETH LP | `0x08e5e77763ba3deae8dd020e15727b06fe746a64fa562f66a66da3e38357b492` |
+| Bean        | `0x5c72992b83E74c4D5200A8E8920fB946214a5A5D` |
+| GridMining  | `0x9632495bDb93FD6B0740Ab69cc6c71C9c01da4f0` |
+| AutoMiner   | `0x31358496900D600B2f523d6EdC4933E78F72De89` |
+| Treasury    | `0x38F6E74148D6904286131e190d879A699fE3Aeb3` |
+| Staking     | `0xfe177128Df8d336cAf99F787b72183D1E68Ff9c2` |
+| BEAN/ETH LP | `0xd7e5522c9cc3682c960afada6adde0f8116580f2ad2cef08c197faf625e53842` |
 
 **ABI source:** `lib/abis/GridMining.json` is extracted from Hardhat artifacts (`hardhat/artifacts/contracts/GridMining.sol/GridMining.json`). Includes `AlreadyDeployedThisRound` custom error, `ResetRequested` event, and `topMinerSeed`/`winnersDeployed` fields in `RoundSettled` event.
 
@@ -200,7 +200,7 @@ The AutoMiner contract uses a single payable `setConfig(strategyId, numRounds, n
 **Frontend constants in `lib/contracts.ts`:**
 - `MIN_DEPLOY_PER_BLOCK = 0.0000025` — minimum ETH per block
 - `EXECUTOR_FEE_BPS = 100` — 1% executor fee deducted from deposits
-- `EXECUTOR_FLAT_FEE = 0.000005` — ETH per round flat fee floor
+- `EXECUTOR_FLAT_FEE = 0.000006` — ETH per round flat fee floor
 
 **Hybrid fee calculation:** The contract charges `max(percentageFee, flatFee)` per round. Frontend mirrors this to calculate the required deposit:
 ```typescript
@@ -238,9 +238,7 @@ const deposit = pctFeePerRound >= EXECUTOR_FLAT_FEE
 
 ### Staking Integration
 
-The staking page (`/stake`) allows users to deposit BEAN tokens to earn yield from protocol buybacks. Connected to `Staking` contract (`0x4C95D7F61C8D259d1c0a9a4dA1D0d57D9388A0bB`) via wagmi.
-
-**Two-token distinction:** BEANS (`0x000Ae3...`) is the mining rewards ERC20; Bean (`0xDAB7B7...`) is the stakeable BEAN token. The staking contract accepts Bean, not BEANS. Frontend reads BEAN balance via `useBalance({ token: CONTRACTS.Bean.address })`.
+The staking page (`/stake`) allows users to deposit BEAN tokens to earn yield from protocol buybacks. Connected to `Staking` contract (`0xfe177128Df8d336cAf99F787b72183D1E68Ff9c2`) via wagmi.
 
 **Deposit flow (approve→deposit chain):**
 1. User enters BEAN amount + optional auto-compound toggle (ETH for `compoundFeeReserve`)
