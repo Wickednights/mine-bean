@@ -7,6 +7,8 @@ import {
   walletConnectWallet,
   phantomWallet,
   rainbowWallet,
+  zerionWallet,
+  rabbyWallet,
 } from '@rainbow-me/rainbowkit/wallets'
 import { createConfig, http } from 'wagmi'
 import { base, baseSepolia } from 'wagmi/chains'
@@ -18,6 +20,8 @@ const connectors = connectorsForWallets(
       wallets: [
         metaMaskWallet,
         phantomWallet,
+        rabbyWallet,
+        zerionWallet,
         coinbaseWallet,
         rainbowWallet,
         walletConnectWallet,
