@@ -9,10 +9,10 @@ import { MIN_DEPLOY_PER_BLOCK, EXECUTOR_FEE_BPS, EXECUTOR_FLAT_FEE } from '@/lib
 import { useRoundTimer } from '@/lib/RoundTimerContext'
 import { parseEther } from 'viem'
 
-const EthLogo = ({ size = 18 }: { size?: number }) => (
+const BnbLogo = ({ size = 18 }: { size?: number }) => (
     <img
         src="https://imagedelivery.net/GyRgSdgDhHz2WNR4fvaN-Q/f9461cf2-aacc-4c59-8b9d-59ade3c46c00/public"
-        alt="ETH"
+        alt="BNB"
         style={{ width: size, height: size, objectFit: "contain" as const }}
     />
 )
@@ -100,7 +100,7 @@ export default function SidebarControls({
     const [isHoveringTotalDeployed, setIsHoveringTotalDeployed] = useState(false)
     const [isHoveringYouDeployed, setIsHoveringYouDeployed] = useState(false)
 
-    const [ethPrice, setEthPrice] = useState<number>(0)
+    const [bnbPrice, setBnbPrice] = useState<number>(0)
     const [beansPrice, setBeansPrice] = useState<number>(0)
 
     // Fetch AutoMiner state from backend
@@ -231,9 +231,9 @@ export default function SidebarControls({
                 })
                 .catch((err) => console.error('Failed to fetch prices:', err))
 
-            fetch("https://api.binance.com/api/v3/ticker/price?symbol=ETHUSDT")
+            fetch("https://api.binance.com/api/v3/ticker/price?symbol=BNBUSDT")
                 .then(r => r.json())
-                .then(d => { if (d.price) setEthPrice(parseFloat(d.price)) })
+                .then(d => { if (d.price) setBnbPrice(parseFloat(d.price)) })
                 .catch(() => {})
         }
 
@@ -382,14 +382,14 @@ const handleSelectClick = () => {
                     onMouseLeave={() => setIsHoveringTotalDeployed(false)}
                 >
                     <div style={styles.statValue}>
-                        <EthLogo size={20} />
+                        <BnbLogo size={20} />
                         <span style={styles.statValueText}>
                             {totalDeployed > 0 ? totalDeployed.toFixed(5) : '—'}
                         </span>
                     </div>
                     <div style={styles.statLabel}>
                         {isHoveringTotalDeployed && totalDeployed > 0
-                            ? `≈$${(totalDeployed * ethPrice).toFixed(2)}`
+                            ? `≈$${(totalDeployed * bnbPrice).toFixed(2)}`
                             : "Total deployed"}
                     </div>
                 </div>
@@ -400,12 +400,12 @@ const handleSelectClick = () => {
                     onMouseLeave={() => setIsHoveringYouDeployed(false)}
                 >
                     <div style={styles.statValue}>
-                        <EthLogo size={20} />
+                        <BnbLogo size={20} />
                         <span style={styles.statValueText}>{userDeployed > 0 ? userDeployed.toFixed(5) : '—'}</span>
                     </div>
                     <div style={styles.statLabel}>
                         {isHoveringYouDeployed && userDeployed > 0
-                            ? `≈$${(userDeployed * ethPrice).toFixed(2)}`
+                            ? `≈$${(userDeployed * bnbPrice).toFixed(2)}`
                             : "You deployed"}
                     </div>
                 </div>
@@ -465,8 +465,8 @@ const handleSelectClick = () => {
 
                         <div style={styles.inputRow}>
                             <div style={styles.inputLeft}>
-                                <EthLogo size={20} />
-                                <span style={styles.inputLabel}>ETH</span>
+                                <BnbLogo size={20} />
+                                <span style={styles.inputLabel}>BNB</span>
                             </div>
                             <input
                                 type="text"
@@ -480,9 +480,9 @@ const handleSelectClick = () => {
                                 onBlur={() => { if (perBlock === "") setPerBlock("0") }}
                             />
                         </div>
-                        {ethPrice > 0 && parseFloat(perBlock) > 0 && (
+                        {bnbPrice > 0 && parseFloat(perBlock) > 0 && (
                             <div style={{ textAlign: "right", fontSize: 11, color: "rgba(255,255,255,0.25)", marginTop: -8, paddingRight: 4 }}>
-                                ≈ ${(parseFloat(perBlock) * ethPrice).toFixed(2)} USD
+                                ≈ ${(parseFloat(perBlock) * bnbPrice).toFixed(2)} USD
                             </div>
                         )}
 
@@ -551,8 +551,8 @@ const handleSelectClick = () => {
 
                         <div style={styles.inputRow}>
                             <div style={styles.inputLeft}>
-                                <EthLogo size={20} />
-                                <span style={styles.inputLabel}>ETH</span>
+                                <BnbLogo size={20} />
+                                <span style={styles.inputLabel}>BNB</span>
                             </div>
                             <input
                                 type="text"
@@ -566,9 +566,9 @@ const handleSelectClick = () => {
                                 onBlur={() => { if (perBlock === "") setPerBlock("0") }}
                             />
                         </div>
-                        {ethPrice > 0 && parseFloat(perBlock) > 0 && (
+                        {bnbPrice > 0 && parseFloat(perBlock) > 0 && (
                             <div style={{ textAlign: "right", fontSize: 11, color: "rgba(255,255,255,0.25)", marginTop: -8, paddingRight: 4 }}>
-                                ≈ ${(parseFloat(perBlock) * ethPrice).toFixed(2)} USD
+                                ≈ ${(parseFloat(perBlock) * bnbPrice).toFixed(2)} USD
                             </div>
                         )}
 
@@ -716,7 +716,7 @@ const handleSelectClick = () => {
                         >
                             Stop AutoMiner
                         </button>
-                        <div style={styles.stopHint}>Cancel and refund remaining ETH</div>
+                        <div style={styles.stopHint}>Cancel and refund remaining BNB</div>
                     </>
                 )}
             </div>
@@ -969,7 +969,7 @@ const styles: { [key: string]: React.CSSProperties } = {
         transition: "all 0.15s",
     },
     deployBtnActive: {
-        background: "#0052FF",
+        background: "#F0B90B",
         color: "#fff",
         cursor: "pointer",
     },
@@ -980,7 +980,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     },
     connectBtn: {
         width: "100%",
-        background: "#0052FF",
+        background: "#F0B90B",
         border: "none",
         borderRadius: "8px",
         padding: "14px",

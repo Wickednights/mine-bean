@@ -71,10 +71,10 @@ const ChevronRight = () => (
 )
 
 // SVG Icons
-const EthIcon = () => (
+const BnbIcon = () => (
     <img
         src="https://imagedelivery.net/GyRgSdgDhHz2WNR4fvaN-Q/f9461cf2-aacc-4c59-8b9d-59ade3c46c00/public"
-        alt="ETH"
+        alt="BNB"
         style={{ width: 16, height: 16, objectFit: "contain" as const }}
     />
 )
@@ -185,7 +185,7 @@ export default function RevenueTable() {
                                 <td style={styles.td}>{entry.time}</td>
                                 <td style={styles.tdRight}>
                                     <span style={styles.valueWithIcon}>
-                                        <EthIcon />
+                                        <BnbIcon />
                                         {entry.spent.toFixed(4)}
                                     </span>
                                 </td>

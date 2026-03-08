@@ -140,7 +140,7 @@ autoCloseRef.current = setTimeout(() => setIsOpen(false), 3000)
                                 </span>
                                 <div style={styles.minerAmounts}>
                                     <span style={styles.ethAmount}>
-                                        <img src="https://imagedelivery.net/GyRgSdgDhHz2WNR4fvaN-Q/f9461cf2-aacc-4c59-8b9d-59ade3c46c00/public" alt="ETH" style={{width: 14, height: 14, marginRight: 4}} />
+                                        <img src="https://imagedelivery.net/GyRgSdgDhHz2WNR4fvaN-Q/f9461cf2-aacc-4c59-8b9d-59ade3c46c00/public" alt="BNB" style={{width: 14, height: 14, marginRight: 4}} />
                                         {parseFloat(miner.ethRewardFormatted).toFixed(6)}
                                     </span>
                                     {parseFloat(miner.beanRewardFormatted) > 0 && (
@@ -181,7 +181,7 @@ const styles: { [key: string]: React.CSSProperties } = {
         justifyContent: "center",
         zIndex: 100,
         transition: "border-width 0.15s ease",
-        border: "1px solid #0052FF",
+        border: "1px solid #F0B90B",
         borderLeft: "none",
     },
 
@@ -273,7 +273,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     },
     beansAmount: {
         fontSize: "13px",
-        color: "#0052FF",
+        color: "#F0B90B",
         fontWeight: 500,
     },
     plusSign: {

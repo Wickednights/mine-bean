@@ -36,7 +36,7 @@ export default function Privacy() {
         <h3 style={subheading}>1.1 Blockchain Data</h3>
         <p style={text}>When you interact with the Services using a non-custodial cryptocurrency wallet, we may collect:</p>
         <p style={text}>(a) Your public wallet address, used to identify transactions on the BNB Smart Chain blockchain.</p>
-        <p style={text}>(b) Transaction details, such as ETH deployed, round results, BEAN earned, staking activity, and claims made through the Protocol, as recorded on the public BNB Smart Chain blockchain.</p>
+        <p style={text}>(b) Transaction details, such as BNB deployed, round results, BEAN earned, staking activity, and claims made through the Protocol, as recorded on the public BNB Smart Chain blockchain.</p>
         <p style={text}>Note that blockchain addresses are publicly-available data that are not created or assigned by us or any central party, and by themselves are not personally identifying. All blockchain-related data is publicly available on the BNB Smart Chain blockchain and is not directly controlled by us.</p>
 
         <h3 style={subheading}>1.2 Profile Information</h3>
@@ -76,7 +76,7 @@ export default function Privacy() {
         <p style={text}><span style={bold}>Service Providers:</span> We may share technical data with third-party providers who assist us in operating the Website. These include:</p>
         <p style={text}>(a) <span style={bold}>RainbowKit</span> — Wallet connection user interface</p>
         <p style={text}>(b) <span style={bold}>wagmi</span> — Blockchain interaction library</p>
-        <p style={text}>(c) <span style={bold}>Base (Coinbase L2)</span> — The underlying blockchain network</p>
+        <p style={text}>(c) <span style={bold}>BNB Smart Chain</span> — The underlying blockchain network</p>
         <p style={text}>(d) <span style={bold}>Cloudflare</span> — Content delivery, image hosting, and infrastructure</p>
         <p style={text}>(e) <span style={bold}>Vercel</span> — Website hosting and deployment</p>
         <p style={text}>These providers may process data in accordance with their own privacy policies.</p>

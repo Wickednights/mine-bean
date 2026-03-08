@@ -142,11 +142,11 @@ function WalletContent({
             </button>
           </div>
 
-          {/* ETH Balance */}
+          {/* BNB Balance */}
           <div style={styles.ethSection}>
-            <span style={styles.ethLabel}>ETH Balance</span>
+            <span style={styles.ethLabel}>BNB Balance</span>
             <span style={styles.ethValue}>
-              {ethBalance ? parseFloat(ethBalance.formatted).toFixed(4) : '0.0000'} ETH
+              {ethBalance ? parseFloat(ethBalance.formatted).toFixed(4) : '0.0000'} BNB
             </span>
           </div>
 
@@ -272,7 +272,7 @@ export default function WalletButton() {
 
 const styles: { [key: string]: React.CSSProperties } = {
   connectButton: {
-    background: '#0052FF',
+    background: '#F0B90B',
     border: '1px solid #444',
     color: '#fff',
     fontWeight: 500,
@@ -448,8 +448,8 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   viewProfileButton: {
     width: '100%',
-    background: '#0052FF',
-    border: '1px solid #0052FF',
+    background: '#F0B90B',
+    border: '1px solid #F0B90B',
     color: '#fff',
     fontWeight: 500,
     padding: '10px',

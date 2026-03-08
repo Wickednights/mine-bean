@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createPublicClient, http } from 'viem'
-import { base } from 'viem/chains'
+import { bsc } from 'viem/chains'
 import { supabase } from '@/lib/supabase'
 import { CONTRACTS } from '@/lib/contracts'
 
-const publicClient = createPublicClient({ chain: base, transport: http() })
+const publicClient = createPublicClient({ chain: bsc, transport: http() })
 
 export async function GET(request: Request) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'

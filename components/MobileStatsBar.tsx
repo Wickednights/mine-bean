@@ -5,13 +5,13 @@ import { useRoundTimer } from '@/lib/RoundTimerContext'
 
 // Move icons OUTSIDE component to prevent re-creation on each render
 const BeanIcon = () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="#0052FF">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="#F0B90B">
         <ellipse cx="12" cy="10" rx="7" ry="5" />
         <ellipse cx="12" cy="14" rx="7" ry="5" />
     </svg>
 )
 
-const ETH_LOGO_URL = "https://imagedelivery.net/GyRgSdgDhHz2WNR4fvaN-Q/f9461cf2-aacc-4c59-8b9d-59ade3c46c00/public"
+const BNB_LOGO_URL = "https://imagedelivery.net/GyRgSdgDhHz2WNR4fvaN-Q/f9461cf2-aacc-4c59-8b9d-59ade3c46c00/public"
 
 interface MobileStatsBarProps {
     userAddress?: string
@@ -77,7 +77,7 @@ export default function MobileStatsBar({ userAddress }: MobileStatsBarProps) {
             <div style={styles.row}>
                 <div style={styles.stat}>
                     <div style={styles.valueRow}>
-                        <img src={ETH_LOGO_URL} alt="ETH" style={styles.ethLogo} />
+                        <img src={BNB_LOGO_URL} alt="BNB" style={styles.bnbLogo} />
                         <span style={styles.value}>
                             {totalDeployed > 0 ? totalDeployed.toFixed(4) : '—'}
                         </span>
@@ -86,7 +86,7 @@ export default function MobileStatsBar({ userAddress }: MobileStatsBarProps) {
                 </div>
                 <div style={styles.stat}>
                     <div style={styles.valueRow}>
-                        <img src={ETH_LOGO_URL} alt="ETH" style={styles.ethLogo} />
+                        <img src={BNB_LOGO_URL} alt="BNB" style={styles.bnbLogo} />
                         <span style={styles.value}>{userDeployed > 0 ? userDeployed.toFixed(4) : '—'}</span>
                     </div>
                     <span style={styles.label}>You deployed</span>
@@ -136,7 +136,7 @@ const styles: { [key: string]: React.CSSProperties } = {
         color: '#999',
         fontWeight: 500,
     },
-    ethLogo: {
+    bnbLogo: {
         width: 20,
         height: 20,
         objectFit: 'contain' as const,

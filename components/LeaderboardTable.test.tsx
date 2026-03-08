@@ -210,7 +210,7 @@ describe('LeaderboardTable', () => {
     })
   })
 
-  it('row links to BaseScan address page', async () => {
+  it('row links to BscScan address page', async () => {
     // Mock window.open
     const mockOpen = vi.fn()
     window.open = mockOpen
@@ -280,7 +280,7 @@ describe('LeaderboardTable', () => {
 
     // Miners tab description
     await waitFor(() => {
-      expect(screen.getByText('Top miners by total ETH deployed over their lifetime.')).toBeInTheDocument()
+      expect(screen.getByText('Top miners by total BNB deployed over their lifetime.')).toBeInTheDocument()
     })
 
     // Stakers tab description

@@ -36,12 +36,12 @@ export default function Terms() {
 
         <h2 style={heading}>1. Description of Services</h2>
         <p style={text}>The Website provides a frontend interface for users to interact with the BEAN mining protocol, a decentralized application running on the BNB Smart Chain blockchain. The Protocol operates through smart contracts and functions as follows:</p>
-        <p style={text}>(a) Users select one or more blocks on a 5x5 grid and deploy ETH (Ethereum) to claim space on those blocks.</p>
+        <p style={text}>(a) Users select one or more blocks on a 5x5 grid and deploy BNB (BNB Smart Chain) to claim space on those blocks.</p>
         <p style={text}>(b) Each mining round lasts approximately 60 seconds.</p>
         <p style={text}>(c) A single winning block is selected per round via a verifiable random process on the BNB Smart Chain blockchain.</p>
-        <p style={text}>(d) ETH deployed on losing blocks is aggregated and distributed to users with claims on the winning block, proportional to their claim sizes.</p>
+        <p style={text}>(d) BNB deployed on losing blocks is aggregated and distributed to users with claims on the winning block, proportional to their claim sizes.</p>
         <p style={text}>(e) The Beanpot jackpot mechanism may be triggered under specific on-chain conditions defined in the smart contract, awarding accumulated BEAN tokens to qualifying participants.</p>
-        <p style={text}>(f) 10% of all distributed ETH is automatically allocated by the Protocol to BEAN token staking rewards. 90% is allocated to BEAN token buyback-and-burn operations, reducing circulating supply.</p>
+        <p style={text}>(f) 10% of all distributed BNB is automatically allocated by the Protocol to BEAN token staking rewards. 90% is allocated to BEAN token buyback-and-burn operations, reducing circulating supply.</p>
         <p style={text}>The Protocol is permissionless and wallet-based, requiring no user registration or account creation to participate in mining. Users interact directly with the Protocol&apos;s smart contracts via their non-custodial cryptocurrency wallets (such as MetaMask, Coinbase Wallet, or other wallets supported through RainbowKit). All transactions are irreversible and recorded on the public BNB Smart Chain blockchain. We provide only the Website interface and do not custody user funds or control Protocol operations.</p>
 
         <h2 style={heading}>2. Wallet Connection and User Profiles</h2>
@@ -71,9 +71,9 @@ export default function Terms() {
 
         <h2 style={heading}>4. Risks and Disclaimers</h2>
         <p style={text}>Cryptocurrency and blockchain activities involve significant risks. By using the Services, you acknowledge and accept:</p>
-        <p style={text}><span style={bold}>Volatility:</span> Cryptocurrencies like ETH and the BEAN token are highly volatile; their value may fluctuate dramatically and may go to zero.</p>
+        <p style={text}><span style={bold}>Volatility:</span> Cryptocurrencies like BNB and the BEAN token are highly volatile; their value may fluctuate dramatically and may go to zero.</p>
         <p style={text}><span style={bold}>No Guarantees:</span> There are no guarantees of rewards, profits, or returns. The Protocol is a decentralized mining game, not an investment. Past performance is not indicative of future results.</p>
-        <p style={text}><span style={bold}>Loss of Funds:</span> You may lose some or all of the ETH you deploy in any given mining round. Round outcomes are determined by the Protocol&apos;s smart contracts and cannot be influenced or controlled by us.</p>
+        <p style={text}><span style={bold}>Loss of Funds:</span> You may lose some or all of the BNB you deploy in any given mining round. Round outcomes are determined by the Protocol&apos;s smart contracts and cannot be influenced or controlled by us.</p>
         <p style={text}><span style={bold}>Blockchain Risks:</span> Transactions are irreversible. Errors in wallet addresses, gas fees, network congestion, forks, or smart contract vulnerabilities may result in loss of funds.</p>
         <p style={text}><span style={bold}>Smart Contract Risks:</span> While the Protocol&apos;s smart contracts have been developed with care, they may contain bugs, vulnerabilities, or function in unexpected ways. We disclaim liability for any losses from smart contract failures.</p>
         <p style={text}><span style={bold}>Regulatory Risks:</span> Cryptocurrency regulations may change, potentially affecting the Services. You bear the risk of regulatory changes in your jurisdiction.</p>
@@ -86,17 +86,17 @@ export default function Terms() {
         <p style={caps}>WE DO NOT REPRESENT OR WARRANT THAT ACCESS TO THE WEBSITE WILL BE CONTINUOUS, UNINTERRUPTED, TIMELY, OR SECURE; THAT THE INFORMATION CONTAINED IN THE WEBSITE WILL BE ACCURATE, RELIABLE, COMPLETE, OR CURRENT; OR THAT THE WEBSITE WILL BE FREE FROM ERRORS, DEFECTS, VIRUSES, OR OTHER HARMFUL ELEMENTS.</p>
 
         <h2 style={heading}>6. Payments and Transactions</h2>
-        <p style={text}>All transactions occur on the BNB Smart Chain blockchain using ETH and the BEAN token. We do not process fiat payments or custody user assets.</p>
-        <p style={text}>The Protocol charges fees on mining round activity. The current fee allocation is: 10% of distributed ETH to BEAN staking rewards and 90% to BEAN buyback-and-burn operations. Fee structures may change from time to time.</p>
-        <p style={text}>Blockchain network fees (gas fees) are your responsibility and are paid directly to the Base network, not to us.</p>
-        <p style={text}><span style={bold}>No Refunds:</span> Due to the immutable nature of blockchain, all transactions are final and non-refundable. This includes ETH deployed in mining rounds, staking transactions, and any fees.</p>
+        <p style={text}>All transactions occur on the BNB Smart Chain blockchain using BNB and the BEAN token. We do not process fiat payments or custody user assets.</p>
+        <p style={text}>The Protocol charges fees on mining round activity. The current fee allocation is: 10% of distributed BNB to BEAN staking rewards and 90% to BEAN buyback-and-burn operations. Fee structures may change from time to time.</p>
+        <p style={text}>Blockchain network fees (gas fees) are your responsibility and are paid directly to the BNB Smart Chain network, not to us.</p>
+        <p style={text}><span style={bold}>No Refunds:</span> Due to the immutable nature of blockchain, all transactions are final and non-refundable. This includes BNB deployed in mining rounds, staking transactions, and any fees.</p>
         <p style={text}><span style={bold}>BEAN Token:</span> BEAN is a utility token within the Protocol ecosystem. It has no guaranteed value and is not an investment security. Token values fluctuate based on market conditions.</p>
 
         <h2 style={heading}>7. Third-Party Services</h2>
         <p style={text}>The Website integrates with or relies upon the following third-party services:</p>
         <p style={text}>(a) <span style={bold}>RainbowKit</span> — Wallet connection user interface</p>
         <p style={text}>(b) <span style={bold}>wagmi</span> — Blockchain interaction library</p>
-        <p style={text}>(c) <span style={bold}>Base (Coinbase L2)</span> — The underlying blockchain network</p>
+        <p style={text}>(c) <span style={bold}>BNB Smart Chain</span> — The underlying blockchain network</p>
         <p style={text}>(d) <span style={bold}>Cloudflare</span> — Content delivery and asset hosting</p>
         <p style={text}>(e) <span style={bold}>Vercel</span> — Website hosting and deployment</p>
         <p style={text}>We do not control, endorse, or assume responsibility for any third-party services, content, or functionality. Your use of third-party services is at your own risk and subject to their respective terms and conditions.</p>
@@ -109,7 +109,7 @@ export default function Terms() {
         <p style={text}>You agree to indemnify, defend, and hold harmless NU11 LABS LLC and its affiliates from and against any and all claims, damages, obligations, losses, liabilities, costs, and expenses (including attorneys&apos; fees) arising from: (a) your access to and use of the Services; (b) your violation of any term or condition of these Terms; (c) your violation of any third-party right, including any intellectual property or privacy right; (d) your violation of any applicable law or regulation; or (e) any damage you cause to any third party.</p>
 
         <h2 style={heading}>10. Force Majeure</h2>
-        <p style={text}>We shall not be liable for any failure or delay in providing the Services due to events beyond our reasonable control, including but not limited to natural disasters, wars, terrorism, government actions, blockchain network failures (e.g., Base network outages), cyberattacks, power outages, or internet outages. In such cases, we will make reasonable efforts to restore access to the Services as soon as practicable.</p>
+        <p style={text}>We shall not be liable for any failure or delay in providing the Services due to events beyond our reasonable control, including but not limited to natural disasters, wars, terrorism, government actions, blockchain network failures (e.g., BNB Smart Chain network outages), cyberattacks, power outages, or internet outages. In such cases, we will make reasonable efforts to restore access to the Services as soon as practicable.</p>
 
         <h2 style={heading}>11. Termination</h2>
         <p style={text}>We may suspend or terminate your access to the Services at any time, without prior notice, for any reason, including suspected violations of these Terms. Upon termination, your license to use the Services ends immediately. The provisions of these Terms relating to liability, indemnification, dispute resolution, and disclaimers shall survive termination.</p>

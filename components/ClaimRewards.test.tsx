@@ -82,11 +82,11 @@ describe('ClaimRewards', () => {
     expect(container.innerHTML).toBe('')
   })
 
-  it('displays ETH rewards amount when non-zero', () => {
+  it('displays BNB rewards amount when non-zero', () => {
     render(
       <ClaimRewards userAddress="0xABC" onClaimETH={onClaimETH} onClaimBEAN={onClaimBEAN} />
     )
-    expect(screen.getByText(/1\.000000 ETH/)).toBeInTheDocument()
+    expect(screen.getByText(/1\.000000 BNB/)).toBeInTheDocument()
   })
 
   it('displays unroasted and roasted BEAN amounts', () => {
@@ -105,12 +105,12 @@ describe('ClaimRewards', () => {
     expect(claimBeanBtn).not.toBeDisabled()
   })
 
-  it('Claim ETH button is enabled when hasETH is true', () => {
+  it('Claim BNB button is enabled when hasBNB is true', () => {
     render(
       <ClaimRewards userAddress="0xABC" onClaimETH={onClaimETH} onClaimBEAN={onClaimBEAN} />
     )
-    const claimEthBtn = screen.getByText('Claim ETH')
-    expect(claimEthBtn).not.toBeDisabled()
+    const claimBnbBtn = screen.getByText('Claim BNB')
+    expect(claimBnbBtn).not.toBeDisabled()
   })
 
   it('Claim BEAN button is disabled when no BEAN rewards', () => {
@@ -139,11 +139,11 @@ describe('ClaimRewards', () => {
     expect(onClaimBEAN).toHaveBeenCalledTimes(1)
   })
 
-  it('clicking Claim ETH calls onClaimETH', () => {
+  it('clicking Claim BNB calls onClaimETH', () => {
     render(
       <ClaimRewards userAddress="0xABC" onClaimETH={onClaimETH} onClaimBEAN={onClaimBEAN} />
     )
-    fireEvent.click(screen.getByText('Claim ETH'))
+    fireEvent.click(screen.getByText('Claim BNB'))
     expect(onClaimETH).toHaveBeenCalledTimes(1)
   })
 })
