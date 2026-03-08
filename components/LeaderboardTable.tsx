@@ -268,7 +268,7 @@ export default function LeaderboardTable() {
                                     }}
                                     onMouseEnter={() => setHoveredRow(index)}
                                     onMouseLeave={() => setHoveredRow(null)}
-                                    onClick={() => window.open(`https://basescan.org/address/${entry.rawAddress}`, '_blank')}
+                                    onClick={() => window.open(`https://bscscan.com/address/${entry.rawAddress}`, '_blank')}
                                 >
                                     <td style={styles.td}>#{entry.rank}</td>
                                     <td style={styles.td}>

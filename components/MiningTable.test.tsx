@@ -203,7 +203,7 @@ describe('MiningTable', () => {
       fireEvent.click(firstRow)
 
       expect(windowOpenSpy).toHaveBeenCalledWith(
-        'https://basescan.org/tx/0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890',
+        'https://bscscan.com/tx/0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890',
         '_blank'
       )
     }

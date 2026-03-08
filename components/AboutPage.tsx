@@ -64,7 +64,7 @@ export default function AboutPage({
             title: "Overview",
             content: (
                 <div style={{ display: "flex", flexDirection: "column", gap: paragraphGap }}>
-                    <p style={{ margin: 0 }}><strong>BEAN</strong> is a gamified mining protocol on Base where players compete in continuous 60-second rounds to earn ETH and BEAN tokens. It combines the excitement of competitive gaming with real DeFi mechanics — every round has real stakes, real winners, and real rewards.</p>
+                    <p style={{ margin: 0 }}><strong>BEAN</strong> is a gamified mining protocol on BNB Smart Chain where players compete in continuous 60-second rounds to earn ETH and BEAN tokens. It combines the excitement of competitive gaming with real DeFi mechanics — every round has real stakes, real winners, and real rewards.</p>
                     <p style={{ margin: 0 }}>The game takes place on a 5×5 grid of 25 blocks. Each round, players deploy ETH onto the blocks they think will win. When the timer runs out, one winning block is randomly selected on-chain. A 1% admin fee is taken from all deployed ETH, and a 10% vault fee is applied to the losers&apos; pool. The remaining ETH from losing blocks is redistributed to miners on the winning block — proportional to how much each player deployed.</p>
                     <p style={{ margin: 0 }}>On top of ETH rewards, 1 BEAN is minted each round and awarded to a miner on the winning block. A growing jackpot called the Beanpot can trigger at any time, distributing a potentially massive BEAN bonus. And a unique roasting mechanic rewards patient miners who delay claiming their earned BEAN.</p>
                     <div style={isMobile ? styles.infoBoxMobile : styles.infoBox}>
@@ -78,13 +78,13 @@ export default function AboutPage({
             title: "Getting Started",
             content: (
                 <div style={{ display: "flex", flexDirection: "column", gap: sectionGap }}>
-                    <p style={{ margin: 0 }}>Getting started with BEAN takes less than a minute. All you need is a Web3 wallet with some ETH on the Base network.</p>
+                    <p style={{ margin: 0 }}>Getting started with BEAN takes less than a minute. All you need is a Web3 wallet with some ETH on the BNB Smart Chain network.</p>
                     <div>
                         <h3 style={isMobile ? styles.h3Mobile : styles.h3}>What You Need</h3>
                         <ol style={{ ...styles.list, gap: listGap }}>
-                            <li><strong>A Web3 wallet</strong> — MetaMask, Trust Wallet, Rabby, or any WalletConnect-compatible wallet. Make sure it&apos;s configured for the Base network.</li>
+                            <li><strong>A Web3 wallet</strong> — MetaMask, Trust Wallet, Rabby, or any WalletConnect-compatible wallet. Make sure it&apos;s configured for BNB Smart Chain.</li>
                             <li><strong>ETH for mining</strong> — This is what you deploy on the grid each round. You can start with as little as 0.00001 ETH to get a feel for the game.</li>
-                            <li><strong>A small amount of ETH for gas</strong> — Transaction fees on Base are very low (typically under $0.05 per transaction).</li>
+                            <li><strong>A small amount of ETH for gas</strong> — Transaction fees on BNB Smart Chain are very low (typically under $0.05 per transaction).</li>
                         </ol>
                     </div>
                     <div>
@@ -96,7 +96,7 @@ export default function AboutPage({
                         <p style={{ margin: 0 }}>Click your address in the header to open the Account panel. Here you can see:</p>
                         <ul style={{ ...styles.list, gap: listGap, marginTop: "12px" }}>
                             <li><strong>Wallet Address</strong> — Your connected address with a copy button for easy sharing.</li>
-                            <li><strong>ETH Balance</strong> — Your current ETH balance on Base, used for deploying and gas fees.</li>
+                            <li><strong>ETH Balance</strong> — Your current ETH balance on BNB Smart Chain, used for deploying and gas fees.</li>
                             <li><strong>Portfolio</strong> — Your BEAN token breakdown across three categories: Wallet (BEAN in your wallet), Staked (BEAN deposited in the staking contract), and Rewards (unclaimed staking rewards).</li>
                         </ul>
                         <SectionImage alt="Account panel showing wallet and portfolio" placeholder="accountpanel.png" maxWidth="280px" />
@@ -301,11 +301,11 @@ export default function AboutPage({
                         <table style={styles.table}>
                             <tbody>
                                 <tr><td style={isMobile ? styles.tableLabelMobile : styles.tableLabel}>Token Name</td><td style={isMobile ? styles.tableValueMobile : styles.tableValue}>BEAN</td></tr>
-                                <tr><td style={isMobile ? styles.tableLabelMobile : styles.tableLabel}>Network</td><td style={isMobile ? styles.tableValueMobile : styles.tableValue}>Base</td></tr>
+                                <tr><td style={isMobile ? styles.tableLabelMobile : styles.tableLabel}>Network</td><td style={isMobile ? styles.tableValueMobile : styles.tableValue}>BNB Smart Chain</td></tr>
                                 <tr><td style={isMobile ? styles.tableLabelMobile : styles.tableLabel}>Max Supply</td><td style={isMobile ? styles.tableValueMobile : styles.tableValue}>3,000,000 BEAN</td></tr>
                                 <tr><td style={isMobile ? styles.tableLabelMobile : styles.tableLabel}>Initial Supply</td><td style={isMobile ? styles.tableValueMobile : styles.tableValue}>50,000 BEAN</td></tr>
                                 <tr><td style={isMobile ? styles.tableLabelMobile : styles.tableLabel}>Emission</td><td style={isMobile ? styles.tableValueMobile : styles.tableValue}>1.3 BEAN per round</td></tr>
-<tr><td style={isMobile ? styles.tableLabelMobile : styles.tableLabel}>Contract</td><td style={isMobile ? styles.tableValueMobile : styles.tableValue}><a href="https://basescan.org/token/0x5c72992b83E74c4D5200A8E8920fB946214a5A5D" target="_blank" rel="noopener noreferrer" style={{ color: '#fff', wordBreak: 'break-all' }}>0x5c72...A5A5D</a></td></tr>                            </tbody>
+<tr><td style={isMobile ? styles.tableLabelMobile : styles.tableLabel}>Contract</td><td style={isMobile ? styles.tableValueMobile : styles.tableValue}><a href="https://bscscan.com/token/0x5c72992b83E74c4D5200A8E8920fB946214a5A5D" target="_blank" rel="noopener noreferrer" style={{ color: '#fff', wordBreak: 'break-all' }}>0x5c72...A5A5D</a></td></tr>                            </tbody>
                         </table>
                     </div>
                     <div>
@@ -427,7 +427,7 @@ export default function AboutPage({
                 <div style={{ display: "flex", flexDirection: "column", gap: sectionGap }}>
                     <div style={styles.faqItem}>
                         <h4 style={isMobile ? styles.h4Mobile : styles.h4}>What is BEAN?</h4>
-                        <p style={{ margin: "12px 0 0 0" }}>BEAN is a gamified mining protocol on Base. Players deploy ETH on a 5×5 grid in 60-second rounds, competing to land on the randomly selected winning block and earn ETH rewards plus BEAN tokens. It&apos;s a fair-launch protocol with zero pre-mine or team allocation.</p>
+                        <p style={{ margin: "12px 0 0 0" }}>BEAN is a gamified mining protocol on BNB Smart Chain. Players deploy ETH on a 5×5 grid in 60-second rounds, competing to land on the randomly selected winning block and earn ETH rewards plus BEAN tokens. It&apos;s a fair-launch protocol with zero pre-mine or team allocation.</p>
                     </div>
                     <div style={styles.faqItem}>
                         <h4 style={isMobile ? styles.h4Mobile : styles.h4}>Can I lose my ETH?</h4>
@@ -467,11 +467,11 @@ export default function AboutPage({
                     </div>
                     <div style={styles.faqItem}>
                         <h4 style={isMobile ? styles.h4Mobile : styles.h4}>Which wallets are supported?</h4>
-                        <p style={{ margin: "12px 0 0 0" }}>Any wallet that supports Base and WalletConnect — including MetaMask, Trust Wallet, Rabby, Coinbase Wallet, and more. Connect via the button in the top-right corner of the page.</p>
+                        <p style={{ margin: "12px 0 0 0" }}>Any wallet that supports BNB Smart Chain and WalletConnect — including MetaMask, Trust Wallet, Rabby, Coinbase Wallet, and more. Connect via the button in the top-right corner of the page.</p>
                     </div>
                     <div style={styles.faqItem}>
                         <h4 style={isMobile ? styles.h4Mobile : styles.h4}>How much ETH do I need to start?</h4>
-                        <p style={{ margin: "12px 0 0 0" }}>You can start with as little as 0.0.1 ETH to try the game. The minimum deployment is 0.00001 ETH per block. You&apos;ll also need a small amount for gas fees, which are typically under $0.05 per transaction on Base.</p>
+                        <p style={{ margin: "12px 0 0 0" }}>You can start with as little as 0.0.1 ETH to try the game. The minimum deployment is 0.00001 ETH per block. You&apos;ll also need a small amount for gas fees, which are typically under $0.05 per transaction on BNB Smart Chain.</p>
                     </div>
                 </div>
             ),

@@ -248,7 +248,7 @@ export default function MiningTable() {
                                 }}
                                 onMouseEnter={() => setHoveredRow(index)}
                                 onMouseLeave={() => setHoveredRow(null)}
-                                onClick={() => window.open(`https://basescan.org/tx/${round.txHash}`, '_blank')}
+                                onClick={() => window.open(`https://bscscan.com/tx/${round.txHash}`, '_blank')}
                             >
                                 <td style={styles.td}>#{round.round.toLocaleString()}</td>
                                 <td style={styles.td}>#{round.block + 1}</td>
