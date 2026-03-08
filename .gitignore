@@ -42,9 +42,6 @@ next-env.d.ts
 # Python virtual environment
 .venv/
 
-# Backend (private repo: github.com/Wickednights/minebean-backend)
-Backend/
-
 # Claude
 .claude
 .env*.local
