@@ -183,7 +183,7 @@ function PnlCard({ round, pfpUrl, username, onClose, ethPriceUsd }: { round: Rou
     const text = round.isBeanpot
       ? `Just hit the BEANPOT for ${round.beanpotAmount?.toFixed(3)} $BEAN on @minebean_`
       : round.isWin
-      ? `${round.pctChange >= 0 ? '+' : ''}${round.pctChange}% on Round #${round.id} — @minebean_ is live on Base`
+      ? `${round.pctChange >= 0 ? '+' : ''}${round.pctChange}% on Round #${round.id} — @minebean_ is live on BSC`
       : `Round #${round.id} on @minebean_ — the grind continues`
     const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent('https://minebean.io')}`
     // Copy card image to clipboard so user can paste it into the tweet
