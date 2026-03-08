@@ -354,7 +354,7 @@ export default function AboutPage({
                     </div>
                     <div style={isMobile ? styles.infoBoxMobile : styles.infoBox}>
                         <strong>Transparency</strong>
-                        <p style={{ margin: "12px 0 0 0" }}>All buyback transactions are recorded on-chain and visible on the Global page under the Revenue tab. You can see exactly how much ETH was spent, how much BEAN was burned, and how much yield was generated for stakers — all verifiable on BaseScan.</p>
+                        <p style={{ margin: "12px 0 0 0" }}>All buyback transactions are recorded on-chain and visible on the Global page under the Revenue tab. You can see exactly how much ETH was spent, how much BEAN was burned, and how much yield was generated for stakers — all verifiable on BscScan.</p>
                     </div>
                 </div>
             ),
