@@ -27,7 +27,7 @@ export default function Privacy() {
         <h1 style={{ fontSize: isMobile ? 28 : 36, fontWeight: 700, color: '#fff', margin: '0 0 8px' }}>Privacy Policy</h1>
         <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.3)', margin: '0 0 40px' }}>Effective Date: February 18, 2026</p>
 
-        <p style={text}>This Privacy Policy (the <span style={bold}>&quot;Policy&quot;</span>) explains how NU11 LABS LLC (<span style={bold}>&quot;we,&quot; &quot;our,&quot;</span> or <span style={bold}>&quot;us&quot;</span>) collects, uses, discloses, and protects your information when you use the website at minebean.com (the <span style={bold}>&quot;Website&quot;</span>) and the associated BEAN mining protocol services (the <span style={bold}>&quot;Services&quot;</span>). By accessing or using the Website or Services, you agree to this Privacy Policy. If you do not agree, you must not use the Services.</p>
+        <p style={text}>This Privacy Policy (the <span style={bold}>&quot;Policy&quot;</span>) explains how NU11 LABS LLC (<span style={bold}>&quot;we,&quot; &quot;our,&quot;</span> or <span style={bold}>&quot;us&quot;</span>) collects, uses, discloses, and protects your information when you use the website at minebean.io (the <span style={bold}>&quot;Website&quot;</span>) and the associated BEAN mining protocol services (the <span style={bold}>&quot;Services&quot;</span>). By accessing or using the Website or Services, you agree to this Privacy Policy. If you do not agree, you must not use the Services.</p>
 
         <p style={text}>The Services are permissionless and wallet-based, requiring no user registration, account creation, or personally identifiable information (PII) such as names or email addresses to participate in mining. Privacy is central to everything we do, and we minimize data collection wherever possible.</p>
 
@@ -35,9 +35,9 @@ export default function Privacy() {
 
         <h3 style={subheading}>1.1 Blockchain Data</h3>
         <p style={text}>When you interact with the Services using a non-custodial cryptocurrency wallet, we may collect:</p>
-        <p style={text}>(a) Your public wallet address, used to identify transactions on the Base blockchain.</p>
-        <p style={text}>(b) Transaction details, such as ETH deployed, round results, BEAN earned, staking activity, and claims made through the Protocol, as recorded on the public Base blockchain.</p>
-        <p style={text}>Note that blockchain addresses are publicly-available data that are not created or assigned by us or any central party, and by themselves are not personally identifying. All blockchain-related data is publicly available on the Base blockchain and is not directly controlled by us.</p>
+        <p style={text}>(a) Your public wallet address, used to identify transactions on the BNB Smart Chain blockchain.</p>
+        <p style={text}>(b) Transaction details, such as ETH deployed, round results, BEAN earned, staking activity, and claims made through the Protocol, as recorded on the public BNB Smart Chain blockchain.</p>
+        <p style={text}>Note that blockchain addresses are publicly-available data that are not created or assigned by us or any central party, and by themselves are not personally identifying. All blockchain-related data is publicly available on the BNB Smart Chain blockchain and is not directly controlled by us.</p>
 
         <h3 style={subheading}>1.2 Profile Information</h3>
         <p style={text}>If you choose to create a user profile, you may voluntarily provide:</p>
@@ -64,7 +64,7 @@ export default function Privacy() {
 
         <h2 style={heading}>2. How We Use Your Information</h2>
         <p style={text}>We use the information we collect to:</p>
-        <p style={text}>(a) <span style={bold}>Provide the Services:</span> Facilitate your interaction with the Website and the Protocol&apos;s smart contracts on the Base blockchain.</p>
+        <p style={text}>(a) <span style={bold}>Provide the Services:</span> Facilitate your interaction with the Website and the Protocol&apos;s smart contracts on the BNB Smart Chain blockchain.</p>
         <p style={text}>(b) <span style={bold}>Improve the Services:</span> Monitor and analyze Website usage to improve functionality, performance, and user experience.</p>
         <p style={text}>(c) <span style={bold}>Customer Support:</span> Respond to inquiries or support requests if you contact us.</p>
         <p style={text}>(d) <span style={bold}>Safety and Security:</span> Detect, prevent, or investigate fraud, abuse, or security issues. We may screen wallet addresses for prior illicit activity using publicly available blockchain data.</p>
@@ -72,7 +72,7 @@ export default function Privacy() {
 
         <h2 style={heading}>3. How We Share Your Information</h2>
         <p style={text}>We do not sell, rent, or trade your information to third parties for marketing or advertising purposes. We may share information as follows:</p>
-        <p style={text}><span style={bold}>Public Blockchain Data:</span> Your wallet address and transaction details are recorded on the Base blockchain, which is publicly accessible and not controlled by us.</p>
+        <p style={text}><span style={bold}>Public Blockchain Data:</span> Your wallet address and transaction details are recorded on the BNB Smart Chain blockchain, which is publicly accessible and not controlled by us.</p>
         <p style={text}><span style={bold}>Service Providers:</span> We may share technical data with third-party providers who assist us in operating the Website. These include:</p>
         <p style={text}>(a) <span style={bold}>RainbowKit</span> — Wallet connection user interface</p>
         <p style={text}>(b) <span style={bold}>wagmi</span> — Blockchain interaction library</p>
@@ -97,13 +97,13 @@ export default function Privacy() {
         <p style={text}>(a) Never share your private keys or seed phrases with anyone.</p>
         <p style={text}>(b) Use hardware wallets for significant holdings.</p>
         <p style={text}>(c) Verify all transaction details before confirming.</p>
-        <p style={text}>(d) Be cautious of phishing attempts and only access the Services through minebean.com.</p>
+        <p style={text}>(d) Be cautious of phishing attempts and only access the Services through minebean.io.</p>
 
         <h2 style={heading}>6. Data Retention</h2>
-        <p style={text}>We retain technical and usage data for as long as necessary to provide the Services, comply with legal obligations, or resolve disputes. Blockchain data (e.g., wallet addresses, transactions) is permanently stored on the Base blockchain and is not controlled by us. You can clear your browser&apos;s localStorage at any time to remove locally stored preferences.</p>
+        <p style={text}>We retain technical and usage data for as long as necessary to provide the Services, comply with legal obligations, or resolve disputes. Blockchain data (e.g., wallet addresses, transactions) is permanently stored on the BNB Smart Chain blockchain and is not controlled by us. You can clear your browser&apos;s localStorage at any time to remove locally stored preferences.</p>
 
         <h2 style={heading}>7. Third-Party Links and Services</h2>
-        <p style={text}>The Website may contain links to third-party websites, services, or resources (e.g., Base blockchain explorers, wallet providers). We do not control and are not responsible for their privacy practices. We encourage you to review the privacy policies of any third-party services you access.</p>
+        <p style={text}>The Website may contain links to third-party websites, services, or resources (e.g., BNB Smart Chain blockchain explorers, wallet providers). We do not control and are not responsible for their privacy practices. We encourage you to review the privacy policies of any third-party services you access.</p>
 
         <h2 style={heading}>8. Your Rights and Choices</h2>
         <p style={text}>Because we minimize data collection and do not maintain traditional user accounts:</p>

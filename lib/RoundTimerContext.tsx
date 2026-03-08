@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useRef, useEffect, useCallback, type ReactNode } from 'react'
 import { createPublicClient, http } from 'viem'
-import { base } from 'viem/chains'
+import { bsc } from 'viem/chains'
 
 interface RoundTimerContextValue {
   timeRemaining: number
@@ -13,7 +13,7 @@ interface RoundTimerContextValue {
 const RoundTimerContext = createContext<RoundTimerContextValue | null>(null)
 
 const publicClient = createPublicClient({
-  chain: base,
+  chain: bsc,
   transport: http(),
 })
 

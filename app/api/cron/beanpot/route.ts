@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { createPublicClient, http, fallback, parseAbi } from 'viem'
-import { base } from 'viem/chains'
+import { bsc } from 'viem/chains'
 
 const WEBHOOK_URL = process.env.DISCORD_BEANPOT_WEBHOOK_URL!
 const CRON_SECRET = process.env.CRON_SECRET
@@ -9,12 +9,12 @@ const BEAN_ADDRESS = '0x5c72992b83E74c4D5200A8E8920fB946214a5A5D'
 const GRID_MINING = '0x9632495bDb93FD6B0740Ab69cc6c71C9c01da4f0' as `0x${string}`
 
 const publicClient = createPublicClient({
-  chain: base,
+  chain: bsc,
   transport: fallback([
-    http('https://base.llamarpc.com'),
-    http('https://rpc.ankr.com/base'),
-    http('https://mainnet.base.org'),
-    http('https://base-rpc.publicnode.com'),
+    http('https://omniscient-icy-crater.bsc.quiknode.pro/f7d76ecdce6f15d4ef95d029c848eee09ae547f7/'),
+    http('https://bsc-dataseed.binance.org'),
+    http('https://bsc-dataseed1.defibit.io'),
+    http('https://bsc-dataseed1.ninicoin.io'),
   ]),
 })
 
@@ -49,9 +49,9 @@ async function postBeanpotEmbed(
       { name: '🫘 Total BEAN', value: beanAmount.toFixed(3), inline: false },
       { name: '💵 USD Value', value: `~$${(beanUsd * beanAmount).toFixed(2)}`, inline: false },
     ],
-    footer: { text: 'minebean.com' },
+    footer: { text: 'minebean.io' },
     timestamp: new Date().toISOString(),
-    url: 'https://minebean.com',
+    url: 'https://minebean.io',
   }
 
   const res = await fetch(WEBHOOK_URL, {
@@ -84,9 +84,9 @@ export async function GET(req: Request) {
   try {
     const beanUsd = await getBeanPrice()
 
-    // Base produces ~1 block per 2 seconds — 150 blocks ≈ 5 minutes of coverage
+    // BSC produces ~1 block per 3 seconds — 100 blocks ≈ 5 minutes of coverage
     const latestBlock = await publicClient.getBlockNumber()
-    const fromBlock = latestBlock - BigInt(150)
+    const fromBlock = latestBlock - BigInt(100)
 
     const logs = await publicClient.getLogs({
       address: GRID_MINING,

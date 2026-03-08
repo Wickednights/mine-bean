@@ -226,7 +226,7 @@ describe('LeaderboardTable', () => {
     fireEvent.click(firstRow!)
 
     expect(mockOpen).toHaveBeenCalledWith(
-      'https://basescan.org/address/0x1234567890123456789012345678901234567890',
+      'https://bscscan.com/address/0x1234567890123456789012345678901234567890',
       '_blank'
     )
   })

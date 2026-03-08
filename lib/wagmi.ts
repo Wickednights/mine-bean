@@ -11,7 +11,7 @@ import {
   rabbyWallet,
 } from '@rainbow-me/rainbowkit/wallets'
 import { createConfig, http } from 'wagmi'
-import { base, baseSepolia } from 'wagmi/chains'
+import { bsc, bscTestnet } from 'wagmi/chains'
 
 const connectors = connectorsForWallets(
   [
@@ -36,10 +36,10 @@ const connectors = connectorsForWallets(
 
 export const config = createConfig({
   connectors,
-  chains: [base, baseSepolia],
+  chains: [bsc, bscTestnet],
   transports: {
-    [base.id]: http(),
-    [baseSepolia.id]: http(),
+    [bsc.id]: http(),
+    [bscTestnet.id]: http(),
   },
   ssr: true,
 })

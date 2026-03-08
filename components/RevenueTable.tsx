@@ -180,7 +180,7 @@ export default function RevenueTable() {
                                 }}
                                 onMouseEnter={() => setHoveredRow(index)}
                                 onMouseLeave={() => setHoveredRow(null)}
-                                onClick={() => window.open(`https://basescan.org/tx/${entry.txHash}`, '_blank')}
+                                onClick={() => window.open(`https://bscscan.com/tx/${entry.txHash}`, '_blank')}
                             >
                                 <td style={styles.td}>{entry.time}</td>
                                 <td style={styles.tdRight}>
