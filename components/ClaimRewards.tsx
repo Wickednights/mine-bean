@@ -10,10 +10,10 @@ interface ClaimRewardsProps {
   onClaimBEAN: () => void
 }
 
-const EthLogo = ({ size = 16 }: { size?: number }) => (
+const BnbLogo = ({ size = 16 }: { size?: number }) => (
   <img
     src="https://imagedelivery.net/GyRgSdgDhHz2WNR4fvaN-Q/f9461cf2-aacc-4c59-8b9d-59ade3c46c00/public"
-    alt="ETH"
+    alt="BNB"
     style={{ width: size, height: size, objectFit: "contain" as const }}
   />
 )
@@ -39,11 +39,11 @@ export default function ClaimRewards({ userAddress, onClaimETH, onClaimBEAN }: C
       <div style={styles.rows}>
         <div style={styles.row}>
           <div style={styles.rowLabel}>
-            <EthLogo size={16} />
-            <span>ETH Rewards</span>
+            <BnbLogo size={16} />
+            <span>BNB Rewards</span>
           </div>
           <div style={{ ...styles.rowValue, color: hasETH ? "#fff" : "#555" }}>
-            {parseFloat(rewards.pendingETHFormatted).toFixed(6)} ETH
+            {parseFloat(rewards.pendingETHFormatted).toFixed(6)} BNB
           </div>
         </div>
 
@@ -81,7 +81,7 @@ export default function ClaimRewards({ userAddress, onClaimETH, onClaimBEAN }: C
           disabled={!hasETH}
           onClick={onClaimETH}
         >
-          Claim ETH
+          Claim BNB
         </button>
       </div>
     </div>
@@ -132,7 +132,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   btnActive: {
     flex: 1,
     padding: "10px 0",
-    background: "#0052FF",
+    background: "#F0B90B",
     color: "#fff",
     border: "none",
     borderRadius: 8,

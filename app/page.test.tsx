@@ -636,7 +636,7 @@ describe('Home Page', () => {
         value: BigInt('2500000000000000000'), // 2.5 ETH
         formatted: '2.5',
         decimals: 18,
-        symbol: 'ETH',
+        symbol: 'BNB',
       },
       isLoading: false,
       refetch: vi.fn(),

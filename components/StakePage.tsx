@@ -66,7 +66,7 @@ export default function StakePage({
         const fetchBeansPrice = async () => {
             try {
                 const response = await fetch(
-                    `https://api.dexscreener.com/latest/dex/pairs/base/${CONTRACTS.LP.address}`
+                    `https://api.dexscreener.com/latest/dex/pairs/bsc/${CONTRACTS.LP.address}`
                 )
                 const data = await response.json()
                 if (data.pair?.priceUsd) {
@@ -321,7 +321,7 @@ export default function StakePage({
                                         </svg>
                                         {showAutoCompoundInfo && (
                                             <div style={isMobile ? styles.tooltipMobile : styles.tooltipWide}>
-                                                Auto-compounding automatically restakes your earned BEAN rewards daily. A small ETH reserve is needed to pay bots that trigger the compound transaction. Each compound costs 0.0002 ETH as a bounty. Unused ETH can be withdrawn at any time.
+                                                Auto-compounding automatically restakes your earned BEAN rewards daily. A small BNB reserve is needed to pay bots that trigger the compound transaction. Each compound costs 0.0002 BNB as a bounty. Unused BNB can be withdrawn at any time.
                                             </div>
                                         )}
                                     </div>
@@ -344,10 +344,10 @@ export default function StakePage({
                                     <div style={styles.inputLeft}>
                                         <img
                                             src="https://imagedelivery.net/GyRgSdgDhHz2WNR4fvaN-Q/f9461cf2-aacc-4c59-8b9d-59ade3c46c00/public"
-                                            alt="ETH"
+                                            alt="BNB"
                                             style={{ width: isMobile ? 18 : 20, height: isMobile ? 18 : 20, objectFit: 'contain' as const }}
                                         />
-                                        <span style={isMobile ? styles.inputLabelMobile : styles.inputLabel}>ETH</span>
+                                        <span style={isMobile ? styles.inputLabelMobile : styles.inputLabel}>BNB</span>
                                     </div>
                                     <input
                                         type="text"
@@ -405,10 +405,10 @@ export default function StakePage({
                         {pendingRewards > 0 && (
                             <>
                                 <div style={{ ...isMobile ? styles.positionRowMobile : styles.positionRow, borderBottom: 'none' }}>
-                                    <span style={isMobile ? { fontSize: '13px', color: '#0052FF' } : { fontSize: '14px', color: '#0052FF' }}>Pending Rewards</span>
+                                    <span style={isMobile ? { fontSize: '13px', color: '#F0B90B' } : { fontSize: '14px', color: '#F0B90B' }}>Pending Rewards</span>
                                     <div style={styles.positionValue}>
                                         <BeanLogo size={14} />
-                                        <span style={isMobile ? { fontSize: '14px', fontWeight: 500, color: '#0052FF' } : { fontSize: '15px', fontWeight: 500, color: '#0052FF' }}>
+                                        <span style={isMobile ? { fontSize: '14px', fontWeight: 500, color: '#F0B90B' } : { fontSize: '15px', fontWeight: 500, color: '#F0B90B' }}>
                                             {pendingRewards.toLocaleString(undefined, { maximumFractionDigits: 4 })}
                                         </span>
                                     </div>
@@ -798,7 +798,7 @@ const styles: { [key: string]: React.CSSProperties } = {
         padding: 0,
     },
     toggleOn: {
-        background: "#0052FF",
+        background: "#F0B90B",
     },
     toggleOff: {
         background: "rgba(255, 255, 255, 0.12)",
@@ -884,7 +884,7 @@ const styles: { [key: string]: React.CSSProperties } = {
         fontFamily: "inherit",
     },
     actionBtnEnabled: {
-        background: "#0052FF",
+        background: "#F0B90B",
         color: "#fff",
         fontWeight: 600,
     },
@@ -945,8 +945,8 @@ const styles: { [key: string]: React.CSSProperties } = {
         transition: "all 0.15s",
     },
     rewardBtnPrimary: {
-        background: "#0052FF",
-        border: "1px solid #0052FF",
+        background: "#F0B90B",
+        border: "1px solid #F0B90B",
         color: "#fff",
         fontWeight: 600,
     },

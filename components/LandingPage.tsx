@@ -76,7 +76,7 @@ export default function LandingPage({ onStartMining }: LandingPageProps) {
                     style={{
                       ...styles.navUnderline,
                       opacity: isHovered ? 1 : 0,
-                      boxShadow: isHovered ? '0 0 8px 2px rgba(0, 82, 255, 0.5)' : 'none',
+                      boxShadow: isHovered ? '0 0 8px 2px rgba(240, 185, 11, 0.5)' : 'none',
                     }}
                   />
                 </Link>
@@ -124,7 +124,7 @@ export default function LandingPage({ onStartMining }: LandingPageProps) {
           <div style={{...styles.headline, paddingLeft: "24px"}}><BeansTextLogo height={80} /></div>
           
           <p style={styles.subheadline}>
-            Deploy ETH. Compete for blocks. Win rewards every 60 seconds.
+            Deploy BNB. Compete for blocks. Win rewards every 60 seconds.
           </p>
           
           <div style={styles.ctaContainer}>
@@ -144,16 +144,16 @@ export default function LandingPage({ onStartMining }: LandingPageProps) {
 const styles: { [key: string]: React.CSSProperties } = {
   container: { minHeight: '100vh', background: '#0a0a0a', position: 'relative', overflow: 'hidden', fontFamily: "'Inter', -apple-system, sans-serif" },
   gridBackground: { position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)', backgroundSize: '60px 60px' },
-  glowEffect: { position: 'absolute', top: '30%', left: '50%', transform: 'translate(-50%, -50%)', width: '600px', height: '400px', background: 'radial-gradient(ellipse, rgba(0, 82, 255, 0.15) 0%, transparent 70%)', pointerEvents: 'none' },
+  glowEffect: { position: 'absolute', top: '30%', left: '50%', transform: 'translate(-50%, -50%)', width: '600px', height: '400px', background: 'radial-gradient(ellipse, rgba(240, 185, 11, 0.15) 0%, transparent 70%)', pointerEvents: 'none' },
   header: { position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 40px', borderBottom: '1px solid #1a1a1a', zIndex: 20 },
   logoSection: { display: 'flex', alignItems: 'center', gap: '40px' },
   logo: { display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' },
   nav: { display: 'flex', gap: '8px' },
   navItem: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', padding: '8px 16px', fontSize: '14px', fontWeight: 500, cursor: 'pointer', transition: 'color 0.2s', textDecoration: 'none', position: 'relative' },
-  navUnderline: { width: '100%', height: '2px', background: '#0052FF', borderRadius: '1px', transition: 'opacity 0.2s, box-shadow 0.2s' },
+  navUnderline: { width: '100%', height: '2px', background: '#F0B90B', borderRadius: '1px', transition: 'opacity 0.2s, box-shadow 0.2s' },
   headerRight: { display: 'flex', alignItems: 'center', gap: '20px' },
   priceTag: { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: '#fff' },
-  ethLogo: { width: '18px', height: '18px', objectFit: 'contain' as const },
+  bnbLogo: { width: '18px', height: '18px', objectFit: 'contain' as const },
   priceSymbol: { color: '#999' },
   priceValue: { color: '#fff', fontWeight: 500 },
   socials: { display: 'flex', gap: '16px', alignItems: 'center' },
@@ -161,10 +161,10 @@ const styles: { [key: string]: React.CSSProperties } = {
   main: { position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 80px)', padding: '0 24px', zIndex: 10 },
   heroContent: { display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', marginTop: '-60px' },
   beanLogoWrapper: { position: 'relative', marginBottom: '40px' },
-  beanLogoGlow: { position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '160px', height: '160px', background: 'radial-gradient(circle, rgba(0, 82, 255, 0.3) 0%, transparent 70%)', pointerEvents: 'none' },
+  beanLogoGlow: { position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '160px', height: '160px', background: 'radial-gradient(circle, rgba(240, 185, 11, 0.3) 0%, transparent 70%)', pointerEvents: 'none' },
   headline: { fontSize: '64px', fontWeight: 700, color: '#fff', margin: '0 0 20px 0', letterSpacing: '-2px', lineHeight: 1.1 },
   subheadline: { fontSize: '20px', color: '#999', margin: '0 0 48px 0', maxWidth: '500px', lineHeight: 1.5 },
   ctaContainer: { display: 'flex', gap: '16px' },
-  primaryCta: { background: '#0052FF', color: '#fff', border: 'none', borderRadius: '8px', padding: '16px 48px', fontSize: '16px', fontWeight: 600, cursor: 'pointer' },
+  primaryCta: { background: '#F0B90B', color: '#fff', border: 'none', borderRadius: '8px', padding: '16px 48px', fontSize: '16px', fontWeight: 600, cursor: 'pointer' },
   secondaryCta: { background: 'transparent', color: '#fff', border: '1px solid #444', borderRadius: '8px', padding: '16px 48px', fontSize: '16px', fontWeight: 500, textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' },
 }

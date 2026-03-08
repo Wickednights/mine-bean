@@ -75,10 +75,10 @@ const transformStaker = (s: StakerFromAPI, i: number): LeaderboardEntry => ({
 })
 
 // SVG Icons
-const EthIcon = () => (
+const BnbIcon = () => (
     <img
         src="https://imagedelivery.net/GyRgSdgDhHz2WNR4fvaN-Q/f9461cf2-aacc-4c59-8b9d-59ade3c46c00/public"
-        alt="ETH"
+        alt="BNB"
         style={{ width: 16, height: 16, objectFit: "contain" as const }}
     />
 )
@@ -167,7 +167,7 @@ export default function LeaderboardTable() {
     const getDescription = () => {
         switch (activeTab) {
             case "miners":
-                return "Top miners by total ETH deployed over their lifetime."
+                return "Top miners by total BNB deployed over their lifetime."
             case "stakers":
                 return "Top stakers by amount of BEANS staked."
             case "unroasted":
@@ -286,7 +286,7 @@ export default function LeaderboardTable() {
                                     <td style={styles.tdRight}>
                                         {getValueIcon() === "eth" ? (
                                             <span style={styles.valueWithIcon}>
-                                                <EthIcon />
+                                                <BnbIcon />
                                                 {entry.value.toLocaleString(undefined, { maximumFractionDigits: 4 })}
                                             </span>
                                         ) : (

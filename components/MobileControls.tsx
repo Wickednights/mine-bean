@@ -32,7 +32,7 @@ interface MobileControlsProps {
     onAutoStop?: () => void
 }
 
-const ETH_LOGO_URL = "https://imagedelivery.net/GyRgSdgDhHz2WNR4fvaN-Q/f9461cf2-aacc-4c59-8b9d-59ade3c46c00/public"
+const BNB_LOGO_URL = "https://imagedelivery.net/GyRgSdgDhHz2WNR4fvaN-Q/f9461cf2-aacc-4c59-8b9d-59ade3c46c00/public"
 
 export default function MobileControls({
     userBalance = 0,
@@ -319,8 +319,8 @@ export default function MobileControls({
 
                         <div style={styles.inputRow}>
                             <div style={styles.inputLeft}>
-                                <img src={ETH_LOGO_URL} alt="ETH" style={{ width: 18, height: 18, objectFit: "contain" }} />
-                                <span style={styles.inputLabel}>Ξ ETH</span>
+                                <img src={BNB_LOGO_URL} alt="BNB" style={{ width: 18, height: 18, objectFit: "contain" }} />
+                                <span style={styles.inputLabel}>Ξ BNB</span>
                             </div>
                             <input
                                 type="text"
@@ -387,8 +387,8 @@ export default function MobileControls({
 
                         <div style={styles.inputRow}>
                             <div style={styles.inputLeft}>
-                                <img src={ETH_LOGO_URL} alt="ETH" style={{ width: 18, height: 18, objectFit: "contain" }} />
-                                <span style={styles.inputLabel}>Ξ ETH</span>
+                                <img src={BNB_LOGO_URL} alt="BNB" style={{ width: 18, height: 18, objectFit: "contain" }} />
+                                <span style={styles.inputLabel}>Ξ BNB</span>
                             </div>
                             <input
                                 type="text"
@@ -555,7 +555,7 @@ export default function MobileControls({
                         >
                             Stop AutoMiner
                         </button>
-                        <div style={styles.stopHint}>Cancel and refund remaining ETH</div>
+                        <div style={styles.stopHint}>Cancel and refund remaining BNB</div>
                     </>
                 )}
             </div>
@@ -769,7 +769,7 @@ const styles: { [key: string]: React.CSSProperties } = {
         fontFamily: "inherit",
     },
     deployBtnActive: {
-        background: "#0052FF",
+        background: "#F0B90B",
         color: "#fff",
         cursor: "pointer",
     },
@@ -780,7 +780,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     },
     connectBtn: {
         width: "100%",
-        background: "#0052FF",
+        background: "#F0B90B",
         border: "none",
         borderRadius: "8px",
         padding: "12px",

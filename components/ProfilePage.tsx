@@ -216,12 +216,12 @@ function PnlCard({ round, pfpUrl, username, onClose, ethPriceUsd }: { round: Rou
             <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', flex: 1 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                  <div style={{ width: 50, height: 50, borderRadius: '50%', background: 'linear-gradient(135deg,#0052FF,#3B7BFF)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 24px rgba(0,82,255,0.3)', overflow: 'hidden', flexShrink: 0 }}>
+                  <div style={{ width: 50, height: 50, borderRadius: '50%', background: 'linear-gradient(135deg,#F0B90B,#3B7BFF)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 24px rgba(240,185,11,0.3)', overflow: 'hidden', flexShrink: 0 }}>
                     {pfpUrl ? <img src={pfpUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} crossOrigin="anonymous" /> : <BeanLogo size={28} />}
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                     <span style={{ fontWeight: 800, fontSize: 26, letterSpacing: '-0.02em' }}>
-                      <span style={{ color: '#fff' }}>BE</span><span style={{ color: '#0052FF' }}>AN</span><span style={{ color: '#fff' }}>.</span>
+                      <span style={{ color: '#fff' }}>BE</span><span style={{ color: '#F0B90B' }}>AN</span><span style={{ color: '#fff' }}>.</span>
                     </span>
                     {username && <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', fontFamily: "'Space Mono', monospace" }}>@{username}</span>}
                   </div>
@@ -237,7 +237,7 @@ function PnlCard({ round, pfpUrl, username, onClose, ethPriceUsd }: { round: Rou
                   {heroText}{round.isBeanpot && <span style={{ fontSize: 'clamp(28px,4vw,48px)', marginLeft: 12, opacity: 0.8 }}>BEAN</span>}
                 </div>
                 <div style={{ fontSize: 17, fontWeight: 600, fontFamily: "'Space Mono', monospace", color: sub }}>
-                  {round.isBeanpot ? `+${round.netPnl.toFixed(4)} ETH profit` : `${round.netPnl >= 0 ? '+' : ''}${round.netPnl.toFixed(4)} ETH`}
+                  {round.isBeanpot ? `+${round.netPnl.toFixed(4)} BNB profit` : `${round.netPnl >= 0 ? '+' : ''}${round.netPnl.toFixed(4)} BNB`}
                 </div>
                 {ethPriceUsd > 0 && (
                   <div style={{ fontSize: 13, fontWeight: 500, fontFamily: "'Space Mono', monospace", color: 'rgba(255,255,255,0.35)' }}>
@@ -359,12 +359,12 @@ export default function ProfilePage() {
     return () => window.removeEventListener('resize', check)
   }, [])
 
-  // ETH price for USD display on PnL cards
+  // BNB price for USD display on PnL cards
   const [ethPriceUsd, setEthPriceUsd] = useState(0)
   useEffect(() => {
     const fetchEthPrice = async () => {
       try {
-        const res = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=ETHUSDT')
+        const res = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BNBUSDT')
         const data = await res.json()
         if (data.price) setEthPriceUsd(parseFloat(data.price))
       } catch {}
@@ -647,7 +647,7 @@ export default function ProfilePage() {
     editBtn: { background: 'transparent', border: 'none', color: '#999', cursor: 'pointer', padding: 4, display: 'flex', alignItems: 'center' } as React.CSSProperties,
     row: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' } as React.CSSProperties,
     input: { flex: 1, background: 'transparent', border: '1px solid #444', borderRadius: 8, padding: '10px 12px', color: '#fff', fontSize: 14, fontFamily: 'inherit', outline: 'none' } as React.CSSProperties,
-    saveBtn: { background: '#0052FF', border: 'none', color: '#fff', fontWeight: 600, padding: '10px 16px', borderRadius: 8, cursor: 'pointer', fontSize: 13, whiteSpace: 'nowrap' as const } as React.CSSProperties,
+    saveBtn: { background: '#F0B90B', border: 'none', color: '#fff', fontWeight: 600, padding: '10px 16px', borderRadius: 8, cursor: 'pointer', fontSize: 13, whiteSpace: 'nowrap' as const } as React.CSSProperties,
     divider: { height: 1, background: 'rgba(255,255,255,0.04)', margin: '4px 0' } as React.CSSProperties,
   }
 
@@ -675,7 +675,7 @@ export default function ProfilePage() {
         /* ── Not connected ─────────────────────────────────────── */
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 24, padding: '48px 56px', maxWidth: 380, textAlign: 'center' }}>
-            <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'rgba(0,82,255,0.1)', border: '1px solid rgba(0,82,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 40px rgba(0,82,255,0.15)' }}>
+            <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'rgba(240,185,11,0.1)', border: '1px solid rgba(240,185,11,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 40px rgba(240,185,11,0.15)' }}>
               <BeanLogo size={32} />
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -701,7 +701,7 @@ export default function ProfilePage() {
               >
                 {bannerUrl
                   ? <img src={bannerUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  : <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, rgba(0,82,255,0.18) 0%, rgba(59,123,255,0.05) 60%, rgba(0,0,0,0) 100%)' }} />
+                  : <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, rgba(240,185,11,0.18) 0%, rgba(59,123,255,0.05) 60%, rgba(0,0,0,0) 100%)' }} />
                 }
                 <div className="banner-ov" style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0, transition: 'opacity 0.15s', pointerEvents: 'none' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#fff', fontSize: 12, fontWeight: 600 }}>
@@ -718,7 +718,7 @@ export default function ProfilePage() {
                   onClick={() => fileInputRef.current?.click()}
                   onMouseEnter={() => setPfpHovered(true)}
                   onMouseLeave={() => setPfpHovered(false)}
-                  style={{ position: 'relative', width: 76, height: 76, borderRadius: '50%', cursor: 'pointer', overflow: 'hidden', border: '3px solid #080910', boxShadow: '0 0 0 1px rgba(0,82,255,0.3), 0 8px 24px rgba(0,0,0,0.5)' }}>
+                  style={{ position: 'relative', width: 76, height: 76, borderRadius: '50%', cursor: 'pointer', overflow: 'hidden', border: '3px solid #080910', boxShadow: '0 0 0 1px rgba(240,185,11,0.3), 0 8px 24px rgba(0,0,0,0.5)' }}>
                   {pfpUrl
                     ? <img src={pfpUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     : <div style={{ width: '100%', height: '100%', background: 'rgba(255,255,255,0.04)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -772,7 +772,7 @@ export default function ProfilePage() {
                 <div style={s.row}>
                   <span style={{ ...s.fieldVal, fontFamily: 'monospace' }}>{truncatedAddress}</span>
                   <button onClick={() => { navigator.clipboard.writeText(address!); setCopied(true); setTimeout(() => setCopied(false), 2000) }} style={s.editBtn}>
-                    {copied ? <CheckIcon color="#0052FF" /> : <CopyIcon />}
+                    {copied ? <CheckIcon color="#F0B90B" /> : <CopyIcon />}
                   </button>
                 </div>
               </div>
@@ -829,9 +829,9 @@ export default function ProfilePage() {
               <h3 style={{ fontSize: 16, fontWeight: 600, color: '#fff', margin: '0 0 10px' }}>Portfolio</h3>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '7px 0' }}>
-                <span style={{ fontSize: 14, color: '#bbb' }}>ETH Balance</span>
+                <span style={{ fontSize: 14, color: '#bbb' }}>BNB Balance</span>
                 <span style={{ fontSize: 14, color: '#fff', fontFamily: 'monospace', display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <img src="https://imagedelivery.net/GyRgSdgDhHz2WNR4fvaN-Q/f9461cf2-aacc-4c59-8b9d-59ade3c46c00/public" alt="ETH" style={{ width: 16, height: 16 }} />
+                  <img src="https://imagedelivery.net/GyRgSdgDhHz2WNR4fvaN-Q/f9461cf2-aacc-4c59-8b9d-59ade3c46c00/public" alt="BNB" style={{ width: 16, height: 16 }} />
                   {ethBalance ? (Number(ethBalance.value) / 10 ** ethBalance.decimals).toFixed(4) : '0.0000'}
                 </span>
               </div>
@@ -875,7 +875,7 @@ export default function ProfilePage() {
                   </div>
                   {!isMobile && <div style={{ textAlign: 'right' }}>
                     <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', marginBottom: 4 }}>Total P&amp;L</div>
-                    <div style={{ fontSize: 22, fontWeight: 700, color: '#fff' }}>{totalPnl >= 0 ? '+' : ''}{totalPnl.toFixed(4)} ETH</div>
+                    <div style={{ fontSize: 22, fontWeight: 700, color: '#fff' }}>{totalPnl >= 0 ? '+' : ''}{totalPnl.toFixed(4)} BNB</div>
                   </div>}
                 </div>
               </div>
@@ -966,12 +966,12 @@ export default function ProfilePage() {
                 type="range" min="1" max="4" step="0.01"
                 value={cropState.scale}
                 onChange={e => setCropState(s => s ? { ...s, scale: parseFloat(e.target.value) } : s)}
-                style={{ flex: 1, accentColor: '#0052FF' }}
+                style={{ flex: 1, accentColor: '#F0B90B' }}
               />
             </div>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
               <button onClick={() => setCropState(null)} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.6)', padding: '10px 20px', borderRadius: 10, cursor: 'pointer', fontSize: 14 }}>Cancel</button>
-              <button onClick={confirmCrop} style={{ background: '#0052FF', border: 'none', color: '#fff', padding: '10px 24px', borderRadius: 10, cursor: 'pointer', fontSize: 14, fontWeight: 600 }}>Apply</button>
+              <button onClick={confirmCrop} style={{ background: '#F0B90B', border: 'none', color: '#fff', padding: '10px 24px', borderRadius: 10, cursor: 'pointer', fontSize: 14, fontWeight: 600 }}>Apply</button>
             </div>
           </div>
         </div>

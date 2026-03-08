@@ -111,18 +111,16 @@ describe('Header', () => {
 
     render(<Header />)
 
-    // ETH price is fetched but no longer displayed in the header (removed during Base migration).
-    // Verify fetch was called with the updated Binance API URL for ETH.
+    // BNB price is fetched but no longer displayed in the header.
+    // Verify fetch was called with the Binance API URL for BNB.
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith('https://api.binance.com/api/v3/ticker/price?symbol=ETHUSDT')
+      expect(global.fetch).toHaveBeenCalledWith('https://api.binance.com/api/v3/ticker/price?symbol=BNBUSDT')
     })
   })
 
   it('fetches BEAN price from DexScreener', async () => {
     const mockDexScreenerResponse = {
-      pair: {
-        priceUsd: '0.0275'
-      }
+      pairs: [{ priceUsd: '0.0275', liquidity: { usd: 1000 } }]
     }
 
     ;(global.fetch as any).mockImplementation((url: string) => {
@@ -133,7 +131,7 @@ describe('Header', () => {
       }
       // Binance fallback
       return Promise.resolve({
-        json: () => Promise.resolve({ price: '580.00' })
+        json: () => Promise.resolve({ price: '600.00' })
       })
     })
 
@@ -141,16 +139,19 @@ describe('Header', () => {
 
     // Wait for BEANS price to be fetched and displayed
     await waitFor(() => {
-      expect(screen.getByText(/0\.0275/)).toBeInTheDocument()
+      expect(screen.getByText(/0\.03/)).toBeInTheDocument()
     }, { timeout: 3000 })
 
-    // Verify fetch was called with DexScreener API
-    expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('api.dexscreener.com/latest/dex/pairs/base/'))
+    // Verify fetch was called with DexScreener tokens API
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining('api.dexscreener.com/latest/dex/tokens/'),
+      expect.anything()
+    )
   })
 
   it('shows price values when loaded', async () => {
     const mockBinanceResponse = { price: '600.00' }
-    const mockDexScreenerResponse = { pair: { priceUsd: '0.0300' } }
+    const mockDexScreenerResponse = { pairs: [{ priceUsd: '0.0300', liquidity: { usd: 1000 } }] }
 
     ;(global.fetch as any).mockImplementation((url: string) => {
       if (url.includes('binance.com')) {
@@ -168,12 +169,12 @@ describe('Header', () => {
 
     render(<Header />)
 
-    // Only BEAN price is displayed in the header (ETH price tag removed during Base migration)
+    // BEAN price is displayed in the header
     await waitFor(() => {
-      expect(screen.getByText(/0\.0300/)).toBeInTheDocument()
+      expect(screen.getByText(/0\.03/)).toBeInTheDocument()
     }, { timeout: 3000 })
 
-    // Check for BEAN price label (ETH label no longer rendered)
+    // Check for BEAN price label
     expect(screen.getByText('BEAN')).toBeInTheDocument()
   })
 
@@ -182,9 +183,11 @@ describe('Header', () => {
 
     render(<Header />)
 
-    // Only BEAN fallback price is displayed (ETH price tag removed during Base migration)
+    // Fallback shows '--' for BEAN price on error
     await waitFor(() => {
-      expect(screen.getByText(/0\.0264/)).toBeInTheDocument()
+      const priceValues = document.querySelectorAll('span')
+      const dashSpan = Array.from(priceValues).find(s => s.textContent === '--')
+      expect(dashSpan).toBeTruthy()
     }, { timeout: 3000 })
   })
 
@@ -252,7 +255,7 @@ describe('Header', () => {
       }
       if (url.includes('dexscreener.com')) {
         return Promise.resolve({
-          json: () => Promise.resolve({ pair: { priceUsd: '0.0264' } })
+          json: () => Promise.resolve({ pairs: [{ priceUsd: '0.0264', liquidity: { usd: 1000 } }] })
         })
       }
       return Promise.reject(new Error('Unknown API'))
@@ -260,7 +263,7 @@ describe('Header', () => {
 
     render(<Header isMobile={false} />)
 
-    // Only BEAN price tag is displayed (ETH price tag removed during Base migration)
+    // BEAN price tag is displayed
     await waitFor(() => {
       const beanLogos = screen.getAllByTestId('bean-logo')
       expect(beanLogos.length).toBeGreaterThan(0)
@@ -268,7 +271,7 @@ describe('Header', () => {
     })
   })
 
-  it('updates ETH price on interval', async () => {
+  it('updates BNB price on interval', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true })
 
     let binanceCallCount = 0
@@ -280,13 +283,13 @@ describe('Header', () => {
         })
       }
       return Promise.resolve({
-        json: () => Promise.resolve({ pair: { priceUsd: '0.0264' } })
+        json: () => Promise.resolve({ pairs: [{ priceUsd: '0.0264', liquidity: { usd: 1000 } }] })
       })
     })
 
     render(<Header isMobile={false} />)
 
-    // ETH price is fetched but no longer displayed in the header (removed during Base migration).
+    // BNB price is fetched via Binance API.
     // Verify the fetch interval works by checking call count.
     await waitFor(() => {
       expect(binanceCallCount).toBeGreaterThanOrEqual(1)
@@ -315,12 +318,14 @@ describe('Header', () => {
     ;(global.fetch as any).mockImplementation((url: string) => {
       if (url.includes('dexscreener.com')) {
         callCount++
+        // Use values that are distinguishable after .toFixed(2)
+        const prices = ['1.11', '2.22', '3.33']
         return Promise.resolve({
-          json: () => Promise.resolve({ pair: { priceUsd: `0.0${260 + callCount}` } })
+          json: () => Promise.resolve({ pairs: [{ priceUsd: prices[callCount - 1] || '1.00', liquidity: { usd: 1000 } }] })
         })
       }
       return Promise.resolve({
-        json: () => Promise.resolve({ price: '580.00' })
+        json: () => Promise.resolve({ price: '600.00' })
       })
     })
 
@@ -328,7 +333,7 @@ describe('Header', () => {
 
     // Wait for initial fetch to complete
     await waitFor(() => {
-      expect(screen.getByText(/0\.0261/)).toBeInTheDocument()
+      expect(screen.getByText(/1\.11/)).toBeInTheDocument()
     })
 
     // Advance timers by 30 seconds and flush promises
@@ -337,9 +342,9 @@ describe('Header', () => {
       await new Promise(resolve => setTimeout(resolve, 0))
     })
 
-    // Second fetch should happen
+    // Second fetch should happen with updated price
     await waitFor(() => {
-      expect(screen.getByText(/0\.0262/)).toBeInTheDocument()
+      expect(screen.getByText(/2\.22/)).toBeInTheDocument()
     })
 
     vi.useRealTimers()

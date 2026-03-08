@@ -143,7 +143,7 @@ describe('RevenueTable', () => {
     }
   })
 
-  it('row links to BaseScan via txHash', async () => {
+  it('row links to BscScan via txHash', async () => {
     mockApiFetch.mockResolvedValue(mockBuybacksResponse)
     const windowOpenSpy = vi.spyOn(window, 'open').mockImplementation(() => null)
 

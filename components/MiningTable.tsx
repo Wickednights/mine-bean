@@ -46,10 +46,10 @@ interface RoundsResponse {
     }
 }
 
-const EthIcon = () => (
+const BnbIcon = () => (
     <img
         src="https://imagedelivery.net/GyRgSdgDhHz2WNR4fvaN-Q/f9461cf2-aacc-4c59-8b9d-59ade3c46c00/public"
-        alt="ETH"
+        alt="BNB"
         style={{ width: 16, height: 16, objectFit: "contain" as const }}
     />
 )
@@ -273,19 +273,19 @@ export default function MiningTable() {
                                 <td style={styles.tdCenter}>{round.winners}</td>
                                 <td style={styles.tdRight}>
                                     <span style={styles.valueWithIcon}>
-                                        <EthIcon />
+                                        <BnbIcon />
                                         {round.deployed.toFixed(4)}
                                     </span>
                                 </td>
                                 <td style={styles.tdRight}>
                                     <span style={styles.valueWithIcon}>
-                                        <EthIcon />
+                                        <BnbIcon />
                                         {round.vaulted.toFixed(4)}
                                     </span>
                                 </td>
                                 <td style={styles.tdRight}>
                                     <span style={styles.valueWithIcon}>
-                                        <EthIcon />
+                                        <BnbIcon />
                                         {round.winnings.toFixed(4)}
                                     </span>
                                 </td>

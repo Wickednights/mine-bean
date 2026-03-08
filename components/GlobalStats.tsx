@@ -109,7 +109,7 @@ export default function GlobalStats({
                                 {stat.iconType === "eth" && (
                                     <img
                                         src="https://imagedelivery.net/GyRgSdgDhHz2WNR4fvaN-Q/f9461cf2-aacc-4c59-8b9d-59ade3c46c00/public"
-                                        alt="ETH"
+                                        alt="BNB"
                                         style={styles.mobileIcon}
                                     />
                                 )}
@@ -140,8 +140,8 @@ export default function GlobalStats({
                             {stat.iconType === "eth" && (
                                 <img
                                     src="https://imagedelivery.net/GyRgSdgDhHz2WNR4fvaN-Q/f9461cf2-aacc-4c59-8b9d-59ade3c46c00/public"
-                                    alt="ETH"
-                                    style={styles.ethIcon}
+                                    alt="BNB"
+                                    style={styles.bnbIcon}
                                 />
                             )}
                             <span>{stat.value}</span>
@@ -197,7 +197,7 @@ const styles: { [key: string]: React.CSSProperties } = {
         color: "#fff",
         marginBottom: "10px",
     },
-    ethIcon: {
+    bnbIcon: {
         width: "22px",
         height: "22px",
         objectFit: "contain" as const,

@@ -32,9 +32,9 @@ export const CONTRACTS = {
 
 // Below values are used by frontend validations to avoid users submitting tx's that will revert due to contract limits.
 // Make sure they reflect the true contract values.
-export const MIN_DEPLOY_PER_BLOCK = 0.0000025 // ETH
+export const MIN_DEPLOY_PER_BLOCK = 0.0000025 // BNB
 export const EXECUTOR_FEE_BPS = 100 // 1% AutoMiner executor fee
-export const EXECUTOR_FLAT_FEE = 0.000006 // ETH per round — fee floor for AutoMiner
+export const EXECUTOR_FLAT_FEE = 0.000006 // BNB per round — fee floor for AutoMiner
 
 // ERC-8021 Builder Code attribution suffix (bc_rudgiazu)
 export const BUILDER_CODE_SUFFIX = '0x62635f7275646769617a750b0080218021802180218021802180218021' as `0x${string}`

@@ -40,7 +40,7 @@ a {
 
 /* Selection styling */
 ::selection {
-  background: rgba(0, 82, 255, 0.3);
+  background: rgba(240, 185, 11, 0.3);
   color: #fff;
 }
 
@@ -134,8 +134,8 @@ input[type="number"] {
 }
 
 [data-rk] button[data-testid="rk-connect-button"]:hover {
-  border-color: #0052FF !important;
-  background: rgba(0, 82, 255, 0.1) !important;
+  border-color: #F0B90B !important;
+  background: rgba(240, 185, 11, 0.1) !important;
 }
 
 /* Connected wallet button styling */
@@ -201,9 +201,9 @@ body::before {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
   background: 
-    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(0, 82, 255, 0.25), transparent),
-    radial-gradient(ellipse 60% 40% at 80% 60%, rgba(59, 130, 246, 0.15), transparent),
-    radial-gradient(ellipse 50% 50% at 20% 80%, rgba(0, 82, 255, 0.06), transparent);
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(240, 185, 11, 0.15), transparent),
+    radial-gradient(ellipse 60% 40% at 80% 60%, rgba(240, 185, 11, 0.08), transparent),
+    radial-gradient(ellipse 50% 50% at 20% 80%, rgba(240, 185, 11, 0.04), transparent);
   pointer-events: none;
   z-index: 0;
 }

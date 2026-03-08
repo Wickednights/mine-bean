@@ -535,7 +535,7 @@ const styles: { [key: string]: React.CSSProperties } = {
         outline: "none",
     },
     cellSelected: {
-        border: "2px solid rgba(0, 82, 255, 0.7)", background: "rgba(0, 82, 255, 0.12)", boxShadow: "0 0 24px rgba(0, 82, 255, 0.25), inset 0 0 24px rgba(0, 82, 255, 0.08)",
+        border: "2px solid rgba(240, 185, 11, 0.7)", background: "rgba(240, 185, 11, 0.12)", boxShadow: "0 0 24px rgba(240, 185, 11, 0.25), inset 0 0 24px rgba(240, 185, 11, 0.08)",
     },
     cellDeployed: {
         background: "rgba(34, 197, 94, 0.10)",

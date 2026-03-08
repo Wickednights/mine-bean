@@ -46,14 +46,14 @@ export default function HelpButton() {
             {/* Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(0,82,255,0.15)', border: '1px solid rgba(0,82,255,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(0,82,255,0.9)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(240,185,11,0.15)', border: '1px solid rgba(240,185,11,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(240,185,11,0.9)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                     <rect x="4" y="8" width="16" height="12" rx="2"/>
-                    <circle cx="9" cy="13" r="1.5" fill="rgba(0,82,255,0.9)" stroke="none"/>
-                    <circle cx="15" cy="13" r="1.5" fill="rgba(0,82,255,0.9)" stroke="none"/>
+                    <circle cx="9" cy="13" r="1.5" fill="rgba(240,185,11,0.9)" stroke="none"/>
+                    <circle cx="15" cy="13" r="1.5" fill="rgba(240,185,11,0.9)" stroke="none"/>
                     <path d="M9 17h6"/>
                     <path d="M12 8V5"/>
-                    <circle cx="12" cy="4" r="1.5" fill="rgba(0,82,255,0.9)" stroke="none"/>
+                    <circle cx="12" cy="4" r="1.5" fill="rgba(240,185,11,0.9)" stroke="none"/>
                     <path d="M4 12H2M22 12h-2"/>
                   </svg>
                 </div>
@@ -74,10 +74,10 @@ export default function HelpButton() {
                 <div style={{ flex: 1, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, padding: '10px 14px', fontFamily: 'monospace', fontSize: 13, color: 'rgba(255,255,255,0.7)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {skillUrl}
                 </div>
-                <button onClick={handleCopy} style={{ flexShrink: 0, width: 40, height: 40, borderRadius: 10, background: copied ? 'rgba(0,200,83,0.15)' : 'rgba(0,82,255,0.15)', border: copied ? '1px solid rgba(0,200,83,0.3)' : '1px solid rgba(0,82,255,0.3)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }}>
+                <button onClick={handleCopy} style={{ flexShrink: 0, width: 40, height: 40, borderRadius: 10, background: copied ? 'rgba(0,200,83,0.15)' : 'rgba(240,185,11,0.15)', border: copied ? '1px solid rgba(0,200,83,0.3)' : '1px solid rgba(240,185,11,0.3)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }}>
                   {copied
                     ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(0,200,83,0.9)" strokeWidth="2"><path d="M20 6L9 17l-5-5"/></svg>
-                    : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(0,82,255,0.9)" strokeWidth="1.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                    : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(240,185,11,0.9)" strokeWidth="1.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                   }
                 </button>
               </div>
@@ -87,10 +87,10 @@ export default function HelpButton() {
             <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: '16px 18px', marginBottom: 16 }}>
               <div style={{ fontSize: 13, fontWeight: 600, color: '#fff', marginBottom: 12 }}>Once deployed, your agent can:</div>
               {[
-                'Pick blocks and deploy ETH every round without you lifting a finger',
+                'Pick blocks and deploy BNB every round without you lifting a finger',
                 'Run any strategy — conservative, degen, spread across blocks, and more',
                 'React to round outcomes and refine its approach over time',
-                'Accumulate ETH winnings and BEAN rewards autonomously',
+                'Accumulate BNB winnings and BEAN rewards autonomously',
               ].map((item, i) => (
                 <div key={i} style={{ display: 'flex', gap: 8, marginBottom: i < 3 ? 8 : 0 }}>
                   <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: 13, flexShrink: 0 }}>—</span>
@@ -100,9 +100,9 @@ export default function HelpButton() {
             </div>
 
             {/* View skill file */}
-            <a href={skillUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', padding: '13px', background: 'rgba(0,82,255,0.18)', border: '1px solid rgba(0,82,255,0.35)', borderRadius: 12, color: '#fff', fontSize: 14, fontWeight: 600, textDecoration: 'none', transition: 'background 0.15s' }}
-              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(0,82,255,0.28)')}
-              onMouseLeave={e => (e.currentTarget.style.background = 'rgba(0,82,255,0.18)')}>
+            <a href={skillUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', padding: '13px', background: 'rgba(240,185,11,0.18)', border: '1px solid rgba(240,185,11,0.35)', borderRadius: 12, color: '#fff', fontSize: 14, fontWeight: 600, textDecoration: 'none', transition: 'background 0.15s' }}
+              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(240,185,11,0.28)')}
+              onMouseLeave={e => (e.currentTarget.style.background = 'rgba(240,185,11,0.18)')}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/></svg>
               Open Agent Docs
             </a>
@@ -113,15 +113,15 @@ export default function HelpButton() {
       {/* Bot button */}
       <button onClick={() => setShowAgentModal(true)} style={{
         width: isMobile ? 28 : 36, height: isMobile ? 28 : 36, borderRadius: '50%',
-        background: 'rgba(0,82,255,0.1)',
-        border: '1px solid rgba(0,82,255,0.25)',
-        color: 'rgba(0,82,255,0.8)', cursor: 'pointer',
+        background: 'rgba(240,185,11,0.1)',
+        border: '1px solid rgba(240,185,11,0.25)',
+        color: 'rgba(240,185,11,0.8)', cursor: 'pointer',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         transition: 'all 0.15s',
         backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
       }}
-        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,82,255,0.2)'; e.currentTarget.style.borderColor = 'rgba(0,82,255,0.5)' }}
-        onMouseLeave={e => { e.currentTarget.style.background = 'rgba(0,82,255,0.1)'; e.currentTarget.style.borderColor = 'rgba(0,82,255,0.25)' }}>
+        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(240,185,11,0.2)'; e.currentTarget.style.borderColor = 'rgba(240,185,11,0.5)' }}
+        onMouseLeave={e => { e.currentTarget.style.background = 'rgba(240,185,11,0.1)'; e.currentTarget.style.borderColor = 'rgba(240,185,11,0.25)' }}>
         <svg width={isMobile ? 13 : 16} height={isMobile ? 13 : 16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
           <rect x="4" y="8" width="16" height="12" rx="2"/>
           <circle cx="9" cy="13" r="1.5" fill="currentColor" stroke="none"/>
@@ -146,7 +146,7 @@ export default function HelpButton() {
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
             </button>
           </div>
-          <a href="https://discord.gg/M4RrY4jE8p" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 16px', color: 'rgba(255,255,255,0.7)', fontSize: 13, fontWeight: 500, textDecoration: 'none', transition: 'background 0.15s' }}
+          <a href="#" title="Coming Soon" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 16px', color: 'rgba(255,255,255,0.7)', fontSize: 13, fontWeight: 500, textDecoration: 'none', transition: 'background 0.15s' }}
             onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.04)')}
             onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
@@ -182,7 +182,7 @@ export default function HelpButton() {
               }
               {muted ? 'Unmute Sounds' : 'Mute Sounds'}
             </div>
-            <div style={{ width: 32, height: 18, borderRadius: 9, background: muted ? 'rgba(255,255,255,0.1)' : 'rgba(0,82,255,0.6)', border: '1px solid rgba(255,255,255,0.1)', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
+            <div style={{ width: 32, height: 18, borderRadius: 9, background: muted ? 'rgba(255,255,255,0.1)' : 'rgba(240,185,11,0.6)', border: '1px solid rgba(255,255,255,0.1)', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
               <div style={{ position: 'absolute', top: 2, left: muted ? 2 : 14, width: 12, height: 12, borderRadius: '50%', background: '#fff', transition: 'left 0.2s' }} />
             </div>
           </div>
@@ -200,21 +200,21 @@ export default function HelpButton() {
             <video src="https://customer-9u3b1kxg6ai5dy2s.cloudflarestream.com/d59092db5733750b3a5e22c3810922c1/downloads/default.mp4" controls style={{ width: '100%', borderRadius: 12, marginBottom: 24, outline: 'none' }} />
             {[
             { num: '01', title: 'Pick Your Blocks', desc: 'Each round, select one or more blocks on the 5×5 grid. You can only deploy once per round so choose carefully.' },
-              { num: '02', title: 'Deploy ETH', desc: 'Set your ETH amount per block and hit Deploy. The more ETH you deploy to a block, the larger your share of winnings if it wins.' },
-              { num: '03', title: 'Wait for the Winner', desc: 'Every 60 seconds, one block is randomly selected as the winner. All ETH deployed to that block splits the round pot proportionally.' },
+              { num: '02', title: 'Deploy BNB', desc: 'Set your BNB amount per block and hit Deploy. The more BNB you deploy to a block, the larger your share of winnings if it wins.' },
+              { num: '03', title: 'Wait for the Winner', desc: 'Every 60 seconds, one block is randomly selected as the winner. All BNB deployed to that block splits the round pot proportionally.' },
               { num: '04', title: 'Earn BEAN', desc: 'The top miner on the winning block earns BEAN tokens each round. Stake BEAN to earn a share of protocol revenue.' },
               { num: '05', title: 'Hit the Beanpot', desc: 'A portion of every round feeds the Beanpot jackpot. Win it and earn a share of the accumulated jackpot on top of your normal winnings.' },
-              { num: '06', title: 'Auto Mine', desc: 'Enable Auto mode to set a strategy and deposit ETH. The protocol deploys automatically every round on your behalf.' },
+              { num: '06', title: 'Auto Mine', desc: 'Enable Auto mode to set a strategy and deposit BNB. The protocol deploys automatically every round on your behalf.' },
             ].map(({ num, title, desc }) => (
               <div key={num} style={{ display: 'flex', gap: 16, marginBottom: 20 }}>
-                <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(0,82,255,0.6)', fontFamily: 'monospace', minWidth: 24, marginTop: 2 }}>{num}</span>
+                <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(240,185,11,0.6)', fontFamily: 'monospace', minWidth: 24, marginTop: 2 }}>{num}</span>
                 <div>
                   <div style={{ fontSize: 13, fontWeight: 600, color: '#fff', marginBottom: 4 }}>{title}</div>
                   <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', lineHeight: 1.6 }}>{desc}</div>
                 </div>
               </div>
             ))}
-            <button onClick={() => setShowHowTo(false)} style={{ width: '100%', marginTop: 8, padding: '12px', background: 'rgba(0,82,255,0.15)', border: '1px solid rgba(0,82,255,0.3)', borderRadius: 10, color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Got it</button>
+            <button onClick={() => setShowHowTo(false)} style={{ width: '100%', marginTop: 8, padding: '12px', background: 'rgba(240,185,11,0.15)', border: '1px solid rgba(240,185,11,0.3)', borderRadius: 10, color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Got it</button>
           </div>
         </div>
       )}

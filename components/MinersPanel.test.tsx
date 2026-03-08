@@ -127,7 +127,7 @@ describe('MinersPanel', () => {
     })
   })
 
-  it('displays miner addresses and ETH rewards', async () => {
+  it('displays miner addresses and BNB rewards', async () => {
     mockApiFetch.mockResolvedValue(mockMinersResponse)
 
     render(<MinersPanel />)

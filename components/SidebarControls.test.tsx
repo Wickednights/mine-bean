@@ -78,6 +78,11 @@ describe('SidebarControls', () => {
     vi.clearAllMocks()
     mockApiFetch.mockReset()
 
+    // Mock global fetch for Binance price API
+    global.fetch = vi.fn().mockResolvedValue({
+      json: () => Promise.resolve({ price: '600.00' }),
+    }) as any
+
     // Reset timer mock
     mockTimerValue.timeRemaining = 45
     mockTimerValue.endTime = Math.floor(Date.now() / 1000) + 45
