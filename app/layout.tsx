@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   title: 'MineBean',
   description: 'Decentralized mining protocol on Base',
   icons: {
-    icon: '/favicon.svg',
+    icon: '/favicon.png',
   },
 }
 
