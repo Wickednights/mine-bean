@@ -35,6 +35,7 @@ interface HistoryTotals {
   totalBEANWonFormatted: string
   totalETHDeployedFormatted: string
   totalPNL: string
+  beanPriceEth: string
   roundsPlayed: number
   roundsWon: number
 }
@@ -90,21 +91,24 @@ function decodeBlockMask(mask: string): number[] {
   return blocks
 }
 
-function entryToRound(entry: DeployEntry): Round {
+function entryToRound(entry: DeployEntry, beanPriceEth: number): Round {
   const deployed = parseFloat(entry.totalAmount) / 1e18
-  const pnl = parseFloat(entry.roundResult.pnl) || 0
-  const pctChange = deployed > 0 ? Math.round((pnl / deployed) * 10000) / 100 : 0
+  const ethPnl = parseFloat(entry.roundResult.pnl) || 0
+  const beansEarned = parseFloat(entry.roundResult.beanWonFormatted) || 0
+  const beanValueEth = beansEarned * beanPriceEth
+  const truePnl = ethPnl + beanValueEth
+  const pctChange = deployed > 0 ? Math.round((truePnl / deployed) * 10000) / 100 : 0
   return {
     id: entry.roundId,
     block: entry.roundResult.winningBlock + 1,
     yourBlocks: decodeBlockMask(entry.blockMask).map(b => b + 1),
     deployed,
     won: parseFloat(entry.roundResult.ethWonFormatted) || 0,
-    netPnl: pnl,
+    netPnl: truePnl,
     pctChange,
-    beansEarned: parseFloat(entry.roundResult.beanWonFormatted) || 0,
-    beanpotAmount: entry.roundResult.beanpotHit ? parseFloat(entry.roundResult.beanWonFormatted) || 0 : null,
-    isWin: entry.roundResult.wonWinningBlock,
+    beansEarned,
+    beanpotAmount: entry.roundResult.beanpotHit ? beansEarned : null,
+    isWin: decodeBlockMask(entry.blockMask).includes(entry.roundResult.winningBlock),
     isBeanpot: entry.roundResult.beanpotHit,
     timestamp: getRelativeTime(entry.timestamp),
   }
@@ -146,7 +150,7 @@ const DownloadIcon = () => (
 
 // ── PnL Card Modal ────────────────────────────────────────
 
-function PnlCard({ round, pfpUrl, username, onClose }: { round: Round; pfpUrl: string | null; username: string; onClose: () => void }) {
+function PnlCard({ round, pfpUrl, username, onClose, ethPriceUsd }: { round: Round; pfpUrl: string | null; username: string; onClose: () => void; ethPriceUsd: number }) {
   const cardRef = useRef<HTMLDivElement>(null)
   const [downloading, setDownloading] = useState(false)
 
@@ -235,6 +239,11 @@ function PnlCard({ round, pfpUrl, username, onClose }: { round: Round; pfpUrl: s
                 <div style={{ fontSize: 17, fontWeight: 600, fontFamily: "'Space Mono', monospace", color: sub }}>
                   {round.isBeanpot ? `+${round.netPnl.toFixed(4)} ETH profit` : `${round.netPnl >= 0 ? '+' : ''}${round.netPnl.toFixed(4)} ETH`}
                 </div>
+                {ethPriceUsd > 0 && (
+                  <div style={{ fontSize: 13, fontWeight: 500, fontFamily: "'Space Mono', monospace", color: 'rgba(255,255,255,0.35)' }}>
+                    {round.netPnl >= 0 ? '+' : ''}{`$${(round.netPnl * ethPriceUsd).toFixed(2)} USD`}
+                  </div>
+                )}
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
@@ -348,6 +357,21 @@ export default function ProfilePage() {
     check()
     window.addEventListener('resize', check)
     return () => window.removeEventListener('resize', check)
+  }, [])
+
+  // ETH price for USD display on PnL cards
+  const [ethPriceUsd, setEthPriceUsd] = useState(0)
+  useEffect(() => {
+    const fetchEthPrice = async () => {
+      try {
+        const res = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=ETHUSDT')
+        const data = await res.json()
+        if (data.price) setEthPriceUsd(parseFloat(data.price))
+      } catch {}
+    }
+    fetchEthPrice()
+    const interval = setInterval(fetchEthPrice, 30000)
+    return () => clearInterval(interval)
   }, [])
 
   // On-chain balances
@@ -605,7 +629,8 @@ export default function ProfilePage() {
   const total = portfolio.wallet + portfolio.staked + portfolio.roasted + portfolio.unroasted
 
   // Round history stats (from backend totals)
-  const rounds = deployHistory.map(entryToRound)
+  const beanPriceEth = historyTotals ? parseFloat(historyTotals.beanPriceEth) || 0 : 0
+  const rounds = deployHistory.map(e => entryToRound(e, beanPriceEth))
   const totalPnl = historyTotals ? parseFloat(historyTotals.totalPNL) || 0 : 0
   const totalBean = historyTotals ? parseFloat(historyTotals.totalBEANWonFormatted) || 0 : 0
   const winRate = historyTotals && historyTotals.roundsPlayed > 0
@@ -916,6 +941,7 @@ export default function ProfilePage() {
           pfpUrl={pfpUrl}
           username={username}
           onClose={() => setExpandedRound(null)}
+          ethPriceUsd={ethPriceUsd}
         />
       )}
 

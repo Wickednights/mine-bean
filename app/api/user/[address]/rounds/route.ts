@@ -40,6 +40,10 @@ export async function GET(_req: Request, { params }: { params: { address: string
     // Deduplicate round IDs, most recent first
     const roundIds = Array.from(new Set(history.map(h => Number(h.roundId)))).slice(0, 100)
 
+    // 1b. Fetch BEAN price in ETH from history totals
+    const priceRes = await fetch(`${API_BASE}/api/user/${address}/history?type=deploy&limit=1`).then(r => r.ok ? r.json() : null).catch(() => null)
+    const beanPriceEth = priceRes?.totals?.beanPriceEth ? parseFloat(priceRes.totals.beanPriceEth) : 0
+
     // 2. Fetch per-round miners + round data in parallel for each round ID
     //    Fetching individually avoids the 200-round pagination limit on the bulk endpoint
     const roundResults = await Promise.all(
@@ -78,7 +82,9 @@ export async function GET(_req: Request, { params }: { params: { address: string
       )
       const won = userMiner ? Number(userMiner.ethReward) / 1e18 : 0
       const beansEarned = userMiner ? Number(userMiner.beanReward) / 1e18 : 0
-      const netPnl = won - deployed
+      const ethPnl = won - deployed
+      const beanValueEth = beansEarned * beanPriceEth
+      const netPnl = ethPnl + beanValueEth
       const pctChange = deployed > 0 ? Math.round((netPnl / deployed) * 100) : -100
 
       const ts = roundData?.settledAt || roundData?.endTime || ''
