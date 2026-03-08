@@ -5,9 +5,26 @@ import './globals.css'
 
 export const metadata: Metadata = {
   title: 'MineBean',
-  description: 'Decentralized mining protocol on BNB Smart Chain',
+  description: 'Gamified mining protocol on BNB Smart Chain. Compete in 60-second rounds, deploy BNB on a 5×5 grid, and earn BNBEAN tokens.',
   icons: {
-    icon: '/favicon.png',
+    icon: '/favicon.svg',
+  },
+  openGraph: {
+    title: 'MineBean — Mine. Win. Earn.',
+    description: 'Gamified mining protocol on BNB Smart Chain. Compete in 60-second rounds, deploy BNB on a 5×5 grid, and earn BNBEAN tokens.',
+    url: 'https://minebean.io',
+    siteName: 'MineBean',
+    type: 'website',
+    images: ['/opengraph-image'],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'MineBean — Mine. Win. Earn.',
+    description: 'Gamified mining protocol on BNB Smart Chain. Compete in 60-second rounds, deploy BNB on a 5×5 grid, and earn BNBEAN tokens.',
+    images: ['/opengraph-image'],
+  },
+  other: {
+    'telegram:channel': '@minebean',
   },
 }
 

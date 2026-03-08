@@ -216,7 +216,7 @@ function PnlCard({ round, pfpUrl, username, onClose, ethPriceUsd }: { round: Rou
             <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', flex: 1 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                  <div style={{ width: 50, height: 50, borderRadius: '50%', background: 'linear-gradient(135deg,#F0B90B,#3B7BFF)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 24px rgba(240,185,11,0.3)', overflow: 'hidden', flexShrink: 0 }}>
+                  <div style={{ width: 50, height: 50, borderRadius: '50%', background: 'linear-gradient(135deg,#F0B90B,#E0A800)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 24px rgba(240,185,11,0.3)', overflow: 'hidden', flexShrink: 0 }}>
                     {pfpUrl ? <img src={pfpUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} crossOrigin="anonymous" /> : <BeanLogo size={28} />}
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -251,7 +251,7 @@ function PnlCard({ round, pfpUrl, username, onClose, ethPriceUsd }: { round: Rou
                   {([
                     ['Deployed', `Ξ ${round.deployed.toFixed(4)}`, '#fff'],
                     ['Won', `Ξ ${round.won.toFixed(4)}`, round.isWin ? '#00C853' : '#FF4444'],
-                    ...(round.beansEarned > 0 ? [[round.isBeanpot ? 'Beanpot' : 'BEAN', `${round.beansEarned.toFixed(3)}`, round.isBeanpot ? '#FFD700' : '#3B7BFF']] : []),
+                    ...(round.beansEarned > 0 ? [[round.isBeanpot ? 'Beanpot' : 'BEAN', `${round.beansEarned.toFixed(3)}`, round.isBeanpot ? '#FFD700' : '#F0B90B']] : []),
                   ] as [string, string, string][]).map(([label, val, c], i) => (
                     <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                       <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase' as const, letterSpacing: 1 }}>{label}</span>
@@ -275,7 +275,7 @@ function PnlCard({ round, pfpUrl, username, onClose, ethPriceUsd }: { round: Rou
               ] as [string, string][]).map(([label, value], i) => (
                 <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
                   <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)' }}>{label}</span>
-                  <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, fontWeight: 700, color: label === 'Won' ? (round.isWin ? '#00C853' : '#FF4444') : label === 'Beanpot' ? '#FFD700' : label === 'BEAN' ? '#3B7BFF' : '#fff' }}>{value}</span>
+                  <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, fontWeight: 700, color: label === 'Won' ? (round.isWin ? '#00C853' : '#FF4444') : label === 'Beanpot' ? '#FFD700' : label === 'BEAN' ? '#F0B90B' : '#fff' }}>{value}</span>
                 </div>
               ))}
               {/* Your Picks — stacked with wrapping chips */}
