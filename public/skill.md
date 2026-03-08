@@ -1,8 +1,8 @@
-# BEAN — Agent Skill (Base Mainnet)
+# BEAN — Agent Skill (BSC Mainnet)
 
-> **Chain:** Base (8453)
-> **App:** https://minebean.com
-> **API:** https://api.minebean.com
+> **Chain:** BNB Smart Chain (56)
+> **App:** https://minebean.io
+> **API:** https://api.minebean.io
 > **Objective:** Deploy ETH to a 5×5 grid in 60-second rounds. Chainlink VRF picks a winning block. Winners split the pool. Earn ETH + BEAN rewards. Stake BEAN for yield.
 
 ---
@@ -25,7 +25,7 @@ All amounts are in wei (18 decimals) unless noted. Use `ethers.parseEther()` / `
 
 | Constant             | Value                     | Note                                                    |
 |----------------------|---------------------------|---------------------------------------------------------|
-| ROUND_DURATION       | 60 seconds                | Based on `block.timestamp` (~2s blocks on Base)         |
+| ROUND_DURATION       | 60 seconds                | Based on `block.timestamp` (~3s blocks on BSC)         |
 | GRID_SIZE            | 25 (5×5)                  | Block IDs 0–24                                          |
 | MIN_DEPLOY           | 0.0000025 ETH per block   | Minimum ETH per block in a deploy                       |
 | MAX_SUPPLY           | 3,000,000 BEAN            | Hard cap — minting stops when exhausted                 |
@@ -120,7 +120,7 @@ BEAN claims: 10% fee on mined BEAN → roasting bonus for unclaimed holders
 
 ## REST API
 
-Base URL: `https://api.minebean.com`
+Base URL: `https://api.minebean.io`
 
 ### Round State
 
@@ -412,7 +412,7 @@ Rounds are 60 seconds (based on `block.timestamp`, which may drift ~2s from wall
 | | Manual | AutoMiner |
 |---|---|---|
 | Control | Full (choose blocks, amount, timing each round) | Strategy preset (random/all/select) |
-| Cost | Gas per deploy (~$0.001 on Base) | Executor fee: max(flatFee, %) per round + upfront deposit |
+| Cost | Gas per deploy (~$0.03 on BSC) | Executor fee: max(flatFee, %) per round + upfront deposit |
 | Upside | React to grid state in real-time | Hands-off, runs N rounds automatically |
 | Best for | Active play, reactive strategy | Passive play, guaranteed participation |
 
@@ -461,7 +461,7 @@ Rounds are 60 seconds (based on `block.timestamp`, which may drift ~2s from wall
 2. **Minimum deploy**: 0.0000025 ETH per block. Transaction reverts below this.
 3. **Approve before staking**: Call `Bean.approve(stakingAddress, amount)` before `Staking.deposit()`.
 4. **Roasting fee**: 10% on mined BEAN only. Roasted bonus (from others' fees) is untaxed.
-5. **Block timestamps**: Round timing uses `block.timestamp`, not wall clock. Base ~2s block times cause minor drift.
+5. **Block timestamps**: Round timing uses `block.timestamp`, not wall clock. BSC ~3s block times cause minor drift.
 6. **Beanpot conditions**: Only accumulates AND can trigger when winning block has at least 1 miner.
 7. **Empty rounds**: Zero deployments = instant settle, no VRF, no BEAN, no beanpot growth.
 8. **Checkpoint auto-trigger**: `deploy()`, `claimETH()`, `claimBEAN()` all checkpoint your previous round automatically.

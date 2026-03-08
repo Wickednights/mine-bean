@@ -568,7 +568,7 @@ async function startIndexer() {
     });
   });
 
-  console.log('[Indexer] Listening to contract events on Base mainnet');
+  console.log('[Indexer] Listening to contract events on BSC mainnet');
 }
 
 module.exports = { startIndexer };

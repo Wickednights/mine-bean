@@ -19,7 +19,7 @@ let contracts = {};
 
 function getProvider() {
   if (!provider) {
-    provider = new ethers.JsonRpcProvider(process.env.RPC_URL || 'https://mainnet.base.org');
+    provider = new ethers.JsonRpcProvider(process.env.RPC_URL || 'https://bsc-dataseed.binance.org');
   }
   return provider;
 }

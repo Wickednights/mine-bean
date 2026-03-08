@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://api.minebean.com'
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://api.minebean.io'
 
 // blockMask is a uint32 bitmask where bit N = block N was deployed (0-indexed, 0-24)
 function decodeBlockMask(mask: string): number[] {

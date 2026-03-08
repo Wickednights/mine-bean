@@ -10,7 +10,7 @@ export default function HelpButton() {
   const [showAgentModal, setShowAgentModal] = useState(false)
   const [copied, setCopied] = useState(false)
 
-  const skillUrl = 'https://www.minebean.com/skill.md'
+  const skillUrl = 'https://www.minebean.io/skill.md'
 
   function handleCopy() {
     navigator.clipboard.writeText(skillUrl)
