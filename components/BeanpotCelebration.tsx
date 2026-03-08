@@ -140,7 +140,7 @@ export default function BeanpotCelebration() {
     playCelebrationSound()
 
     const gold = ['#FFD700', '#FFA500', '#FFE066', '#ffffff']
-    const blue = ['#F0B90B', '#3B7BFF', '#6aa3ff', '#ffffff']
+    const blue = ['#F0B90B', '#E0A800', '#FFD54F', '#ffffff']
     const mix = [...gold, ...blue]
 
     for (let i = 0; i < 10; i++) {
