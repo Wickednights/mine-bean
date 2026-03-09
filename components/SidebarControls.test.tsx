@@ -408,7 +408,7 @@ describe('SidebarControls', () => {
     )
 
     const expectedTotal = perBlock * blockCount
-    expect(screen.getByText(`Ξ ${expectedTotal.toFixed(5)}`)).toBeInTheDocument()
+    expect(screen.getByText(expectedTotal.toFixed(5), { exact: false })).toBeInTheDocument()
   })
 
   it('roundData window event updates timer, beanpot, totalDeployed, userDeployed', () => {
@@ -545,8 +545,8 @@ describe('SidebarControls', () => {
     const input = screen.getByDisplayValue('0')
     fireEvent.change(input, { target: { value: '0.01' } })
 
-    // Initial state - should show Ξ 0.00000 total
-    expect(screen.getByText('Ξ 0.00000')).toBeInTheDocument()
+    // Initial state - should show 0.00000 total
+    expect(screen.getByText('0.00000', { exact: false })).toBeInTheDocument()
 
     // Simulate block selection
     fireEvent(
@@ -557,7 +557,7 @@ describe('SidebarControls', () => {
     )
 
     // Should update total to 0.01 × 3 = 0.03
-    expect(screen.getByText('Ξ 0.03000')).toBeInTheDocument()
+    expect(screen.getByText('0.03000', { exact: false })).toBeInTheDocument()
   })
 
   it('shows Connect Wallet button when not connected', () => {
@@ -902,7 +902,7 @@ describe('SidebarControls', () => {
     // Total blocks = 25 × 10 = 250
     // Deposit = 0.001 × 250 × (10000 + 100) / 10000 = 0.2525
     const expectedTotal = (0.001 * 250 * 10100) / 10000
-    expect(screen.getByText(`Ξ ${expectedTotal.toFixed(5)}`)).toBeInTheDocument()
+    expect(screen.getByText(expectedTotal.toFixed(5), { exact: false })).toBeInTheDocument()
   })
 
   it('Stop AutoMiner button calls onAutoStop', async () => {

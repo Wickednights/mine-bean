@@ -84,7 +84,7 @@ export default function GlobalStats({
                 ? data.protocolRevenue.toLocaleString(undefined, { minimumFractionDigits: 4, maximumFractionDigits: 4 })
                 : "—",
             label: "Protocol Revenue",
-            iconType: "eth",
+            iconType: "bnb",
         },
     ]
 
@@ -106,7 +106,7 @@ export default function GlobalStats({
                         <div key={index} style={styles.mobileStatBox}>
                             <div style={styles.mobileStatValue}>
                                 {stat.iconType === "beans" && <BeanLogo size={14} />}
-                                {stat.iconType === "eth" && (
+                                {stat.iconType === "bnb" && (
                                     <img
                                         src="https://imagedelivery.net/GyRgSdgDhHz2WNR4fvaN-Q/f9461cf2-aacc-4c59-8b9d-59ade3c46c00/public"
                                         alt="BNB"
@@ -137,7 +137,7 @@ export default function GlobalStats({
                     <div key={index} style={styles.statBox}>
                         <div style={styles.statValue}>
                             {stat.iconType === "beans" && <BeanLogo size={20} />}
-                            {stat.iconType === "eth" && (
+                            {stat.iconType === "bnb" && (
                                 <img
                                     src="https://imagedelivery.net/GyRgSdgDhHz2WNR4fvaN-Q/f9461cf2-aacc-4c59-8b9d-59ade3c46c00/public"
                                     alt="BNB"
