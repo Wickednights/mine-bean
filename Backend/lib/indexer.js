@@ -1,5 +1,5 @@
 const { ethers } = require('ethers');
-const { getContracts, getProvider, ADDRESSES } = require('../lib/contracts');
+const { getContracts, getProvider, getWsProvider, ADDRESSES } = require('../lib/contracts');
 const { formatEth } = require('../lib/format');
 const { emitGlobal, emitToUser } = require('../lib/sse');
 const cache = require('../lib/cache');
@@ -22,16 +22,17 @@ async function startIndexer() {
   started = true;
 
   const provider = getProvider();
+  const eventProvider = getWsProvider();
 
-  // Reconnecting provider wrapper
-  provider.on('error', (err) => {
-    console.error('[Indexer] Provider error:', err.message);
+  eventProvider.on('error', (err) => {
+    console.error('[Indexer] Event provider error:', err.message);
   });
 
-  const GridMining = new ethers.Contract(ADDRESSES.GridMining, GridMiningABI, provider);
-  const AutoMiner = new ethers.Contract(ADDRESSES.AutoMiner, AutoMinerABI, provider);
-  const Treasury = new ethers.Contract(ADDRESSES.Treasury, TreasuryABI, provider);
-  const Staking = new ethers.Contract(ADDRESSES.Staking, StakingABI, provider);
+  // Use WebSocket provider for event listening to avoid filter expiry errors
+  const GridMining = new ethers.Contract(ADDRESSES.GridMining, GridMiningABI, eventProvider);
+  const AutoMiner = new ethers.Contract(ADDRESSES.AutoMiner, AutoMinerABI, eventProvider);
+  const Treasury = new ethers.Contract(ADDRESSES.Treasury, TreasuryABI, eventProvider);
+  const Staking = new ethers.Contract(ADDRESSES.Staking, StakingABI, eventProvider);
 
   // ─── GridMining Events ───────────────────────────────────────────────────
 
@@ -568,7 +569,8 @@ async function startIndexer() {
     });
   });
 
-  console.log('[Indexer] Listening to contract events on BSC mainnet');
+  const isWs = eventProvider !== provider;
+  console.log(`[Indexer] Listening to contract events via ${isWs ? 'WebSocket' : 'HTTP polling'}`);
 }
 
 module.exports = { startIndexer };

@@ -15,6 +15,7 @@ const ADDRESSES = {
 };
 
 let provider;
+let wsProvider;
 let contracts = {};
 
 function getProvider() {
@@ -22,6 +23,27 @@ function getProvider() {
     provider = new ethers.JsonRpcProvider(process.env.RPC_URL || 'https://bsc-dataseed.binance.org');
   }
   return provider;
+}
+
+// WebSocket provider for event listening (avoids eth_newFilter/eth_getFilterChanges expiry)
+function getWsProvider() {
+  if (!wsProvider) {
+    const wsUrl = process.env.WS_URL || (process.env.RPC_URL || '').replace(/^https?:\/\//, 'wss://');
+    if (!wsUrl || !wsUrl.startsWith('wss://')) {
+      console.warn('[Contracts] No WS_URL and cannot derive WSS from RPC_URL — falling back to HTTP polling for events');
+      return getProvider();
+    }
+    wsProvider = new ethers.WebSocketProvider(wsUrl);
+    wsProvider.websocket.on('close', () => {
+      console.warn('[Contracts] WebSocket closed, reconnecting in 5s...');
+      wsProvider = null;
+      setTimeout(() => getWsProvider(), 5000);
+    });
+    wsProvider.websocket.on('error', (err) => {
+      console.error('[Contracts] WebSocket error:', err.message);
+    });
+  }
+  return wsProvider;
 }
 
 function getContracts() {
@@ -38,4 +60,4 @@ function getContracts() {
   return contracts;
 }
 
-module.exports = { ADDRESSES, getProvider, getContracts };
+module.exports = { ADDRESSES, getProvider, getWsProvider, getContracts };
