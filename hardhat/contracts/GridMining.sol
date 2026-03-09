@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.26;
 
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@chainlink/contracts/src/v0.8/vrf/dev/VRFConsumerBaseV2Plus.sol";
+import "@chainlink/contracts/src/v0.8/vrf/dev/libraries/VRFV2PlusClient.sol";
 
 /**
  * @title GridMining
@@ -10,7 +12,7 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
  *         Miners deploy BNB to blocks; winning block splits the pot proportionally.
  *         1 BEAN minted per round to top miner (or split among winners).
  */
-contract GridMining is ReentrancyGuard {
+contract GridMining is ReentrancyGuard, VRFConsumerBaseV2Plus {
     // ─── Constants ─────────────────────────────────────────────
     uint256 public constant GRID_SIZE = 25;
     uint256 public constant ROUND_DURATION = 60;
@@ -73,13 +75,10 @@ contract GridMining is ReentrancyGuard {
     // External contracts
     IBean public bean;
     address public autoMiner;
-    address public treasury;
+    ITreasury public treasury;
     address public feeCollector;
-    address public owner;
-    address private _pendingOwner;
 
-    // VRF (Chainlink-compatible)
-    address public s_vrfCoordinator;
+    // VRF (Chainlink VRFConsumerBaseV2Plus)
     uint256 public vrfSubscriptionId;
     bytes32 public vrfKeyHash;
     uint32 public vrfCallbackGasLimit;
@@ -89,7 +88,8 @@ contract GridMining is ReentrancyGuard {
     uint256 public maxMinersForSingleWinner = 50;
 
     // ─── Errors ────────────────────────────────────────────────
-    error ZeroAddress();
+    // Note: ZeroAddress, OnlyCoordinatorCanFulfill, OnlyOwnerOrCoordinator
+    // are inherited from VRFConsumerBaseV2Plus
     error GameNotStarted();
     error GameAlreadyStarted();
     error RoundNotActive();
@@ -111,10 +111,10 @@ contract GridMining is ReentrancyGuard {
     error EmergencyTooEarly();
     error MinimumThresholdTooLow();
     error InvalidBeanpotAccumulation();
-    error OnlyCoordinatorCanFulfill();
-    error OnlyOwnerOrCoordinator();
 
     // ─── Events ────────────────────────────────────────────────
+    // Note: OwnershipTransferRequested, OwnershipTransferred, CoordinatorSet
+    // are inherited from VRFConsumerBaseV2Plus / ConfirmedOwnerWithProposal
     event GameStarted(uint64 indexed roundId, uint256 startTime, uint256 endTime);
     event Deployed(uint64 indexed roundId, address indexed user, uint256 amountPerBlock, uint256 blockMask, uint256 totalAmount);
     event DeployedFor(uint64 indexed roundId, address indexed user, address indexed executor, uint256 amountPerBlock, uint256 blockMask, uint256 totalAmount);
@@ -126,15 +126,8 @@ contract GridMining is ReentrancyGuard {
     event AutoMinerUpdated(address indexed oldAutoMiner, address indexed newAutoMiner);
     event BeanpotAccumulationUpdated(uint256 oldValue, uint256 newValue);
     event EmergencyVRFRequested(uint64 indexed roundId, uint256 oldRequestId, uint256 newRequestId);
-    event OwnershipTransferRequested(address indexed from, address indexed to);
-    event OwnershipTransferred(address indexed from, address indexed to);
 
     // ─── Modifiers ─────────────────────────────────────────────
-
-    modifier onlyOwner() {
-        require(msg.sender == owner, "Not owner");
-        _;
-    }
 
     modifier onlyAutoMiner() {
         if (msg.sender != autoMiner) revert NotAutoMiner();
@@ -143,11 +136,16 @@ contract GridMining is ReentrancyGuard {
 
     // ─── Constructor ───────────────────────────────────────────
 
-    constructor(address _bean, address _vrfCoordinator) {
-        if (_bean == address(0) || _vrfCoordinator == address(0)) revert ZeroAddress();
+    constructor(
+        address _vrfCoordinator,
+        address _bean,
+        address _treasury,
+        address _feeCollector
+    ) VRFConsumerBaseV2Plus(_vrfCoordinator) {
+        if (_bean == address(0)) revert ZeroAddress();
         bean = IBean(_bean);
-        s_vrfCoordinator = _vrfCoordinator;
-        owner = msg.sender;
+        if (_treasury != address(0)) treasury = ITreasury(_treasury);
+        feeCollector = _feeCollector;
     }
 
     // ─── Core Game Logic ───────────────────────────────────────
@@ -227,15 +225,20 @@ contract GridMining is ReentrancyGuard {
         }
 
         // Request VRF
-        if (s_vrfCoordinator == address(0)) revert VRFNotConfigured();
+        if (address(s_vrfCoordinator) == address(0)) revert VRFNotConfigured();
         if (round.vrfRequestId != 0) revert VRFAlreadyRequested();
 
-        uint256 requestId = IVRFCoordinator(s_vrfCoordinator).requestRandomWords(
-            vrfKeyHash,
-            vrfSubscriptionId,
-            vrfRequestConfirmations,
-            vrfCallbackGasLimit,
-            vrfNumWords
+        uint256 requestId = s_vrfCoordinator.requestRandomWords(
+            VRFV2PlusClient.RandomWordsRequest({
+                keyHash: vrfKeyHash,
+                subId: vrfSubscriptionId,
+                requestConfirmations: vrfRequestConfirmations,
+                callbackGasLimit: vrfCallbackGasLimit,
+                numWords: vrfNumWords,
+                extraArgs: VRFV2PlusClient._argsToBytes(
+                    VRFV2PlusClient.ExtraArgsV1({nativePayment: false})
+                )
+            })
         );
 
         round.vrfRequestId = requestId;
@@ -243,8 +246,7 @@ contract GridMining is ReentrancyGuard {
         emit ResetRequested(roundId, requestId);
     }
 
-    function rawFulfillRandomWords(uint256 requestId, uint256[] memory randomWords) external {
-        if (msg.sender != s_vrfCoordinator) revert OnlyCoordinatorCanFulfill();
+    function fulfillRandomWords(uint256 requestId, uint256[] calldata randomWords) internal override {
         uint64 roundId = vrfRequestToRound[requestId];
         if (roundId == 0) revert InvalidVRFRequest();
 
@@ -262,8 +264,8 @@ contract GridMining is ReentrancyGuard {
         uint256 totalWinnings = round.totalDeployed - vaultAmount;
 
         // Send vault fee to treasury
-        if (treasury != address(0) && vaultAmount > 0) {
-            ITreasury(treasury).receiveVault{value: vaultAmount}();
+        if (address(treasury) != address(0) && vaultAmount > 0) {
+            treasury.receiveVault{value: vaultAmount}();
         }
 
         // Beanpot logic
@@ -469,7 +471,7 @@ contract GridMining is ReentrancyGuard {
 
     function setTreasury(address _treasury) external onlyOwner {
         if (_treasury == address(0)) revert ZeroAddress();
-        treasury = _treasury;
+        treasury = ITreasury(_treasury);
     }
 
     function setFeeCollector(address _feeCollector) external onlyOwner {
@@ -499,43 +501,32 @@ contract GridMining is ReentrancyGuard {
         vrfRequestConfirmations = _requestConfirmations;
     }
 
-    function setCoordinator(address _vrfCoordinator) external onlyOwner {
-        s_vrfCoordinator = _vrfCoordinator;
-    }
-
     function emergencyResetVRF() external onlyOwner {
         uint64 roundId = currentRoundId;
         Round storage round = rounds[roundId];
         if (round.vrfRequestId == 0) revert VRFNotConfigured();
-        // Must wait at least 30 blocks
+        // Must wait at least 15 minutes
         if (block.timestamp < round.endTime + 900) revert EmergencyTooEarly();
 
         uint256 oldRequestId = round.vrfRequestId;
         round.vrfRequestId = 0;
 
-        uint256 newRequestId = IVRFCoordinator(s_vrfCoordinator).requestRandomWords(
-            vrfKeyHash, vrfSubscriptionId, vrfRequestConfirmations,
-            vrfCallbackGasLimit, vrfNumWords
+        uint256 newRequestId = s_vrfCoordinator.requestRandomWords(
+            VRFV2PlusClient.RandomWordsRequest({
+                keyHash: vrfKeyHash,
+                subId: vrfSubscriptionId,
+                requestConfirmations: vrfRequestConfirmations,
+                callbackGasLimit: vrfCallbackGasLimit,
+                numWords: vrfNumWords,
+                extraArgs: VRFV2PlusClient._argsToBytes(
+                    VRFV2PlusClient.ExtraArgsV1({nativePayment: false})
+                )
+            })
         );
         round.vrfRequestId = newRequestId;
         vrfRequestToRound[newRequestId] = roundId;
 
         emit EmergencyVRFRequested(roundId, oldRequestId, newRequestId);
-    }
-
-    // ─── Ownership (2-step) ────────────────────────────────────
-
-    function transferOwnership(address to) external onlyOwner {
-        if (to == address(0)) revert ZeroAddress();
-        _pendingOwner = to;
-        emit OwnershipTransferRequested(owner, to);
-    }
-
-    function acceptOwnership() external {
-        require(msg.sender == _pendingOwner, "Not pending owner");
-        emit OwnershipTransferred(owner, msg.sender);
-        owner = msg.sender;
-        _pendingOwner = address(0);
     }
 
     receive() external payable {}
@@ -551,11 +542,4 @@ interface IBean {
 
 interface ITreasury {
     function receiveVault() external payable;
-}
-
-interface IVRFCoordinator {
-    function requestRandomWords(
-        bytes32 keyHash, uint256 subId, uint16 requestConfirmations,
-        uint32 callbackGasLimit, uint32 numWords
-    ) external returns (uint256 requestId);
 }

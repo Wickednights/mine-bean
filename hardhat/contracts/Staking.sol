@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.26;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
@@ -69,9 +69,10 @@ contract Staking is Ownable, ReentrancyGuard {
 
     // ─── Constructor ───────────────────────────────────────────
 
-    constructor(address _bean) Ownable(msg.sender) {
+    constructor(address _bean, address _treasury) Ownable(msg.sender) {
         if (_bean == address(0)) revert ZeroAddress();
         bean = IERC20(_bean);
+        if (_treasury != address(0)) treasury = _treasury;
     }
 
     // ─── Core Staking ──────────────────────────────────────────
