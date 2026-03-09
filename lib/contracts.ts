@@ -6,26 +6,26 @@ import StakingABI from './abis/Staking.json'
 
 export const CONTRACTS = {
   GridMining: {
-    address: '0x9632495bDb93FD6B0740Ab69cc6c71C9c01da4f0' as `0x${string}`,
+    address: '0x2988C22746A6388B0F967Dac676616e08C5AC1aa' as `0x${string}`,
     abi: GridMiningABI,
   },
   Bean: {
-    address: '0x5c72992b83E74c4D5200A8E8920fB946214a5A5D' as `0x${string}`,
+    address: '0xBfA0F620C0C7BD02Aa6138eB505F4B74Dd1aFD03' as `0x${string}`,
     abi: BeanABI,
   },
   AutoMiner: {
-    address: '0x31358496900D600B2f523d6EdC4933E78F72De89' as `0x${string}`,
+    address: '0xe848b866DDeDD459cEE73311Cde1C8570f3Dc898' as `0x${string}`,
     abi: AutoMinerABI,
   },
   Treasury: {
-    address: '0x38F6E74148D6904286131e190d879A699fE3Aeb3' as `0x${string}`,
+    address: '0x8b02C2Fe3831f1B10362Cc11017E55BFf58fD25c' as `0x${string}`,
     abi: TreasuryABI,
   },
   LP: {
     address: '0xd7e5522c9cc3682c960afada6adde0f8116580f2ad2cef08c197faf625e53842' as `0x${string}`,
   },
   Staking: {
-    address: '0xfe177128Df8d336cAf99F787b72183D1E68Ff9c2' as `0x${string}`,
+    address: '0x49811966b9224a5655c54310f2231EA54C105b77' as `0x${string}`,
     abi: StakingABI,
   },
 } as const
