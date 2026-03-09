@@ -454,7 +454,7 @@ const handleSelectClick = () => {
                         <div style={styles.balanceRow}>
                             <div style={styles.balanceLeft}>
                                 <WalletIcon />
-                                <span style={styles.balanceAmount}>Ξ {userBalance.toFixed(5)}</span>
+                                <span style={styles.balanceAmount}><BnbLogo size={14} /> {userBalance.toFixed(5)}</span>
                             </div>
                             <div style={styles.quickAmounts}>
                                 <button style={styles.quickBtn} onClick={() => handleQuickAmount(1)}>+1</button>
@@ -512,7 +512,7 @@ const handleSelectClick = () => {
 
                         <div style={styles.totalRow}>
                             <span style={styles.rowLabel}>Total</span>
-                            <span style={styles.totalValue}>Ξ {manualTotal.toFixed(5)}</span>
+                            <span style={styles.totalValue}><BnbLogo size={14} /> {manualTotal.toFixed(5)}</span>
                         </div>
 
                         {isConnected ? (
@@ -540,7 +540,7 @@ const handleSelectClick = () => {
                         <div style={styles.balanceRow}>
                             <div style={styles.balanceLeft}>
                                 <WalletIcon />
-                                <span style={styles.balanceAmount}>Ξ {userBalance.toFixed(5)}</span>
+                                <span style={styles.balanceAmount}><BnbLogo size={14} /> {userBalance.toFixed(5)}</span>
                             </div>
                             <div style={styles.quickAmounts}>
                                 <button style={styles.quickBtn} onClick={() => handleQuickAmount(1)}>+1</button>
@@ -646,12 +646,12 @@ const handleSelectClick = () => {
 
                         <div style={styles.row}>
                             <span style={styles.rowLabel}>Per round</span>
-                            <span style={styles.totalValue}>Ξ {autoPerRound.toFixed(5)}</span>
+                            <span style={styles.totalValue}><BnbLogo size={14} /> {autoPerRound.toFixed(5)}</span>
                         </div>
 
                         <div style={styles.totalRow}>
                             <span style={styles.rowLabel}>Total deposit</span>
-                            <span style={styles.totalValue}>Ξ {autoTotalDeposit.toFixed(5)}</span>
+                            <span style={styles.totalValue}><BnbLogo size={14} /> {autoTotalDeposit.toFixed(5)}</span>
                         </div>
 
                         {isConnected ? (
@@ -683,7 +683,7 @@ const handleSelectClick = () => {
 
                         <div style={styles.activeRow}>
                             <span style={styles.rowLabel}>Balance</span>
-                            <span style={styles.totalValue}>Ξ {parseFloat(autoMinerState.totalRefundableFormatted).toFixed(5)}</span>
+                            <span style={styles.totalValue}><BnbLogo size={14} /> {parseFloat(autoMinerState.totalRefundableFormatted).toFixed(5)}</span>
                         </div>
 
                         <div style={styles.activeRow}>
@@ -695,7 +695,7 @@ const handleSelectClick = () => {
 
                         <div style={styles.activeRow}>
                             <span style={styles.rowLabel}>Per round</span>
-                            <span style={styles.totalValue}>Ξ {parseFloat(autoMinerState.costPerRoundFormatted).toFixed(5)}</span>
+                            <span style={styles.totalValue}><BnbLogo size={14} /> {parseFloat(autoMinerState.costPerRoundFormatted).toFixed(5)}</span>
                         </div>
 
                         <div style={styles.activeRow}>
@@ -707,7 +707,7 @@ const handleSelectClick = () => {
 
                         <div style={{ ...styles.totalRow, borderTop: "1px solid #222" }}>
                             <span style={styles.rowLabel}>Per block</span>
-                            <span style={styles.totalValue}>Ξ {parseFloat(autoMinerState.amountPerBlockFormatted).toFixed(5)}</span>
+                            <span style={styles.totalValue}><BnbLogo size={14} /> {parseFloat(autoMinerState.amountPerBlockFormatted).toFixed(5)}</span>
                         </div>
 
                         <button

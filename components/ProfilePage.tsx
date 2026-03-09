@@ -249,8 +249,8 @@ function PnlCard({ round, pfpUrl, username, onClose, ethPriceUsd }: { round: Rou
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
                 <div style={{ display: 'flex', gap: 36 }}>
                   {([
-                    ['Deployed', `Ξ ${round.deployed.toFixed(4)}`, '#fff'],
-                    ['Won', `Ξ ${round.won.toFixed(4)}`, round.isWin ? '#00C853' : '#FF4444'],
+                    ['Deployed', `${round.deployed.toFixed(4)}`, '#fff'],
+                    ['Won', `${round.won.toFixed(4)}`, round.isWin ? '#00C853' : '#FF4444'],
                     ...(round.beansEarned > 0 ? [[round.isBeanpot ? 'Beanpot' : 'BEAN', `${round.beansEarned.toFixed(3)}`, round.isBeanpot ? '#FFD700' : '#F0B90B']] : []),
                   ] as [string, string, string][]).map(([label, val, c], i) => (
                     <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -269,8 +269,8 @@ function PnlCard({ round, pfpUrl, username, onClose, ethPriceUsd }: { round: Rou
               {([
                 ['Round', `#${round.id}`],
                 ['Winner', `Block #${round.block}`],
-                ['Deployed', `Ξ ${round.deployed.toFixed(4)}`],
-                ['Won', `Ξ ${round.won.toFixed(4)}`],
+                ['Deployed', `${round.deployed.toFixed(4)}`],
+                ['Won', `${round.won.toFixed(4)}`],
                 ...(round.beansEarned > 0 ? [[round.isBeanpot ? 'Beanpot' : 'BEAN', `${round.beansEarned.toFixed(3)}`]] : []),
               ] as [string, string][]).map(([label, value], i) => (
                 <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
@@ -909,8 +909,8 @@ export default function ProfilePage() {
                       <div style={{ fontSize: 11, color: round.isBeanpot ? 'rgba(255,215,0,0.45)' : 'rgba(255,255,255,0.25)', marginTop: 2 }}>{round.timestamp}</div>
                     </div>
                   </div>
-                  {!isMobile && <div style={{ textAlign: 'right', fontSize: 14, color: '#fff' }}>Ξ {round.deployed.toFixed(4)}</div>}
-                  {!isMobile && <div style={{ textAlign: 'right', fontSize: 14, color: round.won > 0 ? '#fff' : 'rgba(255,255,255,0.2)' }}>{round.won > 0 ? `Ξ ${round.won.toFixed(4)}` : '–'}</div>}
+                  {!isMobile && <div style={{ textAlign: 'right', fontSize: 14, color: '#fff' }}>{round.deployed.toFixed(4)}</div>}
+                  {!isMobile && <div style={{ textAlign: 'right', fontSize: 14, color: round.won > 0 ? '#fff' : 'rgba(255,255,255,0.2)' }}>{round.won > 0 ? `${round.won.toFixed(4)}` : '–'}</div>}
                   <div style={{ textAlign: 'right', fontSize: 14, color: round.beansEarned > 0 ? '#fff' : 'rgba(255,255,255,0.2)' }}>{round.beansEarned > 0 ? round.beansEarned.toFixed(3) : '–'}</div>
                   <div style={{ textAlign: 'right' }}>
                     <div style={{ fontSize: 14, fontWeight: 500, color: '#fff' }}>{round.netPnl >= 0 ? '+' : ''}{round.netPnl.toFixed(4)}</div>
