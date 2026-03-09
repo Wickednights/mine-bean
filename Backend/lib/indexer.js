@@ -1,5 +1,5 @@
 const { ethers } = require('ethers');
-const { getContracts, getProvider, getWsProvider, ADDRESSES } = require('../lib/contracts');
+const { getContracts, getProvider, ADDRESSES } = require('../lib/contracts');
 const { formatEth } = require('../lib/format');
 const { emitGlobal, emitToUser } = require('../lib/sse');
 const cache = require('../lib/cache');
@@ -15,6 +15,8 @@ const AutoMinerABI = require('../abis/AutoMiner.json');
 const TreasuryABI = require('../abis/Treasury.json');
 const StakingABI = require('../abis/Staking.json');
 
+const POLL_INTERVAL = 3000; // 3 seconds — matches BSC ~3s block time
+
 let started = false;
 
 async function startIndexer() {
@@ -22,26 +24,32 @@ async function startIndexer() {
   started = true;
 
   const provider = getProvider();
-  const eventProvider = getWsProvider();
 
-  eventProvider.on('error', (err) => {
-    console.error('[Indexer] Event provider error:', err.message);
-  });
+  const GridMining = new ethers.Contract(ADDRESSES.GridMining, GridMiningABI, provider);
+  const AutoMiner = new ethers.Contract(ADDRESSES.AutoMiner, AutoMinerABI, provider);
+  const Treasury = new ethers.Contract(ADDRESSES.Treasury, TreasuryABI, provider);
+  const Staking = new ethers.Contract(ADDRESSES.Staking, StakingABI, provider);
 
-  // Use WebSocket provider for event listening to avoid filter expiry errors
-  const GridMining = new ethers.Contract(ADDRESSES.GridMining, GridMiningABI, eventProvider);
-  const AutoMiner = new ethers.Contract(ADDRESSES.AutoMiner, AutoMinerABI, eventProvider);
-  const Treasury = new ethers.Contract(ADDRESSES.Treasury, TreasuryABI, eventProvider);
-  const Staking = new ethers.Contract(ADDRESSES.Staking, StakingABI, eventProvider);
+  // Read-only GridMining instance for beanpotPool() calls (uses same provider)
+  const GridMiningRead = getContracts().GridMining;
 
-  // ─── GridMining Events ───────────────────────────────────────────────────
+  // Track last processed block
+  let lastBlock = 0;
+  try {
+    lastBlock = await provider.getBlockNumber();
+    console.log(`[Indexer] Starting from block ${lastBlock}`);
+  } catch (err) {
+    console.error('[Indexer] Failed to get initial block number:', err.message);
+  }
 
-  GridMining.on('GameStarted', async (roundId, startTime, endTime, event) => {
+  // ─── Event Handlers ─────────────────────────────────────────────────────
+
+  async function handleGameStarted(event) {
+    const [roundId, startTime, endTime] = event.args;
     const rid = Number(roundId);
     console.log(`[Indexer] GameStarted round=${rid}`);
 
     try {
-      // Upsert round
       await Round.findOneAndUpdate(
         { roundId: rid },
         {
@@ -55,10 +63,9 @@ async function startIndexer() {
         { upsert: true, new: true }
       );
 
-      // Get beanpot pool
       let beanpotPool = BigInt(0);
       try {
-        beanpotPool = await GridMining.beanpotPool();
+        beanpotPool = await GridMiningRead.beanpotPool();
       } catch {}
 
       cache.delete('stats');
@@ -73,28 +80,36 @@ async function startIndexer() {
     } catch (err) {
       console.error('[Indexer] GameStarted error:', err.message);
     }
-  });
+  }
 
-  GridMining.on('Deployed', async (roundId, user, amountPerBlock, blockMask, totalAmount, event) => {
+  async function handleDeployed(event, isAutoMine = false) {
+    const args = event.args;
+    // Deployed: (roundId, user, amountPerBlock, blockMask, totalAmount)
+    // DeployedFor: (roundId, user, executor, amountPerBlock, blockMask, totalAmount)
+    const offset = isAutoMine ? 1 : 0; // DeployedFor has extra executor arg
+    const roundId = args[0];
+    const user = args[1];
+    const amountPerBlock = args[2 + offset];
+    const blockMask = args[3 + offset];
+    const totalAmount = args[4 + offset];
+
     const rid = Number(roundId);
     const userAddr = user.toLowerCase();
     const mask = Number(blockMask);
 
-    // Decode block IDs from mask
     const blockIds = [];
     for (let i = 0; i < 25; i++) {
       if (mask & (1 << i)) blockIds.push(i);
     }
 
-    console.log(`[Indexer] Deployed round=${rid} user=${userAddr} blocks=${blockIds.length}`);
+    console.log(`[Indexer] ${isAutoMine ? 'DeployedFor' : 'Deployed'} round=${rid} user=${userAddr} blocks=${blockIds.length}`);
 
     try {
-      const txReceipt = await event.getTransactionReceipt().catch(() => null);
-      const blockNumber = txReceipt?.blockNumber || event.log?.blockNumber || 0;
-      const logIndex = txReceipt ? event.log?.index || 0 : 0;
+      const blockNumber = event.blockNumber || 0;
+      const logIndex = event.index || 0;
 
       await Deployment.findOneAndUpdate(
-        { txHash: event.log?.transactionHash, roundId: rid, user: userAddr },
+        { txHash: event.transactionHash, roundId: rid, user: userAddr },
         {
           roundId: rid,
           user: userAddr,
@@ -102,8 +117,8 @@ async function startIndexer() {
           totalAmount: totalAmount.toString(),
           blockMask: mask,
           blockIds,
-          isAutoMine: false,
-          txHash: event.log?.transactionHash,
+          isAutoMine,
+          txHash: event.transactionHash,
           blockNumber,
           logIndex,
           timestamp: new Date(),
@@ -111,13 +126,11 @@ async function startIndexer() {
         { upsert: true, new: true }
       );
 
-      // Update round totals
       const round = await Round.findOne({ roundId: rid });
       if (round) {
         const currentTotal = BigInt(round.totalDeployed || '0');
         const newTotal = currentTotal + BigInt(totalAmount);
 
-        // Update per-block data
         const blocks = round.blocks && round.blocks.length === 25
           ? [...round.blocks]
           : Array.from({ length: 25 }, (_, i) => ({ id: i, deployed: '0', minerCount: 0 }));
@@ -136,7 +149,6 @@ async function startIndexer() {
           { totalDeployed: newTotal.toString(), blocks }
         );
 
-        // Get user total for this round
         const userDeps = await Deployment.find({ roundId: rid, user: userAddr });
         const userTotal = userDeps.reduce((s, d) => s + BigInt(d.totalAmount), BigInt(0));
 
@@ -146,7 +158,7 @@ async function startIndexer() {
           roundId: rid,
           user: userAddr,
           totalAmount: totalAmount.toString(),
-          isAutoMine: false,
+          isAutoMine,
           totalDeployed: newTotal.toString(),
           totalDeployedFormatted: formatEth(newTotal),
           userDeployed: userTotal.toString(),
@@ -160,95 +172,13 @@ async function startIndexer() {
         });
       }
     } catch (err) {
-      console.error('[Indexer] Deployed error:', err.message);
+      console.error(`[Indexer] ${isAutoMine ? 'DeployedFor' : 'Deployed'} error:`, err.message);
     }
-  });
+  }
 
-  GridMining.on('DeployedFor', async (roundId, user, executor, amountPerBlock, blockMask, totalAmount, event) => {
-    const rid = Number(roundId);
-    const userAddr = user.toLowerCase();
-    const mask = Number(blockMask);
-
-    const blockIds = [];
-    for (let i = 0; i < 25; i++) {
-      if (mask & (1 << i)) blockIds.push(i);
-    }
-
-    console.log(`[Indexer] DeployedFor round=${rid} user=${userAddr} (auto)`);
-
-    try {
-      const txReceipt = await event.getTransactionReceipt().catch(() => null);
-      const blockNumber = txReceipt?.blockNumber || 0;
-      const logIndex = event.log?.index || 0;
-
-      await Deployment.findOneAndUpdate(
-        { txHash: event.log?.transactionHash, roundId: rid, user: userAddr },
-        {
-          roundId: rid,
-          user: userAddr,
-          amountPerBlock: amountPerBlock.toString(),
-          totalAmount: totalAmount.toString(),
-          blockMask: mask,
-          blockIds,
-          isAutoMine: true,
-          txHash: event.log?.transactionHash,
-          blockNumber,
-          logIndex,
-          timestamp: new Date(),
-        },
-        { upsert: true, new: true }
-      );
-
-      // Update round totals
-      const round = await Round.findOne({ roundId: rid });
-      if (round) {
-        const currentTotal = BigInt(round.totalDeployed || '0');
-        const newTotal = currentTotal + BigInt(totalAmount);
-
-        const blocks = round.blocks && round.blocks.length === 25
-          ? [...round.blocks]
-          : Array.from({ length: 25 }, (_, i) => ({ id: i, deployed: '0', minerCount: 0 }));
-
-        for (const blockId of blockIds) {
-          const existing = BigInt(blocks[blockId]?.deployed || '0');
-          blocks[blockId] = {
-            id: blockId,
-            deployed: (existing + BigInt(amountPerBlock)).toString(),
-            minerCount: (blocks[blockId]?.minerCount || 0) + 1,
-          };
-        }
-
-        await Round.updateOne({ roundId: rid }, { totalDeployed: newTotal.toString(), blocks });
-
-        const userDeps = await Deployment.find({ roundId: rid, user: userAddr });
-        const userTotal = userDeps.reduce((s, d) => s + BigInt(d.totalAmount), BigInt(0));
-
-        emitGlobal('deployed', {
-          roundId: rid,
-          user: userAddr,
-          totalAmount: totalAmount.toString(),
-          isAutoMine: true,
-          totalDeployed: newTotal.toString(),
-          totalDeployedFormatted: formatEth(newTotal),
-          userDeployed: userTotal.toString(),
-          userDeployedFormatted: formatEth(userTotal),
-          blocks: blockIds.map(id => ({
-            id,
-            deployed: blocks[id].deployed,
-            deployedFormatted: formatEth(blocks[id].deployed),
-            minerCount: blocks[id].minerCount,
-          })),
-        });
-      }
-    } catch (err) {
-      console.error('[Indexer] DeployedFor error:', err.message);
-    }
-  });
-
-  GridMining.on('RoundSettled', async (
-    roundId, winningBlock, topMiner, totalWinnings, topMinerReward,
-    beanpotAmount, isSplit, topMinerSeed, winnersDeployed, event
-  ) => {
+  async function handleRoundSettled(event) {
+    const [roundId, winningBlock, topMiner, totalWinnings, topMinerReward,
+      beanpotAmount, isSplit, topMinerSeed, winnersDeployed] = event.args;
     const rid = Number(roundId);
     console.log(`[Indexer] RoundSettled round=${rid} winningBlock=${winningBlock}`);
 
@@ -256,14 +186,12 @@ async function startIndexer() {
       const wBlock = Number(winningBlock);
       const bpAmount = beanpotAmount.toString();
 
-      // Determine beanWinner
       const winnerDeps = await Deployment.find({ roundId: rid }).sort({ blockNumber: 1, logIndex: 1 });
       const winners = winnerDeps.filter(d => d.blockMask & (1 << wBlock));
 
       let beanWinner = topMiner;
       let winnerCount = winners.length;
 
-      // Store in DB
       await Round.findOneAndUpdate(
         { roundId: rid },
         {
@@ -278,13 +206,12 @@ async function startIndexer() {
           isSplit: Boolean(isSplit),
           beanWinner: beanWinner.toLowerCase(),
           winnerCount,
-          txHash: event.log?.transactionHash,
+          txHash: event.transactionHash,
           settledAt: new Date(),
         },
         { upsert: true, new: true }
       );
 
-      // Compute vaulted (10% of totalWinnings goes to treasury)
       const total = BigInt(totalWinnings);
       const vaulted = total / 10n;
       await Round.updateOne({ roundId: rid }, { vaultedAmount: vaulted.toString() });
@@ -304,7 +231,6 @@ async function startIndexer() {
         winnersDeployed: winnersDeployed.toString(),
       });
 
-      // After settlement, emit roundTransition for beanpot celebration
       setTimeout(() => {
         emitGlobal('roundTransition', {
           settled: {
@@ -317,9 +243,10 @@ async function startIndexer() {
     } catch (err) {
       console.error('[Indexer] RoundSettled error:', err.message);
     }
-  });
+  }
 
-  GridMining.on('ClaimedETH', async (user, amount, event) => {
+  async function handleClaimedETH(event) {
+    const [user, amount] = event.args;
     const userAddr = user.toLowerCase();
     console.log(`[Indexer] ClaimedETH user=${userAddr}`);
 
@@ -328,21 +255,22 @@ async function startIndexer() {
         user: userAddr,
         type: 'eth',
         amount: amount.toString(),
-        txHash: event.log?.transactionHash,
+        txHash: event.transactionHash,
         timestamp: new Date(),
       });
 
       emitToUser(userAddr, 'claimedETH', {
         amount: amount.toString(),
-        txHash: event.log?.transactionHash,
+        txHash: event.transactionHash,
         timestamp: new Date().toISOString(),
       });
     } catch (err) {
       console.error('[Indexer] ClaimedETH error:', err.message);
     }
-  });
+  }
 
-  GridMining.on('ClaimedBEAN', async (user, minedBean, roastedBean, fee, net, event) => {
+  async function handleClaimedBEAN(event) {
+    const [user, minedBean, roastedBean, fee, net] = event.args;
     const userAddr = user.toLowerCase();
     console.log(`[Indexer] ClaimedBEAN user=${userAddr}`);
 
@@ -355,7 +283,7 @@ async function startIndexer() {
         gross: gross.toString(),
         fee: fee.toString(),
         net: net.toString(),
-        txHash: event.log?.transactionHash,
+        txHash: event.transactionHash,
         timestamp: new Date(),
       });
 
@@ -363,26 +291,26 @@ async function startIndexer() {
         gross: gross.toString(),
         fee: fee.toString(),
         net: net.toString(),
-        txHash: event.log?.transactionHash,
+        txHash: event.transactionHash,
         timestamp: new Date().toISOString(),
       });
     } catch (err) {
       console.error('[Indexer] ClaimedBEAN error:', err.message);
     }
-  });
+  }
 
-  GridMining.on('Checkpointed', async (roundId, user, ethReward, beanReward, event) => {
+  async function handleCheckpointed(event) {
+    const [roundId, user, ethReward, beanReward] = event.args;
     const userAddr = user.toLowerCase();
     emitToUser(userAddr, 'checkpointed', {
       roundId: Number(roundId),
       ethReward: ethReward.toString(),
       beanReward: beanReward.toString(),
     });
-  });
+  }
 
-  // ─── AutoMiner Events ────────────────────────────────────────────────────
-
-  AutoMiner.on('ExecutedFor', async (user, roundId, blocks, totalDeployed, fee, roundsExecuted, event) => {
+  async function handleExecutedFor(event) {
+    const [user, roundId, blocks, totalDeployed, fee, roundsExecuted] = event.args;
     const userAddr = user.toLowerCase();
     const rid = Number(roundId);
     const blockIds = blocks.map(Number);
@@ -396,18 +324,20 @@ async function startIndexer() {
       fee: fee.toString(),
       roundsExecuted: Number(roundsExecuted),
     });
-  });
+  }
 
-  AutoMiner.on('ConfigDeactivated', async (user, roundsCompleted, event) => {
+  async function handleConfigDeactivated(event) {
+    const [user, roundsCompleted] = event.args;
     const userAddr = user.toLowerCase();
     console.log(`[Indexer] AutoMiner ConfigDeactivated user=${userAddr}`);
 
     emitToUser(userAddr, 'configDeactivated', {
       roundsCompleted: Number(roundsCompleted),
     });
-  });
+  }
 
-  AutoMiner.on('Stopped', async (user, refundAmount, roundsCompleted, event) => {
+  async function handleStopped(event) {
+    const [user, refundAmount, roundsCompleted] = event.args;
     const userAddr = user.toLowerCase();
     console.log(`[Indexer] AutoMiner Stopped user=${userAddr}`);
 
@@ -415,16 +345,15 @@ async function startIndexer() {
       refundAmount: refundAmount.toString(),
       roundsCompleted: Number(roundsCompleted),
     });
-  });
+  }
 
-  // ─── Treasury Events ─────────────────────────────────────────────────────
-
-  Treasury.on('BuybackExecuted', async (ethSpent, beanReceived, beanBurned, beanToStakers, event) => {
+  async function handleBuybackExecuted(event) {
+    const [ethSpent, beanReceived, beanBurned, beanToStakers] = event.args;
     console.log('[Indexer] BuybackExecuted');
 
     try {
-      const txHash = event.log?.transactionHash;
-      const block = await provider.getBlock(event.log?.blockNumber).catch(() => null);
+      const txHash = event.transactionHash;
+      const block = await provider.getBlock(event.blockNumber).catch(() => null);
       const timestamp = block ? new Date(Number(block.timestamp) * 1000) : new Date();
 
       await Buyback.findOneAndUpdate(
@@ -439,7 +368,7 @@ async function startIndexer() {
           beanToStakers: beanToStakers.toString(),
           beanToStakersFormatted: formatEth(beanToStakers),
           txHash,
-          blockNumber: event.log?.blockNumber,
+          blockNumber: event.blockNumber,
           timestamp,
         },
         { upsert: true }
@@ -449,11 +378,10 @@ async function startIndexer() {
     } catch (err) {
       console.error('[Indexer] BuybackExecuted error:', err.message);
     }
-  });
+  }
 
-  // ─── Staking Events ──────────────────────────────────────────────────────
-
-  Staking.on('Deposited', async (user, amount, newBalance, event) => {
+  async function handleDeposited(event) {
+    const [user, amount] = event.args;
     const userAddr = user.toLowerCase();
     console.log(`[Indexer] Staking Deposited user=${userAddr}`);
 
@@ -463,7 +391,7 @@ async function startIndexer() {
         type: 'deposit',
         amount: amount.toString(),
         amountFormatted: formatEth(amount),
-        txHash: event.log?.transactionHash,
+        txHash: event.transactionHash,
         timestamp: new Date(),
       });
 
@@ -473,15 +401,16 @@ async function startIndexer() {
       emitToUser(userAddr, 'stakeDeposited', {
         amount: amount.toString(),
         amountFormatted: formatEth(amount),
-        txHash: event.log?.transactionHash,
+        txHash: event.transactionHash,
         timestamp: new Date().toISOString(),
       });
     } catch (err) {
       console.error('[Indexer] Deposited error:', err.message);
     }
-  });
+  }
 
-  Staking.on('Withdrawn', async (user, amount, newBalance, event) => {
+  async function handleWithdrawn(event) {
+    const [user, amount] = event.args;
     const userAddr = user.toLowerCase();
     console.log(`[Indexer] Staking Withdrawn user=${userAddr}`);
 
@@ -491,7 +420,7 @@ async function startIndexer() {
         type: 'withdraw',
         amount: amount.toString(),
         amountFormatted: formatEth(amount),
-        txHash: event.log?.transactionHash,
+        txHash: event.transactionHash,
         timestamp: new Date(),
       });
 
@@ -500,15 +429,16 @@ async function startIndexer() {
       emitToUser(userAddr, 'stakeWithdrawn', {
         amount: amount.toString(),
         amountFormatted: formatEth(amount),
-        txHash: event.log?.transactionHash,
+        txHash: event.transactionHash,
         timestamp: new Date().toISOString(),
       });
     } catch (err) {
       console.error('[Indexer] Withdrawn error:', err.message);
     }
-  });
+  }
 
-  Staking.on('YieldClaimed', async (user, amount, event) => {
+  async function handleYieldClaimed(event) {
+    const [user, amount] = event.args;
     const userAddr = user.toLowerCase();
     console.log(`[Indexer] Staking YieldClaimed user=${userAddr}`);
 
@@ -518,22 +448,23 @@ async function startIndexer() {
         type: 'claim',
         amount: amount.toString(),
         amountFormatted: formatEth(amount),
-        txHash: event.log?.transactionHash,
+        txHash: event.transactionHash,
         timestamp: new Date(),
       });
 
       emitToUser(userAddr, 'yieldClaimed', {
         amount: amount.toString(),
         amountFormatted: formatEth(amount),
-        txHash: event.log?.transactionHash,
+        txHash: event.transactionHash,
         timestamp: new Date().toISOString(),
       });
     } catch (err) {
       console.error('[Indexer] YieldClaimed error:', err.message);
     }
-  });
+  }
 
-  Staking.on('YieldCompounded', async (user, amount, compounder, fee, event) => {
+  async function handleYieldCompounded(event) {
+    const [user, amount] = event.args;
     const userAddr = user.toLowerCase();
     console.log(`[Indexer] Staking YieldCompounded user=${userAddr}`);
 
@@ -543,22 +474,23 @@ async function startIndexer() {
         type: 'compound',
         amount: amount.toString(),
         amountFormatted: formatEth(amount),
-        txHash: event.log?.transactionHash,
+        txHash: event.transactionHash,
         timestamp: new Date(),
       });
 
       emitToUser(userAddr, 'yieldCompounded', {
         amount: amount.toString(),
         amountFormatted: formatEth(amount),
-        txHash: event.log?.transactionHash,
+        txHash: event.transactionHash,
         timestamp: new Date().toISOString(),
       });
     } catch (err) {
       console.error('[Indexer] YieldCompounded error:', err.message);
     }
-  });
+  }
 
-  Staking.on('YieldDistributed', async (amount, newAccYieldPerShare, event) => {
+  async function handleYieldDistributed(event) {
+    const [amount] = event.args;
     console.log('[Indexer] YieldDistributed');
     cache.delete('staking_stats');
 
@@ -567,10 +499,89 @@ async function startIndexer() {
       amountFormatted: formatEth(amount),
       timestamp: new Date().toISOString(),
     });
-  });
+  }
 
-  const isWs = eventProvider !== provider;
-  console.log(`[Indexer] Listening to contract events via ${isWs ? 'WebSocket' : 'HTTP polling'}`);
+  // ─── Event Dispatch Map ─────────────────────────────────────────────────
+
+  const eventHandlers = {
+    // GridMining events
+    GameStarted: handleGameStarted,
+    Deployed: (e) => handleDeployed(e, false),
+    DeployedFor: (e) => handleDeployed(e, true),
+    RoundSettled: handleRoundSettled,
+    ClaimedETH: handleClaimedETH,
+    ClaimedBEAN: handleClaimedBEAN,
+    Checkpointed: handleCheckpointed,
+    // AutoMiner events
+    ExecutedFor: handleExecutedFor,
+    ConfigDeactivated: handleConfigDeactivated,
+    Stopped: handleStopped,
+    // Treasury events
+    BuybackExecuted: handleBuybackExecuted,
+    // Staking events
+    Deposited: handleDeposited,
+    Withdrawn: handleWithdrawn,
+    YieldClaimed: handleYieldClaimed,
+    YieldCompounded: handleYieldCompounded,
+    YieldDistributed: handleYieldDistributed,
+  };
+
+  // ─── Polling Loop ───────────────────────────────────────────────────────
+
+  async function pollEvents() {
+    try {
+      const currentBlock = await provider.getBlockNumber();
+      if (currentBlock <= lastBlock) return;
+
+      const fromBlock = lastBlock + 1;
+      const toBlock = currentBlock;
+      lastBlock = currentBlock;
+
+      // Query all contracts for events in this block range
+      const [gmEvents, amEvents, tEvents, sEvents] = await Promise.all([
+        GridMining.queryFilter('*', fromBlock, toBlock).catch(err => {
+          console.error('[Indexer] GridMining query error:', err.message);
+          return [];
+        }),
+        AutoMiner.queryFilter('*', fromBlock, toBlock).catch(err => {
+          console.error('[Indexer] AutoMiner query error:', err.message);
+          return [];
+        }),
+        Treasury.queryFilter('*', fromBlock, toBlock).catch(err => {
+          console.error('[Indexer] Treasury query error:', err.message);
+          return [];
+        }),
+        Staking.queryFilter('*', fromBlock, toBlock).catch(err => {
+          console.error('[Indexer] Staking query error:', err.message);
+          return [];
+        }),
+      ]);
+
+      // Merge all events and sort by block number + log index
+      const allEvents = [...gmEvents, ...amEvents, ...tEvents, ...sEvents]
+        .sort((a, b) => a.blockNumber - b.blockNumber || a.index - b.index);
+
+      // Dispatch to handlers
+      for (const event of allEvents) {
+        const eventName = event.fragment?.name;
+        const handler = eventHandlers[eventName];
+        if (handler) {
+          try {
+            await handler(event);
+          } catch (err) {
+            console.error(`[Indexer] Handler error for ${eventName}:`, err.message);
+          }
+        }
+      }
+    } catch (err) {
+      console.error('[Indexer] Poll error:', err.message);
+    }
+  }
+
+  // Start polling
+  setInterval(pollEvents, POLL_INTERVAL);
+
+  console.log(`[Indexer] Polling for contract events every ${POLL_INTERVAL / 1000}s`);
 }
 
 module.exports = { startIndexer };
