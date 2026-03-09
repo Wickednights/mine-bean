@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.26;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
@@ -84,9 +84,9 @@ contract AutoMiner is Ownable, ReentrancyGuard {
 
     // ─── Events ────────────────────────────────────────────────
     event ConfigUpdated(address indexed user, uint8 strategyId, uint8 numBlocks, uint256 amountPerBlock, uint256 numRounds, uint256 depositAmount, bool active, uint32 selectedBlockMask);
-    event ExecutedFor(address indexed user, uint64 indexed roundId, uint8[] blocks, uint256 totalDeployed, uint256 fee, uint64 roundsExecuted);
-    event Stopped(address indexed user, uint256 refundAmount, uint64 roundsCompleted);
-    event ConfigDeactivated(address indexed user, uint64 roundsCompleted);
+    event ExecutedFor(address indexed user, uint64 indexed roundId, uint8[] blocks, uint256 totalDeployed, uint256 fee, uint256 roundsExecuted);
+    event Stopped(address indexed user, uint256 refundAmount, uint256 roundsCompleted);
+    event ConfigDeactivated(address indexed user, uint256 roundsCompleted);
     event BatchExecuted(uint256 total, uint256 successful, uint256 failed);
     event BatchStopped(uint256 indexed stoppedAtIndex, uint256 total, uint256 successful, uint256 failed);
     event ExecutorUpdated(address indexed oldExecutor, address indexed newExecutor);
@@ -99,9 +99,17 @@ contract AutoMiner is Ownable, ReentrancyGuard {
 
     // ─── Constructor ───────────────────────────────────────────
 
-    constructor(address _gridMining) Ownable(msg.sender) {
+    constructor(
+        address _gridMining,
+        address _executor,
+        uint256 _executorFeeBps,
+        uint256 _executorFlatFee
+    ) Ownable(msg.sender) {
         if (_gridMining == address(0)) revert ZeroAddress();
         gridMining = IGridMining(_gridMining);
+        if (_executor != address(0)) executor = _executor;
+        if (_executorFeeBps > 0) executorFeeBps = _executorFeeBps;
+        if (_executorFlatFee > 0) executorFlatFee = _executorFlatFee;
 
         // Default strategies
         strategies[0] = Strategy(0, true, true);   // Random
@@ -294,8 +302,8 @@ contract AutoMiner is Ownable, ReentrancyGuard {
     ) {
         config = configs[user];
         lastRound = lastRoundPlayed[user];
-        costPerRound = config.active ? _getCostPerRound(config) : 0;
-        roundsRemaining = config.active ? config.numRounds - config.roundsExecuted : 0;
+        costPerRound = configs[user].active ? _getCostPerRound(configs[user]) : 0;
+        roundsRemaining = configs[user].active ? configs[user].numRounds - configs[user].roundsExecuted : 0;
         totalRefundable = roundsRemaining * costPerRound;
     }
 
