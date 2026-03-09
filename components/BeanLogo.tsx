@@ -32,3 +32,15 @@ export function BeansTextLogo({ height = 24 }: { height?: number }) {
     </span>
   )
 }
+
+export function BnbLogo({ size = 18 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 126.61 126.61" fill="#F3BA2F" xmlns="http://www.w3.org/2000/svg" style={{ display: 'inline-block', verticalAlign: 'middle' }}>
+      <path d="M38.73 53.2L63.3 28.63l24.58 24.58 14.3-14.3L63.3 0 24.43 38.9z" />
+      <path d="M0 63.31l14.3-14.3 14.3 14.3-14.3 14.3z" />
+      <path d="M38.73 73.41L63.3 97.98l24.58-24.58 14.31 14.29-.01.01L63.3 126.61 24.43 87.72l-.01-.01z" />
+      <path d="M97.99 63.31l14.3-14.3 14.31 14.3-14.31 14.3z" />
+      <path d="M77.83 63.3L63.3 48.78 52.95 59.13l-1.19 1.19L48.78 63.3l14.52 14.52 14.53-14.53z" />
+    </svg>
+  )
+}

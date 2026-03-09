@@ -1,5 +1,5 @@
 'use client'
-import BeanLogo from './BeanLogo'
+import BeanLogo, { BnbLogo } from './BeanLogo'
 
 import React from "react"
 import { useUserData } from '@/lib/UserDataContext'
@@ -9,14 +9,6 @@ interface ClaimRewardsProps {
   onClaimETH: () => void
   onClaimBEAN: () => void
 }
-
-const BnbLogo = ({ size = 16 }: { size?: number }) => (
-  <img
-    src="https://imagedelivery.net/GyRgSdgDhHz2WNR4fvaN-Q/f9461cf2-aacc-4c59-8b9d-59ade3c46c00/public"
-    alt="BNB"
-    style={{ width: size, height: size, objectFit: "contain" as const }}
-  />
-)
 
 
 export default function ClaimRewards({ userAddress, onClaimETH, onClaimBEAN }: ClaimRewardsProps) {

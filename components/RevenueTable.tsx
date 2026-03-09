@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from "react"
-import BeanLogo from "./BeanLogo"
+import BeanLogo, { BnbLogo } from "./BeanLogo"
 import { apiFetch } from '../lib/api'
 
 // Display interface (for table rendering)
@@ -68,15 +68,6 @@ const ChevronRight = () => (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
         <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z" />
     </svg>
-)
-
-// SVG Icons
-const BnbIcon = () => (
-    <img
-        src="https://imagedelivery.net/GyRgSdgDhHz2WNR4fvaN-Q/f9461cf2-aacc-4c59-8b9d-59ade3c46c00/public"
-        alt="BNB"
-        style={{ width: 16, height: 16, objectFit: "contain" as const }}
-    />
 )
 
 export default function RevenueTable() {
@@ -185,7 +176,7 @@ export default function RevenueTable() {
                                 <td style={styles.td}>{entry.time}</td>
                                 <td style={styles.tdRight}>
                                     <span style={styles.valueWithIcon}>
-                                        <BnbIcon />
+                                        <BnbLogo size={16} />
                                         {entry.spent.toFixed(4)}
                                     </span>
                                 </td>

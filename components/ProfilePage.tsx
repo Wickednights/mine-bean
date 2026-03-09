@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { useAccount, useBalance, useReadContract, useSignMessage } from 'wagmi'
-import BeanLogo from './BeanLogo'
+import BeanLogo, { BnbLogo } from './BeanLogo'
 import { apiFetch } from '@/lib/api'
 import { supabase } from '@/lib/supabase'
 import { CONTRACTS } from '@/lib/contracts'
@@ -364,9 +364,9 @@ export default function ProfilePage() {
   useEffect(() => {
     const fetchEthPrice = async () => {
       try {
-        const res = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BNBUSDT')
+        const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=binancecoin&vs_currencies=usd')
         const data = await res.json()
-        if (data.price) setEthPriceUsd(parseFloat(data.price))
+        if (data.binancecoin?.usd) setEthPriceUsd(data.binancecoin.usd)
       } catch {}
     }
     fetchEthPrice()
@@ -831,7 +831,7 @@ export default function ProfilePage() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '7px 0' }}>
                 <span style={{ fontSize: 14, color: '#bbb' }}>BNB Balance</span>
                 <span style={{ fontSize: 14, color: '#fff', fontFamily: 'monospace', display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <img src="https://imagedelivery.net/GyRgSdgDhHz2WNR4fvaN-Q/f9461cf2-aacc-4c59-8b9d-59ade3c46c00/public" alt="BNB" style={{ width: 16, height: 16 }} />
+                  <BnbLogo size={16} />
                   {ethBalance ? (Number(ethBalance.value) / 10 ** ethBalance.decimals).toFixed(4) : '0.0000'}
                 </span>
               </div>

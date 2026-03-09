@@ -92,15 +92,15 @@ describe('Header', () => {
     expect(stakeLink).toHaveAttribute('href', '/stake')
   })
 
-  it('fetches ETH price from external API', async () => {
-    const mockBinanceResponse = {
-      price: '595.50'
+  it('fetches BNB price from CoinGecko API', async () => {
+    const mockCoinGeckoResponse = {
+      binancecoin: { usd: 595.50 }
     }
 
     ;(global.fetch as any).mockImplementation((url: string) => {
-      if (url.includes('binance.com')) {
+      if (url.includes('coingecko.com')) {
         return Promise.resolve({
-          json: () => Promise.resolve(mockBinanceResponse)
+          json: () => Promise.resolve(mockCoinGeckoResponse)
         })
       }
       // DexScreener fallback
@@ -111,10 +111,9 @@ describe('Header', () => {
 
     render(<Header />)
 
-    // BNB price is fetched but no longer displayed in the header.
-    // Verify fetch was called with the Binance API URL for BNB.
+    // BNB price is fetched from CoinGecko.
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith('https://api.binance.com/api/v3/ticker/price?symbol=BNBUSDT')
+      expect(global.fetch).toHaveBeenCalledWith('https://api.coingecko.com/api/v3/simple/price?ids=binancecoin&vs_currencies=usd')
     })
   })
 

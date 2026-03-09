@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react"
 import { useConnectModal } from '@rainbow-me/rainbowkit'
 import { parseEther } from 'viem'
-import BeanLogo from './BeanLogo'
+import BeanLogo, { BnbLogo } from './BeanLogo'
 import { apiFetch } from '../lib/api'
 import { useSSE } from '../lib/SSEContext'
 import { useUserData } from '../lib/UserDataContext'
@@ -342,11 +342,7 @@ export default function StakePage({
                             {autoCompoundEnabled && (
                                 <div style={isMobile ? styles.compoundFeeInputRowMobile : styles.compoundFeeInputRow}>
                                     <div style={styles.inputLeft}>
-                                        <img
-                                            src="https://imagedelivery.net/GyRgSdgDhHz2WNR4fvaN-Q/f9461cf2-aacc-4c59-8b9d-59ade3c46c00/public"
-                                            alt="BNB"
-                                            style={{ width: isMobile ? 18 : 20, height: isMobile ? 18 : 20, objectFit: 'contain' as const }}
-                                        />
+                                        <BnbLogo size={isMobile ? 18 : 20} />
                                         <span style={isMobile ? styles.inputLabelMobile : styles.inputLabel}>BNB</span>
                                     </div>
                                     <input
