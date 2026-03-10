@@ -6,6 +6,7 @@ import WalletButton from './WalletButton'
 import BeanLogo, { BeansTextLogo } from './BeanLogo'
 import Link from 'next/link'
 import { CONTRACTS } from '@/lib/contracts'
+import { API_BASE } from '@/lib/api'
 
 interface HeaderProps {
   logoText?: string
@@ -32,9 +33,9 @@ export default function Header({
   useEffect(() => {
     const fetchBnbPrice = async () => {
       try {
-        const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=binancecoin&vs_currencies=usd')
+        const response = await fetch(`${API_BASE}/api/stats/bnb-price`)
         const data = await response.json()
-        if (data.binancecoin?.usd) setBnbPrice(data.binancecoin.usd.toFixed(2))
+        if (data.priceUsd && data.priceUsd !== '0') setBnbPrice(parseFloat(data.priceUsd).toFixed(2))
       } catch {
         setBnbPrice('600.00')
       }

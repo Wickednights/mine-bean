@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { useAccount, useBalance, useReadContract, useSignMessage } from 'wagmi'
 import BeanLogo, { BnbLogo } from './BeanLogo'
-import { apiFetch } from '@/lib/api'
+import { apiFetch, API_BASE } from '@/lib/api'
 import { supabase } from '@/lib/supabase'
 import { CONTRACTS } from '@/lib/contracts'
 import { useUserData } from '@/lib/UserDataContext'
@@ -364,9 +364,9 @@ export default function ProfilePage() {
   useEffect(() => {
     const fetchEthPrice = async () => {
       try {
-        const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=binancecoin&vs_currencies=usd')
+        const res = await fetch(`${API_BASE}/api/stats/bnb-price`)
         const data = await res.json()
-        if (data.binancecoin?.usd) setEthPriceUsd(data.binancecoin.usd)
+        if (data.priceUsd && data.priceUsd !== '0') setEthPriceUsd(parseFloat(data.priceUsd))
       } catch {}
     }
     fetchEthPrice()

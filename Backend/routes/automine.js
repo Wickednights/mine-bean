@@ -9,7 +9,30 @@ router.get('/:address', async (req, res) => {
     const { address } = req.params;
     const { AutoMiner } = getContracts();
 
-    const state = await AutoMiner.getUserState(address);
+    let state;
+    try {
+      state = await AutoMiner.getUserState(address);
+    } catch (contractErr) {
+      // Contract call fails for users with no automine history (out of result range)
+      // Return default inactive state
+      console.warn('AutoMine contract call failed for', address, ':', contractErr.message);
+      return res.json({
+        config: {
+          strategyId: 0,
+          numBlocks: 0,
+          numRounds: 0,
+          roundsExecuted: 0,
+          amountPerBlockFormatted: '0.0',
+          depositAmountFormatted: '0.0',
+          selectedBlockMask: 0,
+          selectedBlocks: [],
+          active: false,
+        },
+        costPerRoundFormatted: '0.0',
+        roundsRemaining: 0,
+        totalRefundableFormatted: '0.0',
+      });
+    }
 
     // getUserState returns (config, lastRound, costPerRound, roundsRemaining, totalRefundable)
     // where config is an AutoConfig struct

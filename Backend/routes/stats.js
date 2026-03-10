@@ -64,4 +64,42 @@ router.get('/price', async (req, res) => {
   }
 });
 
+// GET /api/stats/bnb-price - BNB/USD price (proxied to avoid CORS)
+router.get('/bnb-price', async (req, res) => {
+  try {
+    const cached = cache.get('bnb_price');
+    if (cached) return res.json(cached);
+
+    let priceUsd = '0';
+
+    // Try CoinGecko first
+    try {
+      const cgRes = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=binancecoin&vs_currencies=usd');
+      if (cgRes.ok) {
+        const data = await cgRes.json();
+        if (data.binancecoin?.usd) {
+          priceUsd = data.binancecoin.usd.toString();
+        }
+      }
+    } catch {}
+
+    // Fallback to Binance API
+    if (priceUsd === '0') {
+      try {
+        const bnRes = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BNBUSDT');
+        if (bnRes.ok) {
+          const data = await bnRes.json();
+          if (data.price) priceUsd = data.price;
+        }
+      } catch {}
+    }
+
+    const result = { priceUsd, fetchedAt: new Date().toISOString() };
+    cache.set('bnb_price', result, 60); // Cache for 60s
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch BNB price' });
+  }
+});
+
 module.exports = router;

@@ -92,15 +92,16 @@ describe('Header', () => {
     expect(stakeLink).toHaveAttribute('href', '/stake')
   })
 
-  it('fetches BNB price from CoinGecko API', async () => {
-    const mockCoinGeckoResponse = {
-      binancecoin: { usd: 595.50 }
+  it('fetches BNB price from backend proxy', async () => {
+    const mockBnbPriceResponse = {
+      priceUsd: '595.50',
+      fetchedAt: new Date().toISOString()
     }
 
     ;(global.fetch as any).mockImplementation((url: string) => {
-      if (url.includes('coingecko.com')) {
+      if (url.includes('bnb-price')) {
         return Promise.resolve({
-          json: () => Promise.resolve(mockCoinGeckoResponse)
+          json: () => Promise.resolve(mockBnbPriceResponse)
         })
       }
       // DexScreener fallback
@@ -111,9 +112,9 @@ describe('Header', () => {
 
     render(<Header />)
 
-    // BNB price is fetched from CoinGecko.
+    // BNB price is fetched from backend proxy
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith('https://api.coingecko.com/api/v3/simple/price?ids=binancecoin&vs_currencies=usd')
+      expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('/api/stats/bnb-price'))
     })
   })
 
@@ -273,12 +274,12 @@ describe('Header', () => {
   it('updates BNB price on interval', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true })
 
-    let binanceCallCount = 0
+    let bnbPriceCallCount = 0
     ;(global.fetch as any).mockImplementation((url: string) => {
-      if (url.includes('binance.com')) {
-        binanceCallCount++
+      if (url.includes('bnb-price')) {
+        bnbPriceCallCount++
         return Promise.resolve({
-          json: () => Promise.resolve({ price: `${580 + binanceCallCount}.00` })
+          json: () => Promise.resolve({ priceUsd: `${580 + bnbPriceCallCount}.00`, fetchedAt: new Date().toISOString() })
         })
       }
       return Promise.resolve({
@@ -288,13 +289,12 @@ describe('Header', () => {
 
     render(<Header isMobile={false} />)
 
-    // BNB price is fetched via Binance API.
-    // Verify the fetch interval works by checking call count.
+    // BNB price is fetched via backend proxy
     await waitFor(() => {
-      expect(binanceCallCount).toBeGreaterThanOrEqual(1)
+      expect(bnbPriceCallCount).toBeGreaterThanOrEqual(1)
     })
 
-    const countAfterInitial = binanceCallCount
+    const countAfterInitial = bnbPriceCallCount
 
     // Advance timers by 10 seconds (ETH price interval) and flush promises
     await act(async () => {
@@ -304,7 +304,7 @@ describe('Header', () => {
 
     // Second fetch should happen
     await waitFor(() => {
-      expect(binanceCallCount).toBeGreaterThan(countAfterInitial)
+      expect(bnbPriceCallCount).toBeGreaterThan(countAfterInitial)
     })
 
     vi.useRealTimers()

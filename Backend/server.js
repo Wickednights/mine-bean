@@ -22,10 +22,10 @@ const defaultLimiter = rateLimit({
   message: { error: 'Too many requests' },
 });
 
-// Strict rate limit: 5 req/min/IP (user-specific endpoints)
+// Strict rate limit: 20 req/min/IP (user-specific endpoints)
 const strictLimiter = rateLimit({
   windowMs: 60 * 1000,
-  max: 5,
+  max: 20,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many requests' },

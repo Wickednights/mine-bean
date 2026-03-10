@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react"
 import { useConnectModal } from '@rainbow-me/rainbowkit'
 import BeanLogo, { BnbLogo } from './BeanLogo'
-import { apiFetch } from '@/lib/api'
+import { apiFetch, API_BASE } from '@/lib/api'
 import { useSSE } from '@/lib/SSEContext'
 import { MIN_DEPLOY_PER_BLOCK, EXECUTOR_FEE_BPS, EXECUTOR_FLAT_FEE } from '@/lib/contracts'
 import { useRoundTimer } from '@/lib/RoundTimerContext'
@@ -225,9 +225,9 @@ export default function SidebarControls({
                 })
                 .catch((err) => console.error('Failed to fetch prices:', err))
 
-            fetch("https://api.coingecko.com/api/v3/simple/price?ids=binancecoin&vs_currencies=usd")
+            fetch(`${API_BASE}/api/stats/bnb-price`)
                 .then(r => r.json())
-                .then(d => { if (d.binancecoin?.usd) setBnbPrice(d.binancecoin.usd) })
+                .then(d => { if (d.priceUsd && d.priceUsd !== '0') setBnbPrice(parseFloat(d.priceUsd)) })
                 .catch(() => {})
         }
 
