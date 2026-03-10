@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from "react"
-import BeanLogo from './BeanLogo'
+import BeanLogo, { BnbLogo } from './BeanLogo'
 import { apiFetch } from '../lib/api'
 
 // API response interfaces
@@ -107,11 +107,7 @@ export default function GlobalStats({
                             <div style={styles.mobileStatValue}>
                                 {stat.iconType === "beans" && <BeanLogo size={14} />}
                                 {stat.iconType === "bnb" && (
-                                    <img
-                                        src="https://imagedelivery.net/GyRgSdgDhHz2WNR4fvaN-Q/f9461cf2-aacc-4c59-8b9d-59ade3c46c00/public"
-                                        alt="BNB"
-                                        style={styles.mobileIcon}
-                                    />
+                                    <BnbLogo size={14} />
                                 )}
                                 <span>{stat.value}</span>
                             </div>
@@ -138,11 +134,7 @@ export default function GlobalStats({
                         <div style={styles.statValue}>
                             {stat.iconType === "beans" && <BeanLogo size={20} />}
                             {stat.iconType === "bnb" && (
-                                <img
-                                    src="https://imagedelivery.net/GyRgSdgDhHz2WNR4fvaN-Q/f9461cf2-aacc-4c59-8b9d-59ade3c46c00/public"
-                                    alt="BNB"
-                                    style={styles.bnbIcon}
-                                />
+                                <BnbLogo size={22} />
                             )}
                             <span>{stat.value}</span>
                         </div>

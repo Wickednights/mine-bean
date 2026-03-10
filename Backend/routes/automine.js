@@ -11,15 +11,17 @@ router.get('/:address', async (req, res) => {
 
     const state = await AutoMiner.getUserState(address);
 
-    // Parse the state tuple
-    const strategyId = Number(state[0] || state.strategyId || 0);
-    const numBlocks = Number(state[1] || state.numBlocks || 0);
-    const numRounds = Number(state[2] || state.numRounds || 0);
-    const roundsExecuted = Number(state[3] || state.roundsExecuted || 0);
-    const amountPerBlock = (state[4] || state.amountPerBlock || BigInt(0));
-    const depositAmount = (state[5] || state.depositAmount || BigInt(0));
-    const selectedBlockMask = Number(state[6] || state.selectedBlockMask || 0);
-    const active = Boolean(state[7] || state.active || false);
+    // getUserState returns (config, lastRound, costPerRound, roundsRemaining, totalRefundable)
+    // where config is an AutoConfig struct
+    const config = state.config || state[0];
+    const strategyId = Number(config.strategyId ?? 0);
+    const numBlocks = Number(config.numBlocks ?? 0);
+    const numRounds = Number(config.numRounds ?? 0);
+    const roundsExecuted = Number(config.roundsExecuted ?? 0);
+    const amountPerBlock = config.amountPerBlock ?? BigInt(0);
+    const depositAmount = config.depositAmount ?? BigInt(0);
+    const selectedBlockMask = Number(config.selectedBlockMask ?? 0);
+    const active = Boolean(config.active ?? false);
 
     // Decode selectedBlockMask to block IDs
     const selectedBlocks = [];

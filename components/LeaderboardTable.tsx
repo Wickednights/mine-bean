@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useMemo } from "react"
-import BeanLogo from "./BeanLogo"
+import BeanLogo, { BnbLogo } from "./BeanLogo"
 import { apiFetch } from '../lib/api'
 import { useProfileResolver } from '../lib/useProfileResolver'
 
@@ -73,15 +73,6 @@ const transformStaker = (s: StakerFromAPI, i: number): LeaderboardEntry => ({
     rawAddress: s.address,
     value: parseFloat(s.stakedBalanceFormatted)
 })
-
-// SVG Icons
-const BnbIcon = () => (
-    <img
-        src="https://imagedelivery.net/GyRgSdgDhHz2WNR4fvaN-Q/f9461cf2-aacc-4c59-8b9d-59ade3c46c00/public"
-        alt="BNB"
-        style={{ width: 16, height: 16, objectFit: "contain" as const }}
-    />
-)
 
 export default function LeaderboardTable() {
     const [activeTab, setActiveTab] = useState<"miners" | "stakers" | "unroasted">("miners")
@@ -286,7 +277,7 @@ export default function LeaderboardTable() {
                                     <td style={styles.tdRight}>
                                         {getValueIcon() === "eth" ? (
                                             <span style={styles.valueWithIcon}>
-                                                <BnbIcon />
+                                                <BnbLogo size={16} />
                                                 {entry.value.toLocaleString(undefined, { maximumFractionDigits: 4 })}
                                             </span>
                                         ) : (

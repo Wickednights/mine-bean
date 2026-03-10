@@ -2,20 +2,14 @@
 
 import React, { useState, useEffect } from "react"
 import { useConnectModal } from '@rainbow-me/rainbowkit'
-import BeanLogo from './BeanLogo'
+import BeanLogo, { BnbLogo } from './BeanLogo'
 import { apiFetch } from '@/lib/api'
 import { useSSE } from '@/lib/SSEContext'
 import { MIN_DEPLOY_PER_BLOCK, EXECUTOR_FEE_BPS, EXECUTOR_FLAT_FEE } from '@/lib/contracts'
 import { useRoundTimer } from '@/lib/RoundTimerContext'
 import { parseEther } from 'viem'
 
-const BnbLogo = ({ size = 18 }: { size?: number }) => (
-    <img
-        src="https://imagedelivery.net/GyRgSdgDhHz2WNR4fvaN-Q/f9461cf2-aacc-4c59-8b9d-59ade3c46c00/public"
-        alt="BNB"
-        style={{ width: size, height: size, objectFit: "contain" as const }}
-    />
-)
+// BnbLogo imported from BeanLogo.tsx
 
 const WalletIcon = () => (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="#999">
@@ -225,15 +219,15 @@ export default function SidebarControls({
     // Fetch prices from backend
     useEffect(() => {
         const fetchPrices = () => {
-            apiFetch<{ bean: { priceUsd: string } }>('/api/stats')
+            apiFetch<{ prices: { bean: { usd: string } } }>('/api/stats')
                 .then((data) => {
-                    setBeansPrice(parseFloat(data.bean.priceUsd) || 0)
+                    setBeansPrice(parseFloat(data.prices?.bean?.usd) || 0)
                 })
                 .catch((err) => console.error('Failed to fetch prices:', err))
 
-            fetch("https://api.binance.com/api/v3/ticker/price?symbol=BNBUSDT")
+            fetch("https://api.coingecko.com/api/v3/simple/price?ids=binancecoin&vs_currencies=usd")
                 .then(r => r.json())
-                .then(d => { if (d.price) setBnbPrice(parseFloat(d.price)) })
+                .then(d => { if (d.binancecoin?.usd) setBnbPrice(d.binancecoin.usd) })
                 .catch(() => {})
         }
 

@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react"
-import BeanLogo from './BeanLogo'
+import BeanLogo, { BnbLogo } from './BeanLogo'
 import { apiFetch } from "@/lib/api"
 import { useProfileResolver } from '@/lib/useProfileResolver'
 
@@ -140,7 +140,7 @@ autoCloseRef.current = setTimeout(() => setIsOpen(false), 3000)
                                 </span>
                                 <div style={styles.minerAmounts}>
                                     <span style={styles.ethAmount}>
-                                        <img src="https://imagedelivery.net/GyRgSdgDhHz2WNR4fvaN-Q/f9461cf2-aacc-4c59-8b9d-59ade3c46c00/public" alt="BNB" style={{width: 14, height: 14, marginRight: 4}} />
+                                        <BnbLogo size={14} />
                                         {parseFloat(miner.ethRewardFormatted).toFixed(6)}
                                     </span>
                                     {parseFloat(miner.beanRewardFormatted) > 0 && (

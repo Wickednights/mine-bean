@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react"
 import { useConnectModal } from '@rainbow-me/rainbowkit'
+import { BnbLogo } from './BeanLogo'
 import { MIN_DEPLOY_PER_BLOCK, EXECUTOR_FEE_BPS, EXECUTOR_FLAT_FEE } from '@/lib/contracts'
 import { apiFetch } from '@/lib/api'
 import { useSSE } from '@/lib/SSEContext'
@@ -31,8 +32,6 @@ interface MobileControlsProps {
     onAutoActivate?: (strategyId: number, numRounds: number, numBlocks: number, depositAmount: bigint, blockMask: number) => void
     onAutoStop?: () => void
 }
-
-const BNB_LOGO_URL = "https://imagedelivery.net/GyRgSdgDhHz2WNR4fvaN-Q/f9461cf2-aacc-4c59-8b9d-59ade3c46c00/public"
 
 export default function MobileControls({
     userBalance = 0,
@@ -308,7 +307,7 @@ export default function MobileControls({
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="#999">
                                     <path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z" />
                                 </svg>
-                                <span style={styles.balanceAmount}><img src={BNB_LOGO_URL} alt="BNB" style={{ width: 14, height: 14, objectFit: "contain" as const }} /> {userBalance.toFixed(5)}</span>
+                                <span style={styles.balanceAmount}><BnbLogo size={14} /> {userBalance.toFixed(5)}</span>
                             </div>
                             <div style={styles.quickAmounts}>
                                 <button style={styles.quickBtn} onClick={() => handleQuickAmount(1)}>+1</button>
@@ -319,7 +318,7 @@ export default function MobileControls({
 
                         <div style={styles.inputRow}>
                             <div style={styles.inputLeft}>
-                                <img src={BNB_LOGO_URL} alt="BNB" style={{ width: 18, height: 18, objectFit: "contain" }} />
+                                <BnbLogo size={18} />
                                 <span style={styles.inputLabel}>BNB</span>
                             </div>
                             <input
@@ -349,7 +348,7 @@ export default function MobileControls({
 
                         <div style={styles.totalRow}>
                             <span style={styles.rowLabel}>Total</span>
-                            <span style={styles.totalValue}><img src={BNB_LOGO_URL} alt="BNB" style={{ width: 14, height: 14, objectFit: "contain" as const }} /> {manualTotal.toFixed(5)}</span>
+                            <span style={styles.totalValue}><BnbLogo size={14} /> {manualTotal.toFixed(5)}</span>
                         </div>
 
                         {isConnected ? (
@@ -376,7 +375,7 @@ export default function MobileControls({
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="#999">
                                     <path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z" />
                                 </svg>
-                                <span style={styles.balanceAmount}><img src={BNB_LOGO_URL} alt="BNB" style={{ width: 14, height: 14, objectFit: "contain" as const }} /> {userBalance.toFixed(5)}</span>
+                                <span style={styles.balanceAmount}><BnbLogo size={14} /> {userBalance.toFixed(5)}</span>
                             </div>
                             <div style={styles.quickAmounts}>
                                 <button style={styles.quickBtn} onClick={() => handleQuickAmount(1)}>+1</button>
@@ -387,7 +386,7 @@ export default function MobileControls({
 
                         <div style={styles.inputRow}>
                             <div style={styles.inputLeft}>
-                                <img src={BNB_LOGO_URL} alt="BNB" style={{ width: 18, height: 18, objectFit: "contain" }} />
+                                <BnbLogo size={18} />
                                 <span style={styles.inputLabel}>BNB</span>
                             </div>
                             <input
@@ -488,12 +487,12 @@ export default function MobileControls({
 
                         <div style={styles.row}>
                             <span style={styles.rowLabel}>Per round</span>
-                            <span style={styles.totalValue}><img src={BNB_LOGO_URL} alt="BNB" style={{ width: 14, height: 14, objectFit: "contain" as const }} /> {autoPerRound.toFixed(5)}</span>
+                            <span style={styles.totalValue}><BnbLogo size={14} /> {autoPerRound.toFixed(5)}</span>
                         </div>
 
                         <div style={styles.totalRow}>
                             <span style={styles.rowLabel}>Total deposit</span>
-                            <span style={styles.totalValue}><img src={BNB_LOGO_URL} alt="BNB" style={{ width: 14, height: 14, objectFit: "contain" as const }} /> {autoTotalDeposit.toFixed(5)}</span>
+                            <span style={styles.totalValue}><BnbLogo size={14} /> {autoTotalDeposit.toFixed(5)}</span>
                         </div>
 
                         {isConnected ? (
@@ -522,7 +521,7 @@ export default function MobileControls({
 
                         <div style={styles.activeRow}>
                             <span style={styles.rowLabel}>Balance</span>
-                            <span style={styles.totalValue}><img src={BNB_LOGO_URL} alt="BNB" style={{ width: 14, height: 14, objectFit: "contain" as const }} /> {parseFloat(autoMinerState.totalRefundableFormatted).toFixed(5)}</span>
+                            <span style={styles.totalValue}><BnbLogo size={14} /> {parseFloat(autoMinerState.totalRefundableFormatted).toFixed(5)}</span>
                         </div>
 
                         <div style={styles.activeRow}>
@@ -534,7 +533,7 @@ export default function MobileControls({
 
                         <div style={styles.activeRow}>
                             <span style={styles.rowLabel}>Per round</span>
-                            <span style={styles.totalValue}><img src={BNB_LOGO_URL} alt="BNB" style={{ width: 14, height: 14, objectFit: "contain" as const }} /> {parseFloat(autoMinerState.costPerRoundFormatted).toFixed(5)}</span>
+                            <span style={styles.totalValue}><BnbLogo size={14} /> {parseFloat(autoMinerState.costPerRoundFormatted).toFixed(5)}</span>
                         </div>
 
                         <div style={styles.activeRow}>
@@ -546,7 +545,7 @@ export default function MobileControls({
 
                         <div style={{...styles.totalRow, borderTop: "1px solid #222"}}>
                             <span style={styles.rowLabel}>Per block</span>
-                            <span style={styles.totalValue}><img src={BNB_LOGO_URL} alt="BNB" style={{ width: 14, height: 14, objectFit: "contain" as const }} /> {parseFloat(autoMinerState.amountPerBlockFormatted).toFixed(5)}</span>
+                            <span style={styles.totalValue}><BnbLogo size={14} /> {parseFloat(autoMinerState.amountPerBlockFormatted).toFixed(5)}</span>
                         </div>
 
                         <button
