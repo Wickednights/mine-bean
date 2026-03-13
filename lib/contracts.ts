@@ -21,6 +21,7 @@ export const CONTRACTS = {
     address: '0x8b02C2Fe3831f1B10362Cc11017E55BFf58fD25c' as `0x${string}`,
     abi: TreasuryABI,
   },
+  // TODO: Add LP contract address the current one is just a placeholder
   LP: {
     address: '0xd7e5522c9cc3682c960afada6adde0f8116580f2ad2cef08c197faf625e53842' as `0x${string}`,
   },
