@@ -6,27 +6,27 @@ import StakingABI from './abis/Staking.json'
 
 export const CONTRACTS = {
   GridMining: {
-    address: '0x2988C22746A6388B0F967Dac676616e08C5AC1aa' as `0x${string}`,
+    address: '0x597Af29D204EE1d019Df89f1E93Cf013b098BEf4' as `0x${string}`,
     abi: GridMiningABI,
   },
   Bean: {
-    address: '0xBfA0F620C0C7BD02Aa6138eB505F4B74Dd1aFD03' as `0x${string}`,
+    address: '0xC9ccBa0104a105EcB35B962BD1302cfCF4AE6BEF' as `0x${string}`,
     abi: BeanABI,
   },
   AutoMiner: {
-    address: '0xe848b866DDeDD459cEE73311Cde1C8570f3Dc898' as `0x${string}`,
+    address: '0xCdB629B6E58BBae482adfE49B9886a6a1BBD7304' as `0x${string}`,
     abi: AutoMinerABI,
   },
   Treasury: {
-    address: '0x8b02C2Fe3831f1B10362Cc11017E55BFf58fD25c' as `0x${string}`,
+    address: '0xD02139f8ce44AA168822a706BDa3dde6a2305728' as `0x${string}`,
     abi: TreasuryABI,
   },
-  // TODO: Add LP contract address the current one is just a placeholder
+  // TODO: Add LP pair address after creating BEAN/WBNB pool on PancakeSwap
   LP: {
     address: '0xd7e5522c9cc3682c960afada6adde0f8116580f2ad2cef08c197faf625e53842' as `0x${string}`,
   },
   Staking: {
-    address: '0x49811966b9224a5655c54310f2231EA54C105b77' as `0x${string}`,
+    address: '0x64C90Fdb24F275861067BF332A0C7661cb938F99' as `0x${string}`,
     abi: StakingABI,
   },
 } as const

@@ -41,6 +41,7 @@ contract Bean is ERC20, ERC20Permit, Ownable {
     event MinterUpdated(address indexed oldMinter, address indexed newMinter);
     event MinterFrozen(address indexed minter);
     event PairUpdated(address indexed oldPair, address indexed newPair);
+    event RouterUpdated(address indexed oldRouter, address indexed newRouter);
 
     constructor() ERC20("Bean", "BNBEAN") ERC20Permit("Bean") Ownable(msg.sender) {}
 
@@ -69,6 +70,18 @@ contract Bean is ERC20, ERC20Permit, Ownable {
         if (minterFrozen) revert MinterAlreadyFrozen();
         minterFrozen = true;
         emit MinterFrozen(minter);
+    }
+
+    function setPair(address _pair) external onlyOwner {
+        if (_pair == address(0)) revert ZeroAddress();
+        emit PairUpdated(pair, _pair);
+        pair = _pair;
+    }
+
+    function setRouter(address _router) external onlyOwner {
+        if (_router == address(0)) revert ZeroAddress();
+        emit RouterUpdated(router, _router);
+        router = _router;
     }
 
     // ─── TWAP Oracle ───────────────────────────────────────────

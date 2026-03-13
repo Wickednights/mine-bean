@@ -22,6 +22,7 @@ contract Treasury is Ownable, ReentrancyGuard {
     IBean public bean;
     address public gridMining;
     IStaking public staking;
+    address public pancakeRouterAddress;
 
     // PancakeSwap V3 pool config
     address public poolManager;
@@ -58,9 +59,11 @@ contract Treasury is Ownable, ReentrancyGuard {
 
     // ─── Constructor ───────────────────────────────────────────
 
-    constructor(address _bean, uint256 _buybackThreshold) Ownable(msg.sender) {
+    constructor(address _bean, address _router, uint256 _buybackThreshold) Ownable(msg.sender) {
         if (_bean == address(0)) revert ZeroAddress();
+        if (_router == address(0)) revert ZeroAddress();
         bean = IBean(_bean);
+        pancakeRouterAddress = _router;
         if (_buybackThreshold > 0) buybackThreshold = _buybackThreshold;
     }
 
@@ -84,11 +87,12 @@ contract Treasury is Ownable, ReentrancyGuard {
         uint256 minOut = (expectedBEAN * (BPS_DENOMINATOR - slippageBps)) / BPS_DENOMINATOR;
 
         // Execute swap via PancakeSwap V2 Router
+        address routerAddr = pancakeRouterAddress;
         address[] memory path = new address[](2);
-        path[0] = IPancakeRouter(pancakeRouter()).WETH();
+        path[0] = IPancakeRouter(routerAddr).WETH();
         path[1] = address(bean);
 
-        uint256[] memory amounts = IPancakeRouter(pancakeRouter()).swapExactETHForTokens{value: bnbToSpend}(
+        uint256[] memory amounts = IPancakeRouter(routerAddr).swapExactETHForTokens{value: bnbToSpend}(
             minOut,
             path,
             address(this),
@@ -159,9 +163,9 @@ contract Treasury is Ownable, ReentrancyGuard {
         poolConfigSet = true;
     }
 
-    // PancakeSwap router address — BSC mainnet
-    function pancakeRouter() internal pure returns (address) {
-        return 0x10ED43C718714eb63d5aA57B78B54704E256024E;
+    function setPancakeRouter(address _router) external onlyOwner {
+        if (_router == address(0)) revert ZeroAddress();
+        pancakeRouterAddress = _router;
     }
 
     // Allow receiving BNB refunds from swaps

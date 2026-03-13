@@ -16,8 +16,13 @@ const TreasuryABI = require('../abis/Treasury.json');
 const StakingABI = require('../abis/Staking.json');
 
 const POLL_INTERVAL = 3000; // 3 seconds — matches BSC ~3s block time
+const QUERY_DELAY_MS = 400; // Delay between contract queries to avoid RPC rate limits
 
 let started = false;
+
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 async function startIndexer() {
   if (started) return;
@@ -538,25 +543,34 @@ async function startIndexer() {
       const toBlock = currentBlock;
       lastBlock = currentBlock;
 
-      // Query all contracts for events in this block range
-      const [gmEvents, amEvents, tEvents, sEvents] = await Promise.all([
-        GridMining.queryFilter('*', fromBlock, toBlock).catch(err => {
-          console.error('[Indexer] GridMining query error:', err.message);
-          return [];
-        }),
-        AutoMiner.queryFilter('*', fromBlock, toBlock).catch(err => {
-          console.error('[Indexer] AutoMiner query error:', err.message);
-          return [];
-        }),
-        Treasury.queryFilter('*', fromBlock, toBlock).catch(err => {
-          console.error('[Indexer] Treasury query error:', err.message);
-          return [];
-        }),
-        Staking.queryFilter('*', fromBlock, toBlock).catch(err => {
-          console.error('[Indexer] Staking query error:', err.message);
-          return [];
-        }),
-      ]);
+      // Query contracts sequentially with delays to avoid RPC rate limits (eth_getLogs)
+      let gmEvents = [];
+      let amEvents = [];
+      let tEvents = [];
+      let sEvents = [];
+
+      gmEvents = await GridMining.queryFilter('*', fromBlock, toBlock).catch(err => {
+        console.error('[Indexer] GridMining query error:', err.message);
+        return [];
+      });
+      await delay(QUERY_DELAY_MS);
+
+      amEvents = await AutoMiner.queryFilter('*', fromBlock, toBlock).catch(err => {
+        console.error('[Indexer] AutoMiner query error:', err.message);
+        return [];
+      });
+      await delay(QUERY_DELAY_MS);
+
+      tEvents = await Treasury.queryFilter('*', fromBlock, toBlock).catch(err => {
+        console.error('[Indexer] Treasury query error:', err.message);
+        return [];
+      });
+      await delay(QUERY_DELAY_MS);
+
+      sEvents = await Staking.queryFilter('*', fromBlock, toBlock).catch(err => {
+        console.error('[Indexer] Staking query error:', err.message);
+        return [];
+      });
 
       // Merge all events and sort by block number + log index
       const allEvents = [...gmEvents, ...amEvents, ...tEvents, ...sEvents]
