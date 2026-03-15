@@ -8,21 +8,23 @@ interface ClaimRewardsProps {
   userAddress?: string
   onClaimETH: () => void
   onClaimBEAN: () => void
+  onCheckpoint?: (roundId: number) => void
+  isCheckpointing?: boolean
 }
 
-
-export default function ClaimRewards({ userAddress, onClaimETH, onClaimBEAN }: ClaimRewardsProps) {
+export default function ClaimRewards({ userAddress, onClaimETH, onClaimBEAN, onCheckpoint, isCheckpointing }: ClaimRewardsProps) {
   // Shared rewards data from context (no local fetching)
   const { rewards } = useUserData()
 
-  if (!userAddress || !rewards) return null
+  if (!userAddress) return null
 
-  const hasETH = rewards.pendingETH !== "0"
-  const hasBEAN = rewards.pendingBEAN.gross !== "0"
-  if (!hasETH && !hasBEAN) return null
-
-  const hasUnroasted = rewards.pendingBEAN.unroasted !== "0"
-  const hasRoasted = rewards.pendingBEAN.roasted !== "0"
+  // Always show the Rewards card when connected so users know where to claim
+  const hasETH = rewards?.pendingETH !== "0" && rewards?.pendingETH !== undefined
+  const hasBEAN = rewards?.pendingBEAN?.gross !== "0" && rewards?.pendingBEAN?.gross !== undefined
+  const hasUnroasted = (rewards?.pendingBEAN?.unroasted ?? "0") !== "0"
+  const hasRoasted = (rewards?.pendingBEAN?.roasted ?? "0") !== "0"
+  const uncheckpointedRound = rewards?.uncheckpointedRound ? parseInt(rewards.uncheckpointedRound, 10) : 0
+  const needsCheckpoint = uncheckpointedRound > 0 && onCheckpoint
 
   return (
     <div style={styles.card}>
@@ -35,38 +37,49 @@ export default function ClaimRewards({ userAddress, onClaimETH, onClaimBEAN }: C
             <span>BNB Rewards</span>
           </div>
           <div style={{ ...styles.rowValue, color: hasETH ? "#fff" : "#555" }}>
-            {parseFloat(rewards.pendingETHFormatted).toFixed(6)} BNB
+            {rewards ? parseFloat(rewards.pendingETHFormatted || "0").toFixed(6) : "0.000000"} BNB
           </div>
         </div>
 
         <div style={styles.row}>
           <div style={styles.rowLabel}>
             <BeanLogo size={16} />
-            <span>Unroasted BEAN</span>
+            <span>Unroasted BNBEAN</span>
           </div>
           <div style={{ ...styles.rowValue, color: hasUnroasted ? "#fff" : "#555" }}>
-            {parseFloat(rewards.pendingBEAN.unroastedFormatted).toFixed(4)} BEAN
+            {rewards ? parseFloat(rewards.pendingBEAN?.unroastedFormatted || "0").toFixed(4) : "0.0000"} BNBEAN
           </div>
         </div>
 
         <div style={styles.row}>
           <div style={styles.rowLabel}>
             <BeanLogo size={16} />
-            <span>Roasted BEAN</span>
+            <span>Roasted BNBEAN</span>
           </div>
           <div style={{ ...styles.rowValue, color: hasRoasted ? "#fff" : "#555" }}>
-            {parseFloat(rewards.pendingBEAN.roastedFormatted).toFixed(4)} BEAN
+            {rewards ? parseFloat(rewards.pendingBEAN?.roastedFormatted || "0").toFixed(4) : "0.0000"} BNBEAN
           </div>
         </div>
       </div>
 
+      {needsCheckpoint && (
+        <div style={{ marginBottom: 12 }}>
+          <button
+            style={styles.btnActive}
+            disabled={isCheckpointing}
+            onClick={() => onCheckpoint(uncheckpointedRound)}
+          >
+            {isCheckpointing ? 'Checkpointing...' : `Checkpoint Round ${uncheckpointedRound} (required before claim)`}
+          </button>
+        </div>
+      )}
       <div style={styles.buttons}>
         <button
           style={hasBEAN ? styles.btnActive : styles.btnDisabled}
           disabled={!hasBEAN}
           onClick={onClaimBEAN}
         >
-          Claim BEAN
+          Claim BNBEAN
         </button>
         <button
           style={hasETH ? styles.btnActive : styles.btnDisabled}
@@ -76,6 +89,21 @@ export default function ClaimRewards({ userAddress, onClaimETH, onClaimBEAN }: C
           Claim BNB
         </button>
       </div>
+      {needsCheckpoint && (
+        <div style={{ fontSize: 11, color: "#888", marginTop: 8 }}>
+          You won a round. Checkpoint first to add rewards to your balance, then claim.
+        </div>
+      )}
+      {hasBEAN && (
+        <div style={{ fontSize: 11, color: "#888", marginTop: 8 }}>
+          Claim BNBEAN sends BNBEAN to your wallet. Add the token in MetaMask if it doesn&apos;t appear.
+        </div>
+      )}
+      {(!rewards || (!hasETH && !hasBEAN && !needsCheckpoint)) && (
+        <div style={{ fontSize: 11, color: "#666", marginTop: 8 }}>
+          Win a round to earn rewards. Click &quot;Claim BNBEAN&quot; or &quot;Claim BNB&quot; when you have pending rewards.
+        </div>
+      )}
     </div>
   )
 }

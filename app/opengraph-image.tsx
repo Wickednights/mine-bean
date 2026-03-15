@@ -58,7 +58,7 @@ export default async function Image() {
           }}
         >
           <span style={{ color: '#ffffff' }}>Mine</span>
-          <span style={{ color: '#F0B90B' }}>Bean</span>
+          <span style={{ color: '#F0B90B' }}>BNBEAN</span>
         </div>
 
         {/* Subtitle */}

@@ -7,7 +7,7 @@ const TreasuryABI = require('../abis/Treasury.json');
 const StakingABI = require('../abis/Staking.json');
 
 const ADDRESSES = {
-  GridMining: process.env.GRIDMINING_ADDRESS || '0x597Af29D204EE1d019Df89f1E93Cf013b098BEf4',
+  GridMining: process.env.GRIDMINING_ADDRESS || '0x268Cac7cCEFa8F542a3B64002D66Edc3d6C930FB',
   Bean: process.env.BEAN_ADDRESS || '0xC9ccBa0104a105EcB35B962BD1302cfCF4AE6BEF',
   AutoMiner: process.env.AUTOMINER_ADDRESS || '0xCdB629B6E58BBae482adfE49B9886a6a1BBD7304',
   Treasury: process.env.TREASURY_ADDRESS || '0xD02139f8ce44AA168822a706BDa3dde6a2305728',

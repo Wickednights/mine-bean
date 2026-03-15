@@ -23,7 +23,7 @@ This guide covers every step from contract deployment through game launch. Use i
 |----------|---------|
 | Bean | `0xC9ccBa0104a105EcB35B962BD1302cfCF4AE6BEF` |
 | Treasury | `0xD02139f8ce44AA168822a706BDa3dde6a2305728` |
-| GridMining | `0x597Af29D204EE1d019Df89f1E93Cf013b098BEf4` |
+| GridMining | `0x268Cac7cCEFa8F542a3B64002D66Edc3d6C930FB` |
 | AutoMiner | `0xCdB629B6E58BBae482adfE49B9886a6a1BBD7304` |
 | Staking | `0x64C90Fdb24F275861067BF332A0C7661cb938F99` |
 
@@ -53,7 +53,7 @@ BEAN is minted by GridMining when rounds settle. Until the game starts and at le
 2. Attach to Bean and GridMining:
    ```javascript
    const bean = await ethers.getContractAt("Bean", "0xC9ccBa0104a105EcB35B962BD1302cfCF4AE6BEF")
-   const gridMining = await ethers.getContractAt("GridMining", "0x597Af29D204EE1d019Df89f1E93Cf013b098BEf4")
+   const gridMining = await ethers.getContractAt("GridMining", "0x268Cac7cCEFa8F542a3B64002D66Edc3d6C930FB")
    ```
 
 3. Check deployer address and ownership:
@@ -181,7 +181,7 @@ npx hardhat console --network bscTestnet
 ```
 
 ```javascript
-const gridMining = await ethers.getContractAt("GridMining", "0x597Af29D204EE1d019Df89f1E93Cf013b098BEf4")
+const gridMining = await ethers.getContractAt("GridMining", "0x268Cac7cCEFa8F542a3B64002D66Edc3d6C930FB")
 const tx = await gridMining.startFirstRound()
 await tx.wait()
 console.log("Game started!")
@@ -206,7 +206,7 @@ PORT=3001
 MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/minebean
 RPC_URL=https://bsc-testnet-dataseed.bnbchain.org
 
-GRIDMINING_ADDRESS=0x597Af29D204EE1d019Df89f1E93Cf013b098BEf4
+GRIDMINING_ADDRESS=0x268Cac7cCEFa8F542a3B64002D66Edc3d6C930FB
 BEAN_ADDRESS=0xC9ccBa0104a105EcB35B962BD1302cfCF4AE6BEF
 AUTOMINER_ADDRESS=0xCdB629B6E58BBae482adfE49B9886a6a1BBD7304
 TREASURY_ADDRESS=0xD02139f8ce44AA168822a706BDa3dde6a2305728
@@ -214,6 +214,28 @@ STAKING_ADDRESS=0x64C90Fdb24F275861067BF332A0C7661cb938F99
 ```
 
 The Backend `lib/contracts.js` uses these env vars with the new addresses as fallbacks, so it will work even if `.env` is missing them — but setting them explicitly is recommended.
+
+### 6.1 Verify Bean minter (required for BNBEAN minting)
+
+BEAN (BNBEAN) is minted by GridMining when rounds settle. If `bean.minter()` is not set to GridMining, minting will revert and you will see 0 Circulating Supply and no BNBEAN in wallets after claims.
+
+**Verify in Hardhat console:**
+
+```bash
+cd hardhat
+npx hardhat console --network bscTestnet
+```
+
+```javascript
+const bean = await ethers.getContractAt("Bean", "0xC9ccBa0104a105EcB35B962BD1302cfCF4AE6BEF")
+const gridMiningAddr = "0x268Cac7cCEFa8F542a3B64002D66Edc3d6C930FB"
+console.log("Bean minter:", await bean.minter())
+console.log("Expected (GridMining):", gridMiningAddr)
+console.log("Match:", (await bean.minter()).toLowerCase() === gridMiningAddr.toLowerCase())
+console.log("Bean totalSupply:", (await bean.totalSupply()).toString())
+```
+
+If minter is `0x0000...` or wrong, call `bean.setMinter(gridMiningAddr)` as the Bean owner (deployer).
 
 ---
 
@@ -237,13 +259,13 @@ npx hardhat verify --network bscTestnet 0xD02139f8ce44AA168822a706BDa3dde6a23057
 
 **GridMining (4 args: vrfCoordinator, bean, treasury, feeCollector):**
 ```bash
-npx hardhat verify --network bscTestnet 0x597Af29D204EE1d019Df89f1E93Cf013b098BEf4 "<VRF_COORDINATOR_FROM_ENV>" "0xC9ccBa0104a105EcB35B962BD1302cfCF4AE6BEF" "0xD02139f8ce44AA168822a706BDa3dde6a2305728" "0xd7DEB87E5175f917709454D10a88878b2dE59631"
+npx hardhat verify --network bscTestnet 0x268Cac7cCEFa8F542a3B64002D66Edc3d6C930FB "<VRF_COORDINATOR_FROM_ENV>" "0xC9ccBa0104a105EcB35B962BD1302cfCF4AE6BEF" "0xD02139f8ce44AA168822a706BDa3dde6a2305728" "0xd7DEB87E5175f917709454D10a88878b2dE59631"
 ```
 Replace `<VRF_COORDINATOR_FROM_ENV>` with your `VRF_COORDINATOR` value from hardhat/.env.
 
 **AutoMiner (4 args: gridMining, executor, executorFeeBps, executorFlatFee):**
 ```bash
-npx hardhat verify --network bscTestnet 0xCdB629B6E58BBae482adfE49B9886a6a1BBD7304 "0x597Af29D204EE1d019Df89f1E93Cf013b098BEf4" "0xd7DEB87E5175f917709454D10a88878b2dE59631" "100" "6000000000000"
+npx hardhat verify --network bscTestnet 0xCdB629B6E58BBae482adfE49B9886a6a1BBD7304 "0x268Cac7cCEFa8F542a3B64002D66Edc3d6C930FB" "0xd7DEB87E5175f917709454D10a88878b2dE59631" "100" "6000000000000"
 ```
 
 **Staking (2 args: bean, treasury):**
@@ -278,6 +300,13 @@ Requires [Docker](https://docs.docker.com/get-docker/) installed.
 - MongoDB runs locally in a container (no Atlas needed).
 - Code changes are reflected via volume mounts (hot reload).
 - Stop with `Ctrl+C` or `docker compose down`.
+
+**Picking up new UI changes:** If you pull code changes (e.g. Claim Rewards card, Settle & Start Next button, crown persistence, Profile round history) and don't see them, restart Docker to rebuild the frontend:
+  ```bash
+  docker compose down && docker compose up --build
+  ```
+
+**INTERNAL_API_URL:** Docker Compose sets `INTERNAL_API_URL=http://backend:3001` for the frontend so Next.js API routes (Profile rounds, crown proxy) can reach the backend from inside the frontend container. For local dev without Docker, omit this — the app falls back to `localhost:3001`.
 
 ### Option B: Manual (npm)
 
@@ -353,6 +382,57 @@ Replace `0xd7e5522c9cc3682c960afada6adde0f8116580f2ad2cef08c197faf625e53842` wit
 
 ---
 
+## Pre-Launch Checklist
+
+Before going live, run through [PRE_LAUNCH_CHECKLIST.md](PRE_LAUNCH_CHECKLIST.md) to verify every game feature. It covers mining, rewards, AutoMiner, staking, Global, Profile, SSE, and mobile.
+
+**Restart Docker after Backend changes** (e.g. indexer optimizations): `docker compose down && docker compose up --build`.
+
+---
+
 ## Troubleshooting
 
 See [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) Section 5 for VRF errors, TWAP not ready, port mismatch, and other common issues. For Docker-specific issues, see [DOCKER.md](DOCKER.md).
+
+### BNBEAN not in wallet / 0 Circulating Supply
+
+If you claimed BEAN but don't see BNBEAN in your wallet, or Global shows 0 Circulating:
+
+1. **Verify Bean minter:** Run the check in Step 6.1. If `bean.minter()` is not GridMining, call `bean.setMinter(gridMiningAddress)` as owner.
+2. **Verify backend network:** Ensure Backend `RPC_URL` matches the chain you're on (e.g. BSC Testnet). If backend uses mainnet RPC, stats will show mainnet supply (possibly 0).
+3. **Check claim tx:** On BscScan, find your `claimBEAN` transaction. If it reverted, you may have had 0 BEAN to claim (e.g. round had no topMinerReward, or you weren't on the winning block).
+4. **Add BNBEAN to wallet:** In MetaMask, add custom token: address `0xC9ccBa0104a105EcB35B962BD1302cfCF4AE6BEF`, symbol BNBEAN, decimals 18.
+
+### Crown (Winners panel) disappears on refresh
+
+The award icon on the left shows when you win a round but may vanish after a page refresh.
+
+**Causes:**
+- Indexer timing: the backend polls every 12s (configurable via `INDEXER_POLL_INTERVAL_MS`). If you refresh immediately after winning, the round may not be in MongoDB yet.
+- In Docker, `INTERNAL_API_URL=http://backend:3001` must be set so the Next.js proxy can reach the backend.
+
+**Fixes applied:** The crown now retries 2–3 times (2s apart) on load and uses `sessionStorage` to remember the last round you won. If the crown still disappears, wait a few seconds after winning before refreshing, or win another round.
+
+### RPC / API credit usage too high
+
+If you're approaching your RPC provider's credit limit (e.g. 80M/month):
+
+1. **Indexer optimizations (already applied):** The indexer now uses a single `eth_getLogs` for all 4 contracts (instead of 4 separate calls) and polls every 12s (instead of 3s). This reduces RPC calls by ~15–20x.
+2. **Tune poll interval:** Set `INDEXER_POLL_INTERVAL_MS=20000` (20s) or higher in Backend `.env` to further reduce calls. Trade-off: events are indexed slightly slower.
+3. **Check provider dashboard:** `eth_getlogs`, `eth_chainid`, and `eth_blocknumber` are the main consumers. The indexer drives most of these.
+
+### Rewards not showing after checkpoint
+
+After winning, settling, and resetting, BNB and BNBEAN may stay at 0.0000.
+
+**Required step:** You must click **"Checkpoint Round N (required before claim)"** before rewards appear. Checkpoint credits the round's winnings into your pending balance.
+
+**If you checkpointed and still see 0:**
+- Rounds settled *before* the minter fix never credited on-chain — only new rounds (post-fix) have rewards.
+- In Docker, ensure the frontend can reach the backend. Rewards are fetched via `/api/user/[address]/rewards` (Next.js proxy). Set `INTERNAL_API_URL` so the proxy works.
+
+### Stats showing zeros (Circulating Supply, Protocol Revenue, BNB in Treasury)
+
+**Diagnostic:** Call `GET /api/stats/diagnostic` (or `http://localhost:3001/api/stats/diagnostic` if backend runs separately). This returns raw contract reads (Bean.totalSupply, Treasury.getStats, minter address, etc.) to verify RPC, addresses, and minter.
+
+**Common causes:** Wrong RPC (e.g. mainnet vs testnet), minter not set, or all-blocks strategy (vaultAmount = 0). Stats cache TTL was reduced (15s for stats, 30s for treasury) so values refresh sooner.

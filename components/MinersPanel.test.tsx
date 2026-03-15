@@ -6,11 +6,10 @@ import MinersPanel from './MinersPanel'
 
 // ── Mocks ────────────────────────────────────────────────────────────
 
-const mockApiFetch = vi.fn()
-vi.mock('@/lib/api', () => ({
-  API_BASE: 'http://localhost:3001',
-  apiFetch: (...args: any[]) => mockApiFetch(...args),
-}))
+const mockFetch = vi.fn()
+beforeEach(() => {
+  ;(global as any).fetch = mockFetch
+})
 
 const mockResolve = vi.fn((addr: string) =>
   `${addr.slice(0, 6)}...${addr.slice(-4)}`
@@ -75,8 +74,21 @@ async function triggerSettlement(roundId: string) {
 
 describe('MinersPanel', () => {
   beforeEach(() => {
-    mockApiFetch.mockReset()
+    mockFetch.mockReset()
     mockResolve.mockClear()
+    // Mount: proxy/rounds then proxy/round/:id/miners. Settlement: proxy/round/:id/miners
+    mockFetch.mockImplementation((url: string) => {
+      if (url.includes('/api/proxy/rounds')) {
+        return Promise.resolve({ json: () => Promise.resolve({ rounds: [] }) })
+      }
+      if (url.includes('/api/proxy/round/') && url.includes('/miners')) {
+        return Promise.resolve({ json: () => Promise.resolve(mockMinersResponse) })
+      }
+      if (url.includes('/api/proxy/round/current')) {
+        return Promise.resolve({ json: () => Promise.resolve({ roundId: '1' }) })
+      }
+      return Promise.reject(new Error('Unmocked: ' + url))
+    })
   })
 
   it('does not show trophy tab when no miners data yet', () => {
@@ -91,20 +103,16 @@ describe('MinersPanel', () => {
   })
 
   it('roundSettled event stores roundId and settlementComplete triggers fetch', async () => {
-    mockApiFetch.mockResolvedValue(mockMinersResponse)
-
     render(<MinersPanel />)
 
     await triggerSettlement('100')
 
     await waitFor(() => {
-      expect(mockApiFetch).toHaveBeenCalledWith('/api/round/100/miners')
+      expect(mockFetch).toHaveBeenCalledWith('/api/proxy/round/100/miners')
     })
   })
 
   it('opens panel when miners data arrives', async () => {
-    mockApiFetch.mockResolvedValue(mockMinersResponse)
-
     render(<MinersPanel />)
 
     await triggerSettlement('100')
@@ -115,8 +123,6 @@ describe('MinersPanel', () => {
   })
 
   it('displays round info and winner count', async () => {
-    mockApiFetch.mockResolvedValue(mockMinersResponse)
-
     render(<MinersPanel />)
     await triggerSettlement('100')
 
@@ -128,8 +134,6 @@ describe('MinersPanel', () => {
   })
 
   it('displays miner addresses and BNB rewards', async () => {
-    mockApiFetch.mockResolvedValue(mockMinersResponse)
-
     render(<MinersPanel />)
     await triggerSettlement('100')
 
@@ -140,8 +144,6 @@ describe('MinersPanel', () => {
   })
 
   it('shows BEAN reward only when > 0', async () => {
-    mockApiFetch.mockResolvedValue(mockMinersResponse)
-
     render(<MinersPanel />)
     await triggerSettlement('100')
 
@@ -155,8 +157,6 @@ describe('MinersPanel', () => {
   })
 
   it('close button hides panel', async () => {
-    mockApiFetch.mockResolvedValue(mockMinersResponse)
-
     render(<MinersPanel />)
     await triggerSettlement('100')
 
@@ -170,28 +170,42 @@ describe('MinersPanel', () => {
   })
 
   it('consume-once ref: second settlementComplete without new roundSettled does not fetch', async () => {
-    mockApiFetch.mockResolvedValue(mockMinersResponse)
-
     render(<MinersPanel />)
 
     // First settlement cycle
     await triggerSettlement('100')
 
+    const minersCalls = () => mockFetch.mock.calls.filter((c: any[]) => c[0]?.includes('/miners'))
     await waitFor(() => {
-      expect(mockApiFetch).toHaveBeenCalledTimes(1)
+      expect(minersCalls().length).toBeGreaterThanOrEqual(1)
     })
+
+    const countBefore = minersCalls().length
 
     // Second settlementComplete without roundSettled — should NOT fetch
     act(() => {
       window.dispatchEvent(new CustomEvent('settlementComplete'))
     })
 
-    expect(mockApiFetch).toHaveBeenCalledTimes(1)
+    expect(minersCalls().length).toBe(countBefore)
   })
 
   it('empty round keeps previous data without opening panel', async () => {
-    // First round: has miners
-    mockApiFetch.mockResolvedValueOnce(mockMinersResponse)
+    mockFetch.mockImplementation((url: string) => {
+      if (url.includes('/api/proxy/rounds')) {
+        return Promise.resolve({ json: () => Promise.resolve({ rounds: [] }) })
+      }
+      if (url.includes('/api/proxy/round/100/miners')) {
+        return Promise.resolve({ json: () => Promise.resolve(mockMinersResponse) })
+      }
+      if (url.includes('/api/proxy/round/101/miners')) {
+        return Promise.resolve({ json: () => Promise.resolve({ roundId: 101, winningBlock: 3, miners: [] }) })
+      }
+      if (url.includes('/api/proxy/round/current')) {
+        return Promise.resolve({ json: () => Promise.resolve({ roundId: '1' }) })
+      }
+      return Promise.reject(new Error('Unmocked: ' + url))
+    })
 
     render(<MinersPanel />)
     await triggerSettlement('100')
@@ -205,11 +219,11 @@ describe('MinersPanel', () => {
     expectPanelClosed()
 
     // Second round: empty (no miners)
-    mockApiFetch.mockResolvedValueOnce({ roundId: 101, winningBlock: 3, miners: [] })
     await triggerSettlement('101')
 
     await waitFor(() => {
-      expect(mockApiFetch).toHaveBeenCalledTimes(2)
+      const minersCalls = mockFetch.mock.calls.filter((c: any[]) => c[0]?.includes('/miners'))
+      expect(minersCalls.length).toBeGreaterThanOrEqual(2)
     })
 
     // Panel should still show previous round data (#100), not re-open
@@ -218,8 +232,6 @@ describe('MinersPanel', () => {
   })
 
   it('overlay click closes panel', async () => {
-    mockApiFetch.mockResolvedValue(mockMinersResponse)
-
     const { container } = render(<MinersPanel />)
     await triggerSettlement('100')
 

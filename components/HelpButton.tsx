@@ -59,7 +59,7 @@ export default function HelpButton() {
                 </div>
                 <div>
                   <div style={{ fontSize: 16, fontWeight: 700, color: '#fff' }}>Deploy a Mining Agent</div>
-                  <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', marginTop: 1 }}>Automate your BEAN mining with an AI agent</div>
+                  <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', marginTop: 1 }}>Automate your BNBEAN mining with an AI agent</div>
                 </div>
               </div>
               <button onClick={() => setShowAgentModal(false)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', display: 'flex', padding: 4 }}>
@@ -90,7 +90,7 @@ export default function HelpButton() {
                 'Pick blocks and deploy BNB every round without you lifting a finger',
                 'Run any strategy — conservative, degen, spread across blocks, and more',
                 'React to round outcomes and refine its approach over time',
-                'Accumulate BNB winnings and BEAN rewards autonomously',
+                'Accumulate BNB winnings and BNBEAN rewards autonomously',
               ].map((item, i) => (
                 <div key={i} style={{ display: 'flex', gap: 8, marginBottom: i < 3 ? 8 : 0 }}>
                   <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: 13, flexShrink: 0 }}>—</span>
@@ -202,7 +202,7 @@ export default function HelpButton() {
             { num: '01', title: 'Pick Your Blocks', desc: 'Each round, select one or more blocks on the 5×5 grid. You can only deploy once per round so choose carefully.' },
               { num: '02', title: 'Deploy BNB', desc: 'Set your BNB amount per block and hit Deploy. The more BNB you deploy to a block, the larger your share of winnings if it wins.' },
               { num: '03', title: 'Wait for the Winner', desc: 'Every 60 seconds, one block is randomly selected as the winner. All BNB deployed to that block splits the round pot proportionally.' },
-              { num: '04', title: 'Earn BEAN', desc: 'The top miner on the winning block earns BEAN tokens each round. Stake BEAN to earn a share of protocol revenue.' },
+              { num: '04', title: 'Earn BNBEAN', desc: 'The top miner on the winning block earns BNBEAN tokens each round. Stake BNBEAN to earn a share of protocol revenue.' },
               { num: '05', title: 'Hit the Beanpot', desc: 'A portion of every round feeds the Beanpot jackpot. Win it and earn a share of the accumulated jackpot on top of your normal winnings.' },
               { num: '06', title: 'Auto Mine', desc: 'Enable Auto mode to set a strategy and deposit BNB. The protocol deploys automatically every round on your behalf.' },
             ].map(({ num, title, desc }) => (

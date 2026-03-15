@@ -1,3 +1,4 @@
+import type { Abi } from 'viem'
 import GridMiningABI from './abis/GridMining.json'
 import AutoMinerABI from './abis/AutoMiner.json'
 import BeanABI from './abis/Bean.json'
@@ -6,20 +7,20 @@ import StakingABI from './abis/Staking.json'
 
 export const CONTRACTS = {
   GridMining: {
-    address: '0x597Af29D204EE1d019Df89f1E93Cf013b098BEf4' as `0x${string}`,
-    abi: GridMiningABI,
+    address: '0x268Cac7cCEFa8F542a3B64002D66Edc3d6C930FB' as `0x${string}`,
+    abi: GridMiningABI as Abi,
   },
   Bean: {
     address: '0xC9ccBa0104a105EcB35B962BD1302cfCF4AE6BEF' as `0x${string}`,
-    abi: BeanABI,
+    abi: BeanABI as Abi,
   },
   AutoMiner: {
     address: '0xCdB629B6E58BBae482adfE49B9886a6a1BBD7304' as `0x${string}`,
-    abi: AutoMinerABI,
+    abi: AutoMinerABI as Abi,
   },
   Treasury: {
     address: '0xD02139f8ce44AA168822a706BDa3dde6a2305728' as `0x${string}`,
-    abi: TreasuryABI,
+    abi: TreasuryABI as Abi,
   },
   // TODO: Add LP pair address after creating BEAN/WBNB pool on PancakeSwap
   LP: {
@@ -27,7 +28,7 @@ export const CONTRACTS = {
   },
   Staking: {
     address: '0x64C90Fdb24F275861067BF332A0C7661cb938F99' as `0x${string}`,
-    abi: StakingABI,
+    abi: StakingABI as Abi,
   },
 } as const
 

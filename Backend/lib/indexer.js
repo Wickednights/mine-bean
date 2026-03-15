@@ -15,14 +15,19 @@ const AutoMinerABI = require('../abis/AutoMiner.json');
 const TreasuryABI = require('../abis/Treasury.json');
 const StakingABI = require('../abis/Staking.json');
 
-const POLL_INTERVAL = 3000; // 3 seconds — matches BSC ~3s block time
-const QUERY_DELAY_MS = 400; // Delay between contract queries to avoid RPC rate limits
+// Configurable via env: INDEXER_POLL_INTERVAL_MS (default 12s). Higher = fewer RPC calls.
+const POLL_INTERVAL = parseInt(process.env.INDEXER_POLL_INTERVAL_MS || '12000', 10) || 12000;
+const MAX_BLOCK_RANGE = 2000; // Many RPCs (Alchemy, etc.) reject eth_getLogs over ~2k blocks
+
+// All contract addresses for single eth_getLogs call (reduces 4 RPC calls → 1)
+const INDEXER_ADDRESSES = [
+  ADDRESSES.GridMining,
+  ADDRESSES.AutoMiner,
+  ADDRESSES.Treasury,
+  ADDRESSES.Staking,
+];
 
 let started = false;
-
-function delay(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
 
 async function startIndexer() {
   if (started) return;
@@ -237,13 +242,31 @@ async function startIndexer() {
         winnersDeployed: winnersDeployed.toString(),
       });
 
-      setTimeout(() => {
+      setTimeout(async () => {
+        let newRound = null;
+        try {
+          const next = await Round.findOne({ roundId: rid + 1 }).lean();
+          if (next) {
+            let beanpotPool = BigInt(0);
+            try {
+              beanpotPool = await GridMiningRead.beanpotPool();
+            } catch {}
+            newRound = {
+              roundId: String(next.roundId),
+              startTime: next.startTime,
+              endTime: next.endTime,
+              beanpotPool: beanpotPool.toString(),
+              beanpotPoolFormatted: formatEth(beanpotPool),
+            };
+          }
+        } catch {}
         emitGlobal('roundTransition', {
           settled: {
             roundId: rid,
             winningBlock: wBlock,
             beanpotAmount: bpAmount,
           },
+          newRound,
         });
       }, 500);
     } catch (err) {
@@ -533,6 +556,27 @@ async function startIndexer() {
   };
 
   // ─── Polling Loop ───────────────────────────────────────────────────────
+  // Single eth_getLogs for all 4 contracts (4x fewer RPC calls than separate queryFilter)
+
+  const addrToInterface = { [ADDRESSES.GridMining.toLowerCase()]: GridMining.interface, [ADDRESSES.AutoMiner.toLowerCase()]: AutoMiner.interface, [ADDRESSES.Treasury.toLowerCase()]: Treasury.interface, [ADDRESSES.Staking.toLowerCase()]: Staking.interface };
+
+  function parseLogToEvent(rawLog) {
+    const iface = addrToInterface[rawLog.address?.toLowerCase()];
+    if (!iface) return null;
+    try {
+      const parsed = iface.parseLog({ topics: rawLog.topics, data: rawLog.data });
+      if (!parsed) return null;
+      return {
+        args: parsed.args,
+        blockNumber: rawLog.blockNumber,
+        transactionHash: rawLog.transactionHash,
+        index: rawLog.index,
+        fragment: { name: parsed.name },
+      };
+    } catch {
+      return null;
+    }
+  }
 
   async function pollEvents() {
     try {
@@ -540,43 +584,22 @@ async function startIndexer() {
       if (currentBlock <= lastBlock) return;
 
       const fromBlock = lastBlock + 1;
-      const toBlock = currentBlock;
-      lastBlock = currentBlock;
+      let toBlock = currentBlock;
+      if (toBlock - fromBlock + 1 > MAX_BLOCK_RANGE) {
+        toBlock = fromBlock + MAX_BLOCK_RANGE - 1;
+      }
+      lastBlock = toBlock;
 
-      // Query contracts sequentially with delays to avoid RPC rate limits (eth_getLogs)
-      let gmEvents = [];
-      let amEvents = [];
-      let tEvents = [];
-      let sEvents = [];
-
-      gmEvents = await GridMining.queryFilter('*', fromBlock, toBlock).catch(err => {
-        console.error('[Indexer] GridMining query error:', err.message);
-        return [];
-      });
-      await delay(QUERY_DELAY_MS);
-
-      amEvents = await AutoMiner.queryFilter('*', fromBlock, toBlock).catch(err => {
-        console.error('[Indexer] AutoMiner query error:', err.message);
-        return [];
-      });
-      await delay(QUERY_DELAY_MS);
-
-      tEvents = await Treasury.queryFilter('*', fromBlock, toBlock).catch(err => {
-        console.error('[Indexer] Treasury query error:', err.message);
-        return [];
-      });
-      await delay(QUERY_DELAY_MS);
-
-      sEvents = await Staking.queryFilter('*', fromBlock, toBlock).catch(err => {
-        console.error('[Indexer] Staking query error:', err.message);
+      const rawLogs = await provider.getLogs({ address: INDEXER_ADDRESSES, fromBlock, toBlock }).catch(err => {
+        console.error('[Indexer] getLogs error:', err.message);
         return [];
       });
 
-      // Merge all events and sort by block number + log index
-      const allEvents = [...gmEvents, ...amEvents, ...tEvents, ...sEvents]
+      const allEvents = rawLogs
+        .map(parseLogToEvent)
+        .filter(Boolean)
         .sort((a, b) => a.blockNumber - b.blockNumber || a.index - b.index);
 
-      // Dispatch to handlers
       for (const event of allEvents) {
         const eventName = event.fragment?.name;
         const handler = eventHandlers[eventName];
@@ -593,10 +616,9 @@ async function startIndexer() {
     }
   }
 
-  // Start polling
   setInterval(pollEvents, POLL_INTERVAL);
 
-  console.log(`[Indexer] Listening to contract events via queryFilter polling (${POLL_INTERVAL}ms interval)`);
+  console.log(`[Indexer] Listening via single eth_getLogs (${POLL_INTERVAL}ms interval, env: INDEXER_POLL_INTERVAL_MS)`);
 }
 
 module.exports = { startIndexer };

@@ -174,7 +174,7 @@ describe('Header', () => {
     }, { timeout: 3000 })
 
     // Check for BEAN price label
-    expect(screen.getByText('BEAN')).toBeInTheDocument()
+    expect(screen.getByText('BNBEAN')).toBeInTheDocument()
   })
 
   it('shows fallback prices on API error', async () => {
@@ -266,7 +266,7 @@ describe('Header', () => {
     await waitFor(() => {
       const beanLogos = screen.getAllByTestId('bean-logo')
       expect(beanLogos.length).toBeGreaterThan(0)
-      expect(screen.getByText('BEAN')).toBeInTheDocument()
+      expect(screen.getByText('BNBEAN')).toBeInTheDocument()
     })
   })
 

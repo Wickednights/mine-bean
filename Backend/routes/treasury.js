@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Buyback = require('../models/Buyback');
-const { getContracts } = require('../lib/contracts');
+const { getContracts, getProvider, ADDRESSES } = require('../lib/contracts');
 const { formatEth } = require('../lib/format');
 const cache = require('../lib/cache');
 
@@ -12,12 +12,18 @@ router.get('/stats', async (req, res) => {
     if (cached) return res.json(cached);
 
     const { Treasury } = getContracts();
-    const stats = await Treasury.getStats();
+    const provider = getProvider();
+
+    const [stats, treasuryBalance] = await Promise.all([
+      Treasury.getStats(),
+      provider.getBalance(ADDRESSES.Treasury),
+    ]);
 
     const vaultedETH = (stats[0] || stats.vaultedETH || BigInt(0)).toString();
     const totalBurned = (stats[1] || stats.totalBurned || BigInt(0)).toString();
     const totalToStakers = (stats[2] || stats.totalDistributedToStakers || BigInt(0)).toString();
     const totalBuybacks = (stats[3] || stats.totalBuybacks || BigInt(0)).toString();
+    const balanceStr = treasuryBalance.toString();
 
     const result = {
       vaultedETH,
@@ -30,10 +36,13 @@ router.get('/stats', async (req, res) => {
       totalBuybacksFormatted: formatEth(totalBuybacks),
       // Alias for frontend GlobalStats (uses totalVaultedFormatted)
       totalVaultedFormatted: formatEth(vaultedETH),
+      // BNB currently held in Treasury (from vault fee on squares) — available for buybacks
+      treasuryBalance: balanceStr,
+      treasuryBalanceFormatted: formatEth(balanceStr),
       lastRefresh: new Date().toISOString(),
     };
 
-    cache.set('treasury_stats', result, 60);
+    cache.set('treasury_stats', result, 30);
     res.json(result);
   } catch (err) {
     console.error('Treasury stats error:', err.message);

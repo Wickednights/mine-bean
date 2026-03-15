@@ -11,7 +11,7 @@
 
 | Contract   | Address                                      |
 |------------|----------------------------------------------|
-| GridMining | `0x9632495bDb93FD6B0740Ab69cc6c71C9c01da4f0` |
+| GridMining | `0x268Cac7cCEFa8F542a3B64002D66Edc3d6C930FB` |
 | Bean       | `0x5c72992b83E74c4D5200A8E8920fB946214a5A5D` |
 | Treasury   | `0x38F6E74148D6904286131e190d879A699fE3Aeb3` |
 | AutoMiner  | `0x31358496900D600B2f523d6EdC4933E78F72De89` |

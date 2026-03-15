@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useCallback } from "react"
 import BeanLogo, { BnbLogo } from './BeanLogo'
 import { apiFetch } from '../lib/api'
 
@@ -15,6 +15,7 @@ interface TreasuryStatsResponse {
     totalVaultedFormatted: string
     totalBurned: string
     totalBurnedFormatted: string
+    treasuryBalanceFormatted?: string
 }
 
 // Contract constant
@@ -32,32 +33,46 @@ export default function GlobalStats({
         circulatingSupply: number
         burned: number
         protocolRevenue: number
+        treasuryBalance?: number
     } | null>(null)
 
     useEffect(() => {
         setMounted(true)
     }, [])
 
+    const fetchStats = useCallback(async () => {
+        try {
+            const [statsRes, treasuryRes] = await Promise.all([
+                apiFetch<StatsResponse>('/api/stats'),
+                apiFetch<TreasuryStatsResponse>('/api/treasury/stats')
+            ])
+            setData({
+                circulatingSupply: parseFloat(statsRes.totalSupplyFormatted),
+                burned: parseFloat(treasuryRes.totalBurnedFormatted),
+                protocolRevenue: parseFloat(treasuryRes.totalVaultedFormatted),
+                treasuryBalance: treasuryRes.treasuryBalanceFormatted ? parseFloat(treasuryRes.treasuryBalanceFormatted) : 0
+            })
+        } catch (err) {
+            console.error('Failed to fetch stats:', err)
+        }
+    }, [])
+
     useEffect(() => {
         if (!mounted) return
-
-        const fetchStats = async () => {
-            try {
-                const [statsRes, treasuryRes] = await Promise.all([
-                    apiFetch<StatsResponse>('/api/stats'),
-                    apiFetch<TreasuryStatsResponse>('/api/treasury/stats')
-                ])
-                setData({
-                    circulatingSupply: parseFloat(statsRes.totalSupplyFormatted),
-                    burned: parseFloat(treasuryRes.totalBurnedFormatted),
-                    protocolRevenue: parseFloat(treasuryRes.totalVaultedFormatted)
-                })
-            } catch (err) {
-                console.error('Failed to fetch stats:', err)
-            }
-        }
         fetchStats()
-    }, [mounted])
+    }, [mounted, fetchStats])
+
+    // Refetch when round settles or transitions (e.g. after reset) so stats stay fresh
+    useEffect(() => {
+        if (!mounted) return
+        const handleRoundChange = () => fetchStats()
+        window.addEventListener('roundSettled', handleRoundChange)
+        window.addEventListener('settlementComplete', handleRoundChange)
+        return () => {
+            window.removeEventListener('roundSettled', handleRoundChange)
+            window.removeEventListener('settlementComplete', handleRoundChange)
+        }
+    }, [mounted, fetchStats])
 
     const stats = [
         {
@@ -84,6 +99,13 @@ export default function GlobalStats({
                 ? data.protocolRevenue.toLocaleString(undefined, { minimumFractionDigits: 4, maximumFractionDigits: 4 })
                 : "—",
             label: "Protocol Revenue",
+            iconType: "bnb",
+        },
+        {
+            value: data?.treasuryBalance != null
+                ? data.treasuryBalance.toLocaleString(undefined, { minimumFractionDigits: 4, maximumFractionDigits: 4 })
+                : "—",
+            label: "BNB in Treasury",
             iconType: "bnb",
         },
     ]
@@ -168,7 +190,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     },
     container: {
         display: "grid",
-        gridTemplateColumns: "repeat(4, 1fr)",
+        gridTemplateColumns: "repeat(5, 1fr)",
         gap: "16px",
         marginBottom: "40px",
     },

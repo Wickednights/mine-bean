@@ -6,9 +6,11 @@ import { useRoundTimer } from '@/lib/RoundTimerContext'
 
 interface MobileStatsBarProps {
     userAddress?: string
+    isConnected?: boolean
+    onReset?: () => void
 }
 
-export default function MobileStatsBar({ userAddress }: MobileStatsBarProps) {
+export default function MobileStatsBar({ userAddress, isConnected, onReset }: MobileStatsBarProps) {
     const { timeRemaining: timer } = useRoundTimer()
     const [beanpotPool, setBeanpotPool] = useState(0)
     const [totalDeployed, setTotalDeployed] = useState(0)
@@ -60,9 +62,14 @@ export default function MobileStatsBar({ userAddress }: MobileStatsBarProps) {
                 </div>
                 <div style={styles.stat}>
                     <div style={styles.valueRow}>
-                        <span style={styles.value}>{formatTime(timer)}</span>
+                        <span style={styles.value}>{timer === 0 ? "Waiting..." : formatTime(timer)}</span>
                     </div>
                     <span style={styles.label}>Time remaining</span>
+                    {timer === 0 && isConnected && onReset && (
+                        <button style={styles.resetBtn} onClick={onReset}>
+                            Settle & Start Next
+                        </button>
+                    )}
                 </div>
             </div>
             <div style={styles.row}>
@@ -126,6 +133,19 @@ const styles: { [key: string]: React.CSSProperties } = {
         fontSize: '13px',
         color: '#999',
         fontWeight: 500,
+    },
+    resetBtn: {
+        marginTop: 8,
+        width: '100%',
+        padding: '8px 12px',
+        background: 'rgba(240, 185, 11, 0.2)',
+        border: '1px solid #F0B90B',
+        borderRadius: 8,
+        fontSize: 12,
+        fontWeight: 700,
+        color: '#F0B90B',
+        cursor: 'pointer',
+        fontFamily: 'inherit',
     },
     bnbLogo: {
         width: 20,

@@ -1,9 +1,18 @@
 export const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
 
+/** Use same-origin (Next.js proxy) for paths that have a proxy route, so Docker/browser can reach backend. */
+function getFetchUrl(path: string): string {
+  if (path.startsWith('/api/user/') && path.endsWith('/rewards')) {
+    return path
+  }
+  return `${API_BASE}${path}`
+}
+
 export async function apiFetch<T>(path: string): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`);
-  if (!res.ok) throw new Error(`API ${path}: ${res.status}`);
-  return res.json();
+  const url = getFetchUrl(path)
+  const res = await fetch(url)
+  if (!res.ok) throw new Error(`API ${path}: ${res.status}`)
+  return res.json()
 }
 
 export async function apiMutate<T>(

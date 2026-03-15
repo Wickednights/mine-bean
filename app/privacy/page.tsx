@@ -27,7 +27,7 @@ export default function Privacy() {
         <h1 style={{ fontSize: isMobile ? 28 : 36, fontWeight: 700, color: '#fff', margin: '0 0 8px' }}>Privacy Policy</h1>
         <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.3)', margin: '0 0 40px' }}>Effective Date: February 18, 2026</p>
 
-        <p style={text}>This Privacy Policy (the <span style={bold}>&quot;Policy&quot;</span>) explains how NU11 LABS LLC (<span style={bold}>&quot;we,&quot; &quot;our,&quot;</span> or <span style={bold}>&quot;us&quot;</span>) collects, uses, discloses, and protects your information when you use the website at minebean.io (the <span style={bold}>&quot;Website&quot;</span>) and the associated BEAN mining protocol services (the <span style={bold}>&quot;Services&quot;</span>). By accessing or using the Website or Services, you agree to this Privacy Policy. If you do not agree, you must not use the Services.</p>
+        <p style={text}>This Privacy Policy (the <span style={bold}>&quot;Policy&quot;</span>) explains how NU11 LABS LLC (<span style={bold}>&quot;we,&quot; &quot;our,&quot;</span> or <span style={bold}>&quot;us&quot;</span>) collects, uses, discloses, and protects your information when you use the website at minebean.io (the <span style={bold}>&quot;Website&quot;</span>) and the associated BNBEAN mining protocol services (the <span style={bold}>&quot;Services&quot;</span>). By accessing or using the Website or Services, you agree to this Privacy Policy. If you do not agree, you must not use the Services.</p>
 
         <p style={text}>The Services are permissionless and wallet-based, requiring no user registration, account creation, or personally identifiable information (PII) such as names or email addresses to participate in mining. Privacy is central to everything we do, and we minimize data collection wherever possible.</p>
 
@@ -36,7 +36,7 @@ export default function Privacy() {
         <h3 style={subheading}>1.1 Blockchain Data</h3>
         <p style={text}>When you interact with the Services using a non-custodial cryptocurrency wallet, we may collect:</p>
         <p style={text}>(a) Your public wallet address, used to identify transactions on the BNB Smart Chain blockchain.</p>
-        <p style={text}>(b) Transaction details, such as BNB deployed, round results, BEAN earned, staking activity, and claims made through the Protocol, as recorded on the public BNB Smart Chain blockchain.</p>
+        <p style={text}>(b) Transaction details, such as BNB deployed, round results, BNBEAN earned, staking activity, and claims made through the Protocol, as recorded on the public BNB Smart Chain blockchain.</p>
         <p style={text}>Note that blockchain addresses are publicly-available data that are not created or assigned by us or any central party, and by themselves are not personally identifying. All blockchain-related data is publicly available on the BNB Smart Chain blockchain and is not directly controlled by us.</p>
 
         <h3 style={subheading}>1.2 Profile Information</h3>

@@ -10,36 +10,6 @@ import { useUserData } from '@/lib/UserDataContext'
 
 // ── Types ─────────────────────────────────────────────────
 
-interface DeployEntry {
-  roundId: number
-  totalAmount: string
-  blockMask: string
-  txHash: string
-  isAutoMine: boolean
-  timestamp: string
-  roundResult: {
-    settled: boolean
-    wonWinningBlock: boolean
-    beanpotHit: boolean
-    winningBlock: number
-    ethWon: string
-    ethWonFormatted: string
-    beanWon: string
-    beanWonFormatted: string
-    pnl: string
-  }
-}
-
-interface HistoryTotals {
-  totalETHWonFormatted: string
-  totalBEANWonFormatted: string
-  totalETHDeployedFormatted: string
-  totalPNL: string
-  beanPriceEth: string
-  roundsPlayed: number
-  roundsWon: number
-}
-
 interface Round {
   id: number; block: number; yourBlocks: number[]; deployed: number; won: number;
   netPnl: number; pctChange: number; beansEarned: number; beanpotAmount: number | null;
@@ -72,47 +42,6 @@ interface StakeInfo {
 
 
 const ROWS_PER_PAGE = 8
-
-function getRelativeTime(timestamp: string): string {
-  const seconds = Math.floor((Date.now() - new Date(timestamp).getTime()) / 1000)
-  if (seconds < 0) return 'just now'
-  if (seconds < 60) return `${seconds}s ago`
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`
-  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`
-  return `${Math.floor(seconds / 86400)}d ago`
-}
-
-function decodeBlockMask(mask: string): number[] {
-  const n = BigInt(mask)
-  const blocks: number[] = []
-  for (let i = 0; i < 25; i++) {
-    if ((n >> BigInt(i)) & BigInt(1)) blocks.push(i)
-  }
-  return blocks
-}
-
-function entryToRound(entry: DeployEntry, beanPriceEth: number): Round {
-  const deployed = parseFloat(entry.totalAmount) / 1e18
-  const ethPnl = parseFloat(entry.roundResult.pnl) || 0
-  const beansEarned = parseFloat(entry.roundResult.beanWonFormatted) || 0
-  const beanValueEth = beansEarned * beanPriceEth
-  const truePnl = ethPnl + beanValueEth
-  const pctChange = deployed > 0 ? Math.round((truePnl / deployed) * 10000) / 100 : 0
-  return {
-    id: entry.roundId,
-    block: entry.roundResult.winningBlock + 1,
-    yourBlocks: decodeBlockMask(entry.blockMask).map(b => b + 1),
-    deployed,
-    won: parseFloat(entry.roundResult.ethWonFormatted) || 0,
-    netPnl: truePnl,
-    pctChange,
-    beansEarned,
-    beanpotAmount: entry.roundResult.beanpotHit ? beansEarned : null,
-    isWin: decodeBlockMask(entry.blockMask).includes(entry.roundResult.winningBlock),
-    isBeanpot: entry.roundResult.beanpotHit,
-    timestamp: getRelativeTime(entry.timestamp),
-  }
-}
 
 // ── Icons ─────────────────────────────────────────────────
 
@@ -181,7 +110,7 @@ function PnlCard({ round, pfpUrl, username, onClose, ethPriceUsd }: { round: Rou
 
   const handleShare = async () => {
     const text = round.isBeanpot
-      ? `Just hit the BEANPOT for ${round.beanpotAmount?.toFixed(3)} $BEAN on @minebean_`
+      ? `Just hit the BEANPOT for ${round.beanpotAmount?.toFixed(3)} BNBEAN on @minebean_`
       : round.isWin
       ? `${round.pctChange >= 0 ? '+' : ''}${round.pctChange}% on Round #${round.id} — @minebean_ is live on BSC`
       : `Round #${round.id} on @minebean_ — the grind continues`
@@ -234,7 +163,7 @@ function PnlCard({ round, pfpUrl, username, onClose, ethPriceUsd }: { round: Rou
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <div style={{ fontSize: 13, fontWeight: 500, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase' as const, letterSpacing: 2 }}>Round #{round.id} · Block #{round.block}</div>
                 <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 'clamp(56px,8vw,96px)', fontWeight: 700, lineHeight: 1, letterSpacing: '-0.04em', color, textShadow: `0 0 80px ${glow}, 0 0 40px ${glow}` }}>
-                  {heroText}{round.isBeanpot && <span style={{ fontSize: 'clamp(28px,4vw,48px)', marginLeft: 12, opacity: 0.8 }}>BEAN</span>}
+                  {heroText}{round.isBeanpot && <span style={{ fontSize: 'clamp(28px,4vw,48px)', marginLeft: 12, opacity: 0.8 }}>BNBEAN</span>}
                 </div>
                 <div style={{ fontSize: 17, fontWeight: 600, fontFamily: "'Space Mono', monospace", color: sub }}>
                   {round.isBeanpot ? `+${round.netPnl.toFixed(4)} BNB profit` : `${round.netPnl >= 0 ? '+' : ''}${round.netPnl.toFixed(4)} BNB`}
@@ -251,7 +180,7 @@ function PnlCard({ round, pfpUrl, username, onClose, ethPriceUsd }: { round: Rou
                   {([
                     ['Deployed', `${round.deployed.toFixed(4)}`, '#fff'],
                     ['Won', `${round.won.toFixed(4)}`, round.isWin ? '#00C853' : '#FF4444'],
-                    ...(round.beansEarned > 0 ? [[round.isBeanpot ? 'Beanpot' : 'BEAN', `${round.beansEarned.toFixed(3)}`, round.isBeanpot ? '#FFD700' : '#F0B90B']] : []),
+                    ...(round.beansEarned > 0 ? [[round.isBeanpot ? 'Beanpot' : 'BNBEAN', `${round.beansEarned.toFixed(3)}`, round.isBeanpot ? '#FFD700' : '#F0B90B']] : []),
                   ] as [string, string, string][]).map(([label, val, c], i) => (
                     <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                       <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase' as const, letterSpacing: 1 }}>{label}</span>
@@ -271,7 +200,7 @@ function PnlCard({ round, pfpUrl, username, onClose, ethPriceUsd }: { round: Rou
                 ['Winner', `Block #${round.block}`],
                 ['Deployed', `${round.deployed.toFixed(4)}`],
                 ['Won', `${round.won.toFixed(4)}`],
-                ...(round.beansEarned > 0 ? [[round.isBeanpot ? 'Beanpot' : 'BEAN', `${round.beansEarned.toFixed(3)}`]] : []),
+                ...(round.beansEarned > 0 ? [[round.isBeanpot ? 'Beanpot' : 'BNBEAN', `${round.beansEarned.toFixed(3)}`]] : []),
               ] as [string, string][]).map(([label, value], i) => (
                 <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
                   <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)' }}>{label}</span>
@@ -340,9 +269,8 @@ export default function ProfilePage() {
   const [twitterHandle, setTwitterHandle] = useState<string | null>(null)
   const [socialToast, setSocialToast] = useState<string | null>(null)
 
-  // Round history state
-  const [deployHistory, setDeployHistory] = useState<DeployEntry[]>([])
-  const [historyTotals, setHistoryTotals] = useState<HistoryTotals | null>(null)
+  // Round history state (from enriched /api/user/:addr/rounds)
+  const [rounds, setRounds] = useState<Round[]>([])
   const [expandedRound, setExpandedRound] = useState<Round | null>(null)
   const [page, setPage] = useState(0)
 
@@ -421,14 +349,14 @@ export default function ProfilePage() {
 
   }, [address])
 
-  // Fetch deploy history with round results
+  // Fetch enriched round history from Next.js API (uses backend + round/miners data)
   useEffect(() => {
     if (!address) return
     const addr = address.toLowerCase()
-    apiFetch<{ history: DeployEntry[]; totals: HistoryTotals }>(`/api/user/${addr}/history?type=deploy&limit=500`)
-      .then(data => {
-        if (Array.isArray(data.history)) setDeployHistory(data.history)
-        if (data.totals) setHistoryTotals(data.totals)
+    fetch(`/api/user/${addr}/rounds`)
+      .then(r => r.ok ? r.json() : [])
+      .then((data: Round[]) => {
+        if (Array.isArray(data)) setRounds(data)
       })
       .catch(() => {})
   }, [address])
@@ -481,7 +409,7 @@ export default function ProfilePage() {
       setBio(''); setBioInput('')
       setPfpUrl(null); setBannerUrl(null)
       setStakeInfo(null); setRewards(null)
-      setDeployHistory([]); setHistoryTotals(null)
+      setRounds([])
       setDiscordUsername(null); setTwitterHandle(null)
     }
   }, [address])
@@ -523,7 +451,7 @@ export default function ProfilePage() {
     setSaving(true); setSaveError(null)
     try {
       const timestamp = Math.floor(Date.now() / 1000)
-      const message = `BEAN Protocol Profile Update\nAddress: ${address.toLowerCase()}\nTimestamp: ${timestamp}`
+      const message = `BNBEAN Protocol Profile Update\nAddress: ${address.toLowerCase()}\nTimestamp: ${timestamp}`
       const signature = await signMessageAsync({ message })
       const res = await fetch(`/api/user/${address.toLowerCase()}/profile`, {
         method: 'PUT',
@@ -628,13 +556,12 @@ export default function ProfilePage() {
   const portfolio = { wallet: beansBalance, staked: stakedBalance, roasted: roastedBalance, unroasted: unroastedBalance }
   const total = portfolio.wallet + portfolio.staked + portfolio.roasted + portfolio.unroasted
 
-  // Round history stats (from backend totals)
-  const beanPriceEth = historyTotals ? parseFloat(historyTotals.beanPriceEth) || 0 : 0
-  const rounds = deployHistory.map(e => entryToRound(e, beanPriceEth))
-  const totalPnl = historyTotals ? parseFloat(historyTotals.totalPNL) || 0 : 0
-  const totalBean = historyTotals ? parseFloat(historyTotals.totalBEANWonFormatted) || 0 : 0
-  const winRate = historyTotals && historyTotals.roundsPlayed > 0
-    ? Math.round((historyTotals.roundsWon / historyTotals.roundsPlayed) * 100) : 0
+  // Round history stats (computed from rounds)
+  const roundsPlayed = rounds.length
+  const roundsWon = rounds.filter(r => r.isWin).length
+  const totalPnl = rounds.reduce((sum, r) => sum + r.netPnl, 0)
+  const totalBean = rounds.reduce((sum, r) => sum + r.beansEarned, 0)
+  const winRate = roundsPlayed > 0 ? Math.round((roundsWon / roundsPlayed) * 100) : 0
   const totalPages = Math.ceil(rounds.length / ROWS_PER_PAGE)
   const pageRounds = rounds.slice(page * ROWS_PER_PAGE, (page + 1) * ROWS_PER_PAGE)
 
@@ -680,7 +607,7 @@ export default function ProfilePage() {
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <h2 style={{ fontSize: 22, fontWeight: 700, color: '#fff', margin: 0, letterSpacing: '-0.02em' }}>Connect Your Wallet</h2>
-              <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', margin: 0, lineHeight: 1.6 }}>Connect a wallet to view your BEAN profile and round history.</p>
+              <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', margin: 0, lineHeight: 1.6 }}>Connect a wallet to view your BNBEAN profile and round history.</p>
             </div>
           </div>
         </div>
@@ -862,7 +789,7 @@ export default function ProfilePage() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
                 <div>
                   <h2 style={{ fontSize: isMobile ? 18 : 22, fontWeight: 700, color: '#fff', margin: '0 0 4px' }}>Round History</h2>
-                  <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.25)', margin: 0 }}>{historyTotals?.roundsPlayed ?? rounds.length} rounds played</p>
+                  <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.25)', margin: 0 }}>{roundsPlayed} rounds played</p>
                 </div>
                 <div style={{ display: 'flex', gap: isMobile ? 16 : 28 }}>
                   <div style={{ textAlign: 'right' }}>
@@ -870,7 +797,7 @@ export default function ProfilePage() {
                     <div style={{ fontSize: isMobile ? 16 : 22, fontWeight: 700, color: '#fff' }}>{winRate}%</div>
                   </div>
                   <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', marginBottom: 4 }}>Total BEAN</div>
+                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', marginBottom: 4 }}>Total BNBEAN</div>
                     <div style={{ fontSize: isMobile ? 16 : 22, fontWeight: 700, color: '#fff' }}>{totalBean.toFixed(2)}</div>
                   </div>
                   {!isMobile && <div style={{ textAlign: 'right' }}>

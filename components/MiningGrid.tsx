@@ -129,6 +129,8 @@ const [isAutoMinerActive, setIsAutoMinerActive] = useState(false)
     // Keep a mutable ref to userAddress so callbacks always read the latest value
     const userAddressRef = useRef(userAddress)
     userAddressRef.current = userAddress
+    const currentRoundIdRef = useRef(currentRoundId)
+    currentRoundIdRef.current = currentRoundId
 
     const clearAnimationTimers = useCallback(() => {
         animationTimers.current.forEach(clearTimeout)
@@ -188,6 +190,30 @@ const [isAutoMinerActive, setIsAutoMinerActive] = useState(false)
             })
             .catch((err) => console.error('Failed to load round:', err))
     }, [userAddress])
+
+    // Polling fallback: when SSE misses roundTransition (e.g. REST reset, connection drop), poll every 15s
+    useEffect(() => {
+        const POLL_INTERVAL_MS = 15000
+        const interval = setInterval(() => {
+            if (animatingRef.current) return
+            const url = userAddressRef.current
+                ? `/api/round/current?user=${userAddressRef.current}`
+                : '/api/round/current'
+            apiFetch<RoundResponse>(url)
+                .then((round) => {
+                    if (animatingRef.current) return
+                    if (currentRoundIdRef.current !== round.roundId) {
+                        setCells(blocksToGrid(round.blocks))
+                        setCurrentRoundId(round.roundId)
+                        window.dispatchEvent(
+                            new CustomEvent("roundData", { detail: round })
+                        )
+                    }
+                })
+                .catch(() => { /* ignore */ })
+        }, POLL_INTERVAL_MS)
+        return () => clearInterval(interval)
+    }, [])
 
     // Fetch user's deployed blocks for the current round
     useEffect(() => {

@@ -13,6 +13,7 @@ import { useAccount, useBalance, useWriteContract } from 'wagmi'
 import { parseEther } from 'viem'
 import { useState, useEffect, useCallback } from 'react'
 import { CONTRACTS, BUILDER_CODE_SUFFIX } from '@/lib/contracts'
+import { useUserData } from '@/lib/UserDataContext'
 import BeanpotCelebration from '@/components/BeanpotCelebration'
 import CountdownCelebration from '@/components/CountdownCelebration'
 
@@ -33,7 +34,8 @@ useEffect(() => {
   setShowMining(localStorage.getItem('bean_visited') === 'true')
   setMounted(true)
 }, [])
-  const { writeContract } = useWriteContract()
+  const { writeContract, isPending: isWritePending } = useWriteContract()
+  const { refetchRewards } = useUserData()
   const userBalance = balance ? parseFloat(balance.formatted) : 0
 
   const handleDeploy = useCallback((amount: number, blockIds: number[]) => {
@@ -62,8 +64,10 @@ useEffect(() => {
       functionName: 'claimETH',
       args: [],
       dataSuffix: BUILDER_CODE_SUFFIX,
+    }, {
+      onSuccess: () => refetchRewards(),
     })
-  }, [isConnected, writeContract])
+  }, [isConnected, writeContract, refetchRewards])
 
   const handleClaimBEAN = useCallback(() => {
     if (!isConnected) return
@@ -73,8 +77,23 @@ useEffect(() => {
       functionName: 'claimBEAN',
       args: [],
       dataSuffix: BUILDER_CODE_SUFFIX,
+    }, {
+      onSuccess: () => refetchRewards(),
     })
-  }, [isConnected, writeContract])
+  }, [isConnected, writeContract, refetchRewards])
+
+  const handleCheckpoint = useCallback((roundId: number) => {
+    if (!isConnected) return
+    writeContract({
+      address: CONTRACTS.GridMining.address,
+      abi: CONTRACTS.GridMining.abi,
+      functionName: 'checkpoint',
+      args: [roundId],
+      dataSuffix: BUILDER_CODE_SUFFIX,
+    }, {
+      onSuccess: () => refetchRewards(),
+    })
+  }, [isConnected, writeContract, refetchRewards])
 
   const handleAutoActivate = useCallback((strategyId: number, numRounds: number, numBlocks: number, depositAmount: bigint, blockMask: number) => {
     if (!isConnected) return
@@ -107,6 +126,17 @@ useEffect(() => {
     })
   }, [isConnected, writeContract])
 
+  const handleReset = useCallback(() => {
+    if (!isConnected) return
+    writeContract({
+      address: CONTRACTS.GridMining.address,
+      abi: CONTRACTS.GridMining.abi,
+      functionName: 'reset',
+      args: [],
+      dataSuffix: BUILDER_CODE_SUFFIX,
+    })
+  }, [isConnected, writeContract])
+
   if (!mounted) return null
 if (!showMining) {
     return <LandingPage onStartMining={() => { localStorage.setItem('bean_visited', 'true'); sessionStorage.setItem('bean_visited', 'true'); setShowMining(true) }} />
@@ -117,10 +147,10 @@ if (!showMining) {
       <div style={{ minHeight: '100vh', background: 'transparent', paddingBottom: '80px' }}>
         <Header currentPage="mine" isMobile={true} />
         <div style={styles.mobileContainer}>
-          <MobileStatsBar userAddress={address} />
+          <MobileStatsBar userAddress={address} isConnected={isConnected} onReset={handleReset} />
           <MiningGrid userAddress={address} />
           <MobileControls isConnected={isConnected} userBalance={userBalance} userAddress={address} onDeploy={handleDeploy} onAutoActivate={handleAutoActivate} onAutoStop={handleAutoStop} />
-          <ClaimRewards userAddress={address} onClaimETH={handleClaimETH} onClaimBEAN={handleClaimBEAN} />
+          <ClaimRewards userAddress={address} onClaimETH={handleClaimETH} onClaimBEAN={handleClaimBEAN} onCheckpoint={handleCheckpoint} isCheckpointing={isWritePending} />
         </div>
         <BottomNav currentPage="mine" />
       </div>
@@ -138,8 +168,8 @@ if (!showMining) {
           <MiningGrid userAddress={address} />
         </div>
         <div style={styles.controlsSection}>
-          <SidebarControls isConnected={isConnected} userBalance={userBalance} userAddress={address} onDeploy={handleDeploy} onAutoActivate={handleAutoActivate} onAutoStop={handleAutoStop} />
-          <ClaimRewards userAddress={address} onClaimETH={handleClaimETH} onClaimBEAN={handleClaimBEAN} />
+          <SidebarControls isConnected={isConnected} userBalance={userBalance} userAddress={address} onDeploy={handleDeploy} onAutoActivate={handleAutoActivate} onAutoStop={handleAutoStop} onReset={handleReset} />
+          <ClaimRewards userAddress={address} onClaimETH={handleClaimETH} onClaimBEAN={handleClaimBEAN} onCheckpoint={handleCheckpoint} isCheckpointing={isWritePending} />
         </div>
       </div>
     </div>

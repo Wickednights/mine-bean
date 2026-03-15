@@ -292,7 +292,7 @@ describe('RevenueTable', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText('Transactions where protocol revenue was used to buy back BEANS from the spot market.')
+        screen.getByText('Transactions where protocol revenue was used to buy back BNBEAN from the spot market.')
       ).toBeInTheDocument()
     })
   })

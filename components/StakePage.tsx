@@ -213,7 +213,7 @@ export default function StakePage({
     const monthlyEarnings = (calcBeansAmount * monthlyRate) / 100
 
     const tooltipTexts: Record<string, string> = {
-        totalDeposits: "Total BEAN tokens staked in the protocol by all users.",
+        totalDeposits: "Total BNBEAN tokens staked in the protocol by all users.",
         apr: "Annual Percentage Rate based on the last 7 days of yield distributions. Actual returns may vary.",
         tvl: "Total Value Locked — the USD value of all staked BEAN at current market price.",
     }
@@ -276,7 +276,7 @@ export default function StakePage({
                                 <path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z" />
                             </svg>
                             <span style={isMobile ? styles.balanceTextMobile : styles.balanceText}>
-                                {currentBalance.toFixed(4)} BEAN
+                                {currentBalance.toFixed(4)} BNBEAN
                             </span>
                         </div>
                         <div style={styles.quickBtns}>
@@ -321,7 +321,7 @@ export default function StakePage({
                                         </svg>
                                         {showAutoCompoundInfo && (
                                             <div style={isMobile ? styles.tooltipMobile : styles.tooltipWide}>
-                                                Auto-compounding automatically restakes your earned BEAN rewards daily. A small BNB reserve is needed to pay bots that trigger the compound transaction. Each compound costs 0.0002 BNB as a bounty. Unused BNB can be withdrawn at any time.
+                                                Auto-compounding automatically restakes your earned BNBEAN rewards daily. A small BNB reserve is needed to pay bots that trigger the compound transaction. Each compound costs 0.0002 BNB as a bounty. Unused BNB can be withdrawn at any time.
                                             </div>
                                         )}
                                     </div>

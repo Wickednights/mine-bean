@@ -1,8 +1,42 @@
 const express = require('express');
 const router = express.Router();
-const { getContracts } = require('../lib/contracts');
+const { getContracts, getProvider, ADDRESSES } = require('../lib/contracts');
 const { formatEth } = require('../lib/format');
 const cache = require('../lib/cache');
+
+// GET /api/stats/diagnostic - Raw contract reads for debugging zeros
+router.get('/diagnostic', async (req, res) => {
+  try {
+    const { Bean, GridMining, Treasury } = getContracts();
+    const provider = getProvider();
+
+    const [totalSupply, beanpotPool, treasuryStats, treasuryBalance, minter] = await Promise.all([
+      Bean.totalSupply().then((v) => v.toString()).catch((e) => `error: ${e.message}`),
+      GridMining.beanpotPool().then((v) => v.toString()).catch((e) => `error: ${e.message}`),
+      Treasury.getStats().then((s) => ({
+        vaultedETH: (s[0] ?? s.vaultedETH ?? 0n).toString(),
+        totalBurned: (s[1] ?? s.totalBurned ?? 0n).toString(),
+        totalToStakers: (s[2] ?? s.totalDistributedToStakers ?? 0n).toString(),
+        totalBuybacks: (s[3] ?? s.totalBuybacks ?? 0n).toString(),
+      })).catch((e) => ({ error: e.message })),
+      provider.getBalance(ADDRESSES.Treasury).then((v) => v.toString()).catch((e) => `error: ${e.message}`),
+      Bean.minter().then((a) => a).catch((e) => `error: ${e.message}`),
+    ]);
+
+    res.json({
+      rpcUrl: process.env.RPC_URL ? '(set)' : '(default)',
+      addresses: { Bean: ADDRESSES.Bean, Treasury: ADDRESSES.Treasury, GridMining: ADDRESSES.GridMining },
+      bean: { totalSupply, minter },
+      gridMining: { beanpotPool },
+      treasury: treasuryStats,
+      treasuryBalance,
+      fetchedAt: new Date().toISOString(),
+    });
+  } catch (err) {
+    console.error('Diagnostic error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // GET /api/stats - Global protocol statistics
 router.get('/', async (req, res) => {
@@ -32,7 +66,7 @@ router.get('/', async (req, res) => {
       fetchedAt: new Date().toISOString(),
     };
 
-    cache.set('stats', result, 30);
+    cache.set('stats', result, 15);
     res.json(result);
   } catch (err) {
     console.error('Stats error:', err.message);

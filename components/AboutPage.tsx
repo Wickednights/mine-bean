@@ -24,7 +24,7 @@ export default function AboutPage({
             { id: "getting-started", label: "Getting Started" },
             { id: "mining", label: "Mining" },
             { id: "beanpot", label: "The Beanpot" },
-            { id: "bean-rewards", label: "BEAN Rewards" },
+            { id: "bean-rewards", label: "BNBEAN Rewards" },
             { id: "roasting", label: "Roasting" },
             { id: "autominer", label: "AutoMiner" },
             { id: "strategy", label: "Strategy" },
@@ -64,11 +64,11 @@ export default function AboutPage({
             title: "Overview",
             content: (
                 <div style={{ display: "flex", flexDirection: "column", gap: paragraphGap }}>
-                    <p style={{ margin: 0 }}><strong>BEAN</strong> is a gamified mining protocol on BNB Smart Chain where players compete in continuous 60-second rounds to earn BNB and BNBEAN tokens. It combines the excitement of competitive gaming with real DeFi mechanics — every round has real stakes, real winners, and real rewards.</p>
+                    <p style={{ margin: 0 }}><strong>BNBEAN</strong> is a gamified mining protocol on BNB Smart Chain where players compete in continuous 60-second rounds to earn BNB and BNBEAN tokens. It combines the excitement of competitive gaming with real DeFi mechanics — every round has real stakes, real winners, and real rewards.</p>
                     <p style={{ margin: 0 }}>The game takes place on a 5×5 grid of 25 blocks. Each round, players deploy BNB onto the blocks they think will win. When the timer runs out, one winning block is randomly selected on-chain. A 1% admin fee is taken from all deployed BNB, and a 10% vault fee is applied to the losers&apos; pool. The remaining BNB from losing blocks is redistributed to miners on the winning block — proportional to how much each player deployed.</p>
                     <p style={{ margin: 0 }}>On top of BNB rewards, 1 BNBEAN is minted each round and awarded to a miner on the winning block. A growing jackpot called the Beanpot can trigger at any time, distributing a potentially massive BNBEAN bonus. And a unique roasting mechanic rewards patient miners who delay claiming their earned BNBEAN.</p>
                     <div style={isMobile ? styles.infoBoxMobile : styles.infoBox}>
-                        <strong>Why BEAN?</strong>
+                        <strong>Why BNBEAN?</strong>
                         <p style={{ margin: "12px 0 0 0" }}>Just like coffee beans need to be roasted to reach their full potential, BNBEAN tokens reward patience. When you win BNBEAN, they start as &quot;unroasted&quot; — raw and unclaimed. A 10% roasting fee is applied when you claim, and that fee is redistributed to other miners still holding unclaimed BNBEAN. The longer you let your BNBEAN roast, the more roasted BNBEAN you accumulate from others claiming before you.</p>
                     </div>
                 </div>
@@ -116,8 +116,8 @@ export default function AboutPage({
             title: "Mining",
             content: (
                 <div style={{ display: "flex", flexDirection: "column", gap: sectionGap }}>
-                    <p style={{ margin: 0 }}>Mining is the core mechanic of BEAN. Rounds run continuously — one every 60 seconds — on a 5×5 grid of 25 blocks. Each round is an independent game with its own set of deployments, a randomly selected winner, and immediate payouts.</p>
-                    <SectionImage alt="BEAN mining grid with active round" placeholder="beansmininggrid.png" maxWidth="520px" />
+                    <p style={{ margin: 0 }}>Mining is the core mechanic of BNBEAN. Rounds run continuously — one every 60 seconds — on a 5×5 grid of 25 blocks. Each round is an independent game with its own set of deployments, a randomly selected winner, and immediate payouts.</p>
+                    <SectionImage alt="BNBEAN mining grid with active round" placeholder="beansmininggrid.png" maxWidth="520px" />
                     <div>
                         <h3 style={isMobile ? styles.h3Mobile : styles.h3}>How a Round Works</h3>
                         <ol style={{ ...styles.list, gap: listGap }}>
@@ -265,7 +265,7 @@ export default function AboutPage({
             title: "Strategy",
             content: (
                 <div style={{ display: "flex", flexDirection: "column", gap: sectionGap }}>
-                    <p style={{ margin: 0 }}>There&apos;s no single &quot;correct&quot; strategy in BEAN — it depends on your risk tolerance, bankroll, and goals. Here are the main approaches and how to think about them.</p>
+                    <p style={{ margin: 0 }}>There&apos;s no single &quot;correct&quot; strategy in BNBEAN — it depends on your risk tolerance, bankroll, and goals. Here are the main approaches and how to think about them.</p>
                     <div>
                         <h3 style={isMobile ? styles.h3Mobile : styles.h3}>Block Selection</h3>
                         <ul style={{ ...styles.list, gap: listGap }}>
@@ -426,8 +426,8 @@ export default function AboutPage({
             content: (
                 <div style={{ display: "flex", flexDirection: "column", gap: sectionGap }}>
                     <div style={styles.faqItem}>
-                        <h4 style={isMobile ? styles.h4Mobile : styles.h4}>What is BEAN?</h4>
-                        <p style={{ margin: "12px 0 0 0" }}>BEAN is a gamified mining protocol on BNB Smart Chain. Players deploy BNB on a 5×5 grid in 60-second rounds, competing to land on the randomly selected winning block and earn BNB rewards plus BNBEAN tokens. It&apos;s a fair-launch protocol with zero pre-mine or team allocation.</p>
+                        <h4 style={isMobile ? styles.h4Mobile : styles.h4}>What is BNBEAN?</h4>
+                        <p style={{ margin: "12px 0 0 0" }}>BNBEAN is a gamified mining protocol on BNB Smart Chain. Players deploy BNB on a 5×5 grid in 60-second rounds, competing to land on the randomly selected winning block and earn BNB rewards plus BNBEAN tokens. It&apos;s a fair-launch protocol with zero pre-mine or team allocation.</p>
                     </div>
                     <div style={styles.faqItem}>
                         <h4 style={isMobile ? styles.h4Mobile : styles.h4}>Can I lose my BNB?</h4>
@@ -523,7 +523,7 @@ export default function AboutPage({
         <div style={styles.container}>
             <aside style={styles.sidebar}>
                 <div style={styles.sidebarHeader}>
-                    <span style={styles.sidebarTitle}>BEAN Docs</span>
+                    <span style={styles.sidebarTitle}>BNBEAN Docs</span>
                 </div>
                 <nav style={styles.sidebarNav}>
                     {navigation.map((item) => (

@@ -29,7 +29,7 @@ const connectors = connectorsForWallets(
     },
   ],
   {
-    appName: 'BEANS Protocol',
+    appName: 'BNBEAN Protocol',
     projectId: '666aa4c4e1ee459d4697a07bcf2f1ec6',
   }
 )

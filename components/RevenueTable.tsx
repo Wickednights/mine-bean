@@ -145,7 +145,7 @@ export default function RevenueTable() {
 
             {/* Description */}
             <p style={isMobile ? styles.descriptionMobile : styles.description}>
-                Transactions where protocol revenue was used to buy back BEANS from the spot market.
+                Transactions where protocol revenue was used to buy back BNBEAN from the spot market.
             </p>
 
             {/* Table */}

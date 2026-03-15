@@ -111,7 +111,7 @@ async function start() {
   }
 
   app.listen(PORT, () => {
-    console.log(`[Server] BEAN Protocol API running on port ${PORT}`);
+    console.log(`[Server] BNBEAN Protocol API running on port ${PORT}`);
   });
 }
 
