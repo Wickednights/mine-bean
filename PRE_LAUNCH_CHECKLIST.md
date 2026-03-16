@@ -36,11 +36,11 @@ Or if already running: `docker compose restart backend` (or full `up --build` to
 | 3.1 | 5×5 grid loads with current round info (beanpot, countdown) | ☐ |
 | 3.2 | Select blocks and deploy BNB — tx succeeds | ☐ |
 | 3.3 | Your deployment appears on grid (amount, block highlight) | ☐ |
-| 3.4 | Countdown runs; when it hits 0, **Reset** button appears | ☐ |
-| 3.5 | Click **Reset** — tx succeeds | ☐ |
-| 3.6 | Round settles (VRF); Winners panel slides in with results | ☐ |
+| 3.4 | Countdown runs; when it hits 0, round settles (auto-reset or manual **Reset**) | ☐ |
+| 3.5 | Round settles (VRF); Winners panel slides in with results | ☐ |
 | 3.7 | If you won: crown/award icon shows next to your address | ☐ |
 | 3.8 | New round starts; grid clears for next round | ☐ |
+| 3.9 | *(If auto-reset disabled)* Manual **Reset** button appears and works | ☐ |
 
 ---
 

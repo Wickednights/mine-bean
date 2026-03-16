@@ -388,6 +388,16 @@ Before going live, run through [PRE_LAUNCH_CHECKLIST.md](PRE_LAUNCH_CHECKLIST.md
 
 **Restart Docker after Backend changes** (e.g. indexer optimizations): `docker compose down && docker compose up --build`.
 
+### Auto-reset (automatic round settlement)
+
+Rounds can settle automatically without anyone clicking **Reset**. Add to Backend `.env`:
+
+```
+RESET_WALLET_PRIVATE_KEY=0x...   # Wallet with BNB for gas
+```
+
+The backend will call `GridMining.reset()` when a round ends. Fund the wallet with a small amount of BNB (e.g. 0.01) — each reset costs a few cents in gas. Disable with `AUTO_RESET_ENABLED=false`.
+
 ---
 
 ## Troubleshooting
@@ -425,11 +435,12 @@ If you're approaching your RPC provider's credit limit (e.g. 80M/month):
 
 After winning, settling, and resetting, BNB and BNBEAN may stay at 0.0000.
 
-**Required step:** You must click **"Checkpoint Round N (required before claim)"** before rewards appear. Checkpoint credits the round's winnings into your pending balance.
+**Required step:** You must click **"Checkpoint Round N (required before claim)"** before rewards appear. Checkpoint credits the round's winnings into your pending balance. Then click **Claim BNBEAN** to receive tokens in your wallet.
 
 **If you checkpointed and still see 0:**
 - Rounds settled *before* the minter fix never credited on-chain — only new rounds (post-fix) have rewards.
 - In Docker, ensure the frontend can reach the backend. Rewards are fetched via `/api/user/[address]/rewards` (Next.js proxy). Set `INTERNAL_API_URL` so the proxy works.
+- **Checkpoint stuck on wrong round:** If the UI shows "Checkpoint Round 2" but you didn't deploy to round 2, the old contract required checkpointing rounds in sequence and could get stuck. The contract has been updated to skip rounds you didn't participate in — **redeploy GridMining** and update the address to fix this.
 
 ### Stats showing zeros (Circulating Supply, Protocol Revenue, BNB in Treasury)
 

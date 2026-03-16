@@ -58,7 +58,27 @@ router.get('/:address/rewards', async (req, res) => {
     const pendingETH = rewards[0] || rewards.pendingETH || BigInt(0);
     const pendingUnroasted = rewards[1] || rewards.pendingUnroastedBEAN || BigInt(0);
     const pendingRoasted = rewards[2] || rewards.pendingRoastedBEAN || BigInt(0);
-    const uncheckpointedRound = (rewards[3] || rewards.uncheckpointedRound || BigInt(0)).toString();
+    let uncheckpointedRound = Number(rewards[3] ?? rewards.uncheckpointedRound ?? 0);
+
+    // Workaround for old contract: if user didn't deploy to uncheckpointedRound, find next round they did
+    if (uncheckpointedRound > 0) {
+      const info = await GridMining.getCurrentRoundInfo();
+      const currentRoundId = Number(info.roundId ?? info[0]);
+      let found = false;
+      for (let r = uncheckpointedRound; r <= currentRoundId; r++) {
+        const miner = await GridMining.getMinerInfo(r, address);
+        const amountPerBlock = miner.amountPerBlock ?? miner[1];
+        const checkpointed = miner.checkpointed ?? miner[2];
+        if (amountPerBlock > 0n && !checkpointed) {
+          uncheckpointedRound = r;
+          found = true;
+          break;
+        }
+      }
+      if (!found) uncheckpointedRound = 0;
+    }
+
+    uncheckpointedRound = uncheckpointedRound.toString();
 
     const gross = pendingUnroasted + pendingRoasted;
     // 10% fee on unroasted only
