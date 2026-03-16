@@ -4,13 +4,13 @@ const { getContracts, getProvider, ADDRESSES } = require('../lib/contracts');
 const { formatEth } = require('../lib/format');
 const cache = require('../lib/cache');
 
-// GET /api/stats/diagnostic - Raw contract reads for debugging zeros
+// GET /api/stats/diagnostic - Raw contract reads for debugging zeros / BNBEAN mint
 router.get('/diagnostic', async (req, res) => {
   try {
-    const { Bean, GridMining, Treasury } = getContracts();
+    const { Bean, GridMining, Treasury, Staking } = getContracts();
     const provider = getProvider();
 
-    const [totalSupply, beanpotPool, treasuryStats, treasuryBalance, minter] = await Promise.all([
+    const [totalSupply, beanpotPool, treasuryStats, treasuryBalance, minter, gridMiningTotalMinted, gridMiningBeanAddr, treasuryBeanAddr, stakingBeanAddr] = await Promise.all([
       Bean.totalSupply().then((v) => v.toString()).catch((e) => `error: ${e.message}`),
       GridMining.beanpotPool().then((v) => v.toString()).catch((e) => `error: ${e.message}`),
       Treasury.getStats().then((s) => ({
@@ -21,14 +21,58 @@ router.get('/diagnostic', async (req, res) => {
       })).catch((e) => ({ error: e.message })),
       provider.getBalance(ADDRESSES.Treasury).then((v) => v.toString()).catch((e) => `error: ${e.message}`),
       Bean.minter().then((a) => a).catch((e) => `error: ${e.message}`),
+      GridMining.totalMinted().then((v) => v.toString()).catch((e) => `error: ${e.message}`),
+      GridMining.bean().then((a) => (typeof a === 'string' ? a : a?.toString?.() || null)).catch((e) => `error: ${e.message}`),
+      Treasury.bean?.().then((a) => (typeof a === 'string' ? a : a?.toString?.() || null)).catch(() => null),
+      Staking.bean?.().then((a) => (typeof a === 'string' ? a : a?.toString?.() || null)).catch(() => null),
     ]);
+
+    const minterAddr = typeof minter === 'string' && minter.startsWith('0x') ? minter : null;
+    const gridMiningAddr = ADDRESSES.GridMining?.toLowerCase?.() ?? '';
+    const appBeanAddr = ADDRESSES.Bean?.toLowerCase?.() ?? '';
+    const gridMiningBean = (typeof gridMiningBeanAddr === 'string' && gridMiningBeanAddr.startsWith('0x')) ? gridMiningBeanAddr.toLowerCase() : null;
+
+    const minterMatch = minterAddr && gridMiningAddr && minterAddr.toLowerCase() === gridMiningAddr;
+    const beanAddressMatch = gridMiningBean && appBeanAddr && gridMiningBean === appBeanAddr;
+
+    let bnbeanMintStatus = 'unknown';
+    if (minterMatch && beanAddressMatch && totalSupply !== '0') {
+      bnbeanMintStatus = 'ok';
+    } else if (!beanAddressMatch && gridMiningBean) {
+      bnbeanMintStatus = 'bean_address_mismatch';
+    } else if (!minterMatch && minterAddr) {
+      bnbeanMintStatus = 'minter_mismatch';
+    } else if (totalSupply === '0' && minterMatch && beanAddressMatch) {
+      bnbeanMintStatus = 'no_mints_yet';
+    } else if (totalSupply === '0') {
+      bnbeanMintStatus = 'minter_mismatch_or_no_mints';
+    }
+
+    let fixHint = null;
+    if (bnbeanMintStatus === 'bean_address_mismatch') {
+      fixHint = 'GridMining uses a different Bean contract than the app. Redeploy the full stack (Bean, GridMining, Treasury, Staking, AutoMiner) with deploy.js, or update lib/contracts.ts and Backend to use the Bean address that GridMining uses.';
+    } else if (bnbeanMintStatus === 'minter_mismatch' || bnbeanMintStatus === 'minter_mismatch_or_no_mints') {
+      fixHint = 'Run: cd hardhat && npx hardhat run scripts/setMinter.js --network bscTestnet (requires DEPLOYER_PRIVATE_KEY, Bean owner)';
+    } else if (bnbeanMintStatus === 'no_mints_yet') {
+      fixHint = 'VRF may not be fulfilling. Fund your Chainlink VRF subscription with LINK at vrf.chain.link. BNBEAN is minted only when VRF fulfills after a round ends.';
+    }
+
+    const treasuryBean = (typeof treasuryBeanAddr === 'string' && treasuryBeanAddr.startsWith('0x')) ? treasuryBeanAddr.toLowerCase() : null;
+    const stakingBean = (typeof stakingBeanAddr === 'string' && stakingBeanAddr.startsWith('0x')) ? stakingBeanAddr.toLowerCase() : null;
+    const allBeansMatch = beanAddressMatch && treasuryBean === appBeanAddr && stakingBean === appBeanAddr;
 
     res.json({
       rpcUrl: process.env.RPC_URL ? '(set)' : '(default)',
-      addresses: { Bean: ADDRESSES.Bean, Treasury: ADDRESSES.Treasury, GridMining: ADDRESSES.GridMining },
-      bean: { totalSupply, minter },
-      gridMining: { beanpotPool },
-      treasury: treasuryStats,
+      addresses: { Bean: ADDRESSES.Bean, Treasury: ADDRESSES.Treasury, GridMining: ADDRESSES.GridMining, Staking: ADDRESSES.Staking },
+      bean: { totalSupply, minter: minterAddr || minter },
+      gridMining: { beanpotPool, totalMinted: gridMiningTotalMinted, beanAddress: gridMiningBeanAddr },
+      staking: { beanAddress: stakingBeanAddr },
+      beanAddressMatch,
+      allContractsUseAppBean: allBeansMatch,
+      bnbeanMintStatus,
+      minterMatchesGridMining: minterMatch,
+      fixHint,
+      treasury: { ...treasuryStats, beanAddress: treasuryBeanAddr },
       treasuryBalance,
       fetchedAt: new Date().toISOString(),
     });

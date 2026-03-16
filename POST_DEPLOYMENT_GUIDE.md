@@ -21,7 +21,7 @@ This guide covers every step from contract deployment through game launch. Use i
 
 | Contract | Address |
 |----------|---------|
-| Bean | `0xC9ccBa0104a105EcB35B962BD1302cfCF4AE6BEF` |
+| Bean (BNBEAN) | `0x89BeA6C663D33b129525F14574b8eFdC1d19A39c` — matches GridMining.bean() on-chain |
 | Treasury | `0xD02139f8ce44AA168822a706BDa3dde6a2305728` |
 | GridMining | `0x268Cac7cCEFa8F542a3B64002D66Edc3d6C930FB` |
 | AutoMiner | `0xCdB629B6E58BBae482adfE49B9886a6a1BBD7304` |
@@ -52,7 +52,7 @@ BEAN is minted by GridMining when rounds settle. Until the game starts and at le
 
 2. Attach to Bean and GridMining:
    ```javascript
-   const bean = await ethers.getContractAt("Bean", "0xC9ccBa0104a105EcB35B962BD1302cfCF4AE6BEF")
+   const bean = await ethers.getContractAt("Bean", "0x89BeA6C663D33b129525F14574b8eFdC1d19A39c")
    const gridMining = await ethers.getContractAt("GridMining", "0x268Cac7cCEFa8F542a3B64002D66Edc3d6C930FB")
    ```
 
@@ -83,10 +83,10 @@ BEAN is minted by GridMining when rounds settle. Until the game starts and at le
 1. **Switch to BSC Testnet** in MetaMask (Chain ID 97).
 
 2. **Open PancakeSwap V2 Add Liquidity:**
-   - Go to: https://pancakeswap.finance/add/0xC9ccBa0104a105EcB35B962BD1302cfCF4AE6BEF/0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd
+   - Go to: https://pancakeswap.finance/add/0x89BeA6C663D33b129525F14574b8eFdC1d19A39c/0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd
    - Or: PancakeSwap → Trade → Liquidity → Add Liquidity
    - Select **BNB Chain Testnet** in the network dropdown
-   - Token 1: Paste `0xC9ccBa0104a105EcB35B962BD1302cfCF4AE6BEF` (BEAN)
+   - Token 1: Paste `0x89BeA6C663D33b129525F14574b8eFdC1d19A39c` (BEAN)
    - Token 2: WBNB (or paste `0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd`)
 
 3. **Enter amounts:**
@@ -105,7 +105,7 @@ BEAN is minted by GridMining when rounds settle. Until the game starts and at le
          "0x6725F303b657a9451d8BA641348b6761A6CC7a17"
        )
        const pair = await factory.getPair(
-         "0xC9ccBa0104a105EcB35B962BD1302cfCF4AE6BEF", // BEAN
+         "0x89BeA6C663D33b129525F14574b8eFdC1d19A39c", // BEAN
          "0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd"  // WBNB
        )
        console.log("Pair address:", pair)
@@ -128,7 +128,7 @@ npx hardhat console --network bscTestnet
 ```
 
 ```javascript
-const bean = await ethers.getContractAt("Bean", "0xC9ccBa0104a105EcB35B962BD1302cfCF4AE6BEF")
+const bean = await ethers.getContractAt("Bean", "0x89BeA6C663D33b129525F14574b8eFdC1d19A39c")
 const pairAddress = "0x_YOUR_PAIR_ADDRESS_FROM_STEP_3"  // Replace!
 const tx = await bean.setPair(pairAddress)
 await tx.wait()
@@ -140,7 +140,7 @@ console.log("Bean pair:", await bean.pair())
 
 **Using BscScan (if contract is verified):**
 
-1. Go to https://testnet.bscscan.com/address/0xC9ccBa0104a105EcB35B962BD1302cfCF4AE6BEF#writeContract
+1. Go to https://testnet.bscscan.com/address/0x89BeA6C663D33b129525F14574b8eFdC1d19A39c#writeContract
 2. Connect your wallet (deployer/owner)
 3. Find `setPair` → enter the pair address → Write → Confirm
 
@@ -207,7 +207,7 @@ MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/minebean
 RPC_URL=https://bsc-testnet-dataseed.bnbchain.org
 
 GRIDMINING_ADDRESS=0x268Cac7cCEFa8F542a3B64002D66Edc3d6C930FB
-BEAN_ADDRESS=0xC9ccBa0104a105EcB35B962BD1302cfCF4AE6BEF
+BEAN_ADDRESS=0x89BeA6C663D33b129525F14574b8eFdC1d19A39c
 AUTOMINER_ADDRESS=0xCdB629B6E58BBae482adfE49B9886a6a1BBD7304
 TREASURY_ADDRESS=0xD02139f8ce44AA168822a706BDa3dde6a2305728
 STAKING_ADDRESS=0x64C90Fdb24F275861067BF332A0C7661cb938F99
@@ -227,7 +227,7 @@ npx hardhat console --network bscTestnet
 ```
 
 ```javascript
-const bean = await ethers.getContractAt("Bean", "0xC9ccBa0104a105EcB35B962BD1302cfCF4AE6BEF")
+const bean = await ethers.getContractAt("Bean", "0x89BeA6C663D33b129525F14574b8eFdC1d19A39c")
 const gridMiningAddr = "0x268Cac7cCEFa8F542a3B64002D66Edc3d6C930FB"
 console.log("Bean minter:", await bean.minter())
 console.log("Expected (GridMining):", gridMiningAddr)
@@ -249,17 +249,17 @@ cd hardhat
 
 **Bean (no constructor args):**
 ```bash
-npx hardhat verify --network bscTestnet 0xC9ccBa0104a105EcB35B962BD1302cfCF4AE6BEF
+npx hardhat verify --network bscTestnet 0x89BeA6C663D33b129525F14574b8eFdC1d19A39c
 ```
 
 **Treasury (3 args: bean, router, buybackThreshold):**
 ```bash
-npx hardhat verify --network bscTestnet 0xD02139f8ce44AA168822a706BDa3dde6a2305728 "0xC9ccBa0104a105EcB35B962BD1302cfCF4AE6BEF" "0xD99D1c33F9fC3444f8101754aBC46c52416550D1" "10000000000000000"
+npx hardhat verify --network bscTestnet 0xD02139f8ce44AA168822a706BDa3dde6a2305728 "0x89BeA6C663D33b129525F14574b8eFdC1d19A39c" "0xD99D1c33F9fC3444f8101754aBC46c52416550D1" "10000000000000000"
 ```
 
 **GridMining (4 args: vrfCoordinator, bean, treasury, feeCollector):**
 ```bash
-npx hardhat verify --network bscTestnet 0x268Cac7cCEFa8F542a3B64002D66Edc3d6C930FB "<VRF_COORDINATOR_FROM_ENV>" "0xC9ccBa0104a105EcB35B962BD1302cfCF4AE6BEF" "0xD02139f8ce44AA168822a706BDa3dde6a2305728" "0xd7DEB87E5175f917709454D10a88878b2dE59631"
+npx hardhat verify --network bscTestnet 0x268Cac7cCEFa8F542a3B64002D66Edc3d6C930FB "<VRF_COORDINATOR_FROM_ENV>" "0x89BeA6C663D33b129525F14574b8eFdC1d19A39c" "0xD02139f8ce44AA168822a706BDa3dde6a2305728" "0xd7DEB87E5175f917709454D10a88878b2dE59631"
 ```
 Replace `<VRF_COORDINATOR_FROM_ENV>` with your `VRF_COORDINATOR` value from hardhat/.env.
 
@@ -270,7 +270,7 @@ npx hardhat verify --network bscTestnet 0xCdB629B6E58BBae482adfE49B9886a6a1BBD73
 
 **Staking (2 args: bean, treasury):**
 ```bash
-npx hardhat verify --network bscTestnet 0x64C90Fdb24F275861067BF332A0C7661cb938F99 "0xC9ccBa0104a105EcB35B962BD1302cfCF4AE6BEF" "0xD02139f8ce44AA168822a706BDa3dde6a2305728"
+npx hardhat verify --network bscTestnet 0x64C90Fdb24F275861067BF332A0C7661cb938F99 "0x89BeA6C663D33b129525F14574b8eFdC1d19A39c" "0xD02139f8ce44AA168822a706BDa3dde6a2305728"
 ```
 
 ---
@@ -398,20 +398,70 @@ RESET_WALLET_PRIVATE_KEY=0x...   # Wallet with BNB for gas
 
 The backend will call `GridMining.reset()` when a round ends. Fund the wallet with a small amount of BNB (e.g. 0.01) — each reset costs a few cents in gas. Disable with `AUTO_RESET_ENABLED=false`.
 
+### AutoMiner executor (automated deployments each round)
+
+AutoMiner users deposit BNB and configure a strategy; an **executor** must call `AutoMiner.executeFor(user, blocks)` each round to deploy on their behalf. Without this, AutoMiner configs are stored but nothing happens.
+
+Add to Backend `.env`:
+
+```
+EXECUTOR_PRIVATE_KEY=0x...   # Wallet that is the configured AutoMiner executor (holds BNB for gas)
+```
+
+The executor wallet must match `await AutoMiner.executor()` (typically the deployer). Fund it with BNB for gas — each `executeFor` call costs a few cents. The contract deducts deployment amounts from users' deposits; the executor only pays gas.
+
+- **Disable:** Omit `EXECUTOR_PRIVATE_KEY` or set `AUTO_MINER_EXECUTOR_ENABLED=false`
+- **Poll interval:** `AUTO_MINER_EXECUTOR_POLL_MS=15000` (default 15s)
+
+**Alternative (manual):** If you prefer not to run the executor service, document that the deployer must run a script or cron to call `executeFor` for active users each round until automated execution is enabled.
+
 ---
 
 ## Troubleshooting
 
 See [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) Section 5 for VRF errors, TWAP not ready, port mismatch, and other common issues. For Docker-specific issues, see [DOCKER.md](DOCKER.md).
 
-### BNBEAN not in wallet / 0 Circulating Supply
+### BNBEAN not minting / 0 Circulating Supply / Checkpoint works but Claim disabled
 
-If you claimed BEAN but don't see BNBEAN in your wallet, or Global shows 0 Circulating:
+**Step 1 — Run the diagnostic:** `curl http://localhost:3001/api/stats/diagnostic` (or open `/api/stats/diagnostic` in a browser). The response includes:
 
-1. **Verify Bean minter:** Run the check in Step 6.1. If `bean.minter()` is not GridMining, call `bean.setMinter(gridMiningAddress)` as owner.
-2. **Verify backend network:** Ensure Backend `RPC_URL` matches the chain you're on (e.g. BSC Testnet). If backend uses mainnet RPC, stats will show mainnet supply (possibly 0).
-3. **Check claim tx:** On BscScan, find your `claimBEAN` transaction. If it reverted, you may have had 0 BEAN to claim (e.g. round had no topMinerReward, or you weren't on the winning block).
-4. **Add BNBEAN to wallet:** In MetaMask, add custom token: address `0xC9ccBa0104a105EcB35B962BD1302cfCF4AE6BEF`, symbol BNBEAN, decimals 18.
+| Field | Meaning |
+|-------|---------|
+| `beanAddressMatch` | `true` = GridMining uses the same Bean as the app. `false` = GridMining mints to a different Bean (e.g. legacy) — app will show 0. |
+| `minterMatchesGridMining` | `true` = Bean.minter() is set to GridMining. `false` = minting will revert. |
+| `bnbeanMintStatus` | `ok` = all good. `bean_address_mismatch` = GridMining uses different Bean. `minter_mismatch` = run setMinter. `no_mints_yet` = VRF may need LINK. |
+| `fixHint` | Suggested next step. |
+
+**If `beanAddressMatch` is false (Bean address mismatch):**
+
+GridMining was deployed with a different Bean (e.g. an older deployment). It mints to that Bean; the app reads from the new Bean. To fix:
+
+1. **Redeploy the full stack** so GridMining, Treasury, Staking, and AutoMiner all use the new Bean:
+   ```bash
+   cd hardhat
+   npx hardhat run scripts/deploy.js --network bscTestnet
+   ```
+2. Update `lib/contracts.ts` and `Backend/.env` with the new addresses from the deploy output.
+3. Re-add GridMining as VRF consumer at vrf.chain.link.
+4. Call `gridMining.startFirstRound()` again.
+
+**If `minterMatchesGridMining` is false (minter not set):**
+
+1. **Run setMinter script:**
+   ```bash
+   cd hardhat
+   # Ensure hardhat/.env has DEPLOYER_PRIVATE_KEY (Bean owner) and optionally:
+   # BEAN_ADDRESS=0x89BeA6C663D33b129525F14574b8eFdC1d19A39c
+   # GRIDMINING_ADDRESS=0x268Cac7cCEFa8F542a3B64002D66Edc3d6C930FB
+   npx hardhat run scripts/setMinter.js --network bscTestnet
+   ```
+2. **Verify:** Call the diagnostic again. `minterMatchesGridMining` should be true. Play a new round — after it settles, BNBEAN will mint and you can checkpoint + claim.
+
+**Other causes:**
+
+- **Verify backend network:** Ensure Backend `RPC_URL` matches the chain (e.g. BSC Testnet).
+- **Check claim tx:** On BscScan, find your `claimBEAN` transaction. If it reverted, you may have had 0 BEAN to claim.
+- **Add BNBEAN to wallet:** In MetaMask, add custom token: address `0x89BeA6C663D33b129525F14574b8eFdC1d19A39c`, symbol BNBEAN, decimals 18.
 
 ### Crown (Winners panel) disappears on refresh
 
@@ -447,3 +497,39 @@ After winning, settling, and resetting, BNB and BNBEAN may stay at 0.0000.
 **Diagnostic:** Call `GET /api/stats/diagnostic` (or `http://localhost:3001/api/stats/diagnostic` if backend runs separately). This returns raw contract reads (Bean.totalSupply, Treasury.getStats, minter address, etc.) to verify RPC, addresses, and minter.
 
 **Common causes:** Wrong RPC (e.g. mainnet vs testnet), minter not set, or all-blocks strategy (vaultAmount = 0). Stats cache TTL was reduced (15s for stats, 30s for treasury) so values refresh sooner.
+
+### VRF subscription must be funded with LINK
+
+BNBEAN is minted only when Chainlink VRF fulfills a randomness request after a round ends. The contract uses `nativePayment: false`, so the VRF subscription must be funded with **LINK** (not BNB).
+
+**If BNBEAN total supply is 0 and Bean.minter is correct:**
+1. Go to [vrf.chain.link](https://vrf.chain.link)
+2. Select **BSC Testnet** (or your network)
+3. Find your subscription (ID from `VRF_SUBSCRIPTION_ID` in `hardhat/.env`)
+4. Add **LINK** to the subscription — BSC Testnet LINK from the [faucet](https://faucets.chain.link/bnb-testnet)
+5. Wait for the next round to end — auto-reset will request VRF, and once fulfilled, BNBEAN will mint
+
+Without LINK, VRF never fulfills, so no `RoundSettled` events and no BNBEAN minting.
+
+### BNBEAN Debugging Guide
+
+Use these steps to trace why BNBEAN rewards are not minting or not appearing in your wallet.
+
+1. **Verify contract mints BNBEAN**
+   - On BscScan, open the GridMining contract and check **Events** for `RoundSettled`. Each event includes `topMinerReward` and `beanpotAmount`.
+   - Check the Bean contract for `Transfer` events from `0x0` (mint) to GridMining — these confirm BNBEAN was minted for the round.
+
+2. **Verify checkpoint flow**
+   - `checkpoint(roundId)` only works if you deployed to that round. If `getTotalPendingRewards` returns round 2 but you never deployed to round 2, the contract returns early (no revert, no state change).
+   - Use Hardhat console: `await gridMining.getMinerInfo(roundId, yourAddress)` — confirm `amountPerBlock > 0` and `checkpointed == false` for the round you're trying to checkpoint.
+
+3. **Backend workaround for stuck checkpoint**
+   - The rewards API iterates rounds and returns the first round you deployed to (skipping rounds you didn't participate in). Ensure the Backend has been **restarted** after this workaround was added.
+   - Frontend calls `/api/user/[address]/rewards` (Next.js proxy). Confirm `NEXT_PUBLIC_API_URL` or default points to the correct Backend.
+
+4. **Transaction inspection**
+   - For a `checkpoint(2)` tx: decode input `0x2d588b18...000002` → `checkpoint(2)`. If you had no deployment in round 2, the contract returns early and `userLastRound` does not advance.
+   - Check `Checkpointed` events on BscScan — if none were emitted for your address, the checkpoint did nothing.
+
+5. **Long-term fix**
+   - Redeploy GridMining with the fixed `getTotalPendingRewards` (already in source) and update addresses in `lib/contracts.ts` and `Backend/lib/contracts.js`.

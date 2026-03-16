@@ -10,8 +10,9 @@ export const CONTRACTS = {
     address: '0x268Cac7cCEFa8F542a3B64002D66Edc3d6C930FB' as `0x${string}`,
     abi: GridMiningABI as Abi,
   },
+  // Bean (BNBEAN) — matches GridMining.bean() on-chain (legacy deployment)
   Bean: {
-    address: '0xC9ccBa0104a105EcB35B962BD1302cfCF4AE6BEF' as `0x${string}`,
+    address: '0x89BeA6C663D33b129525F14574b8eFdC1d19A39c' as `0x${string}`,
     abi: BeanABI as Abi,
   },
   AutoMiner: {

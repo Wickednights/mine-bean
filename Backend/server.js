@@ -113,6 +113,13 @@ async function start() {
     } catch (err) {
       console.error('[AutoReset] Failed to start:', err.message);
     }
+    // AutoMiner executor: calls executeFor for active users each round (requires EXECUTOR_PRIVATE_KEY)
+    try {
+      const { startAutoMinerExecutor } = require('./lib/autoMinerExecutor');
+      await startAutoMinerExecutor();
+    } catch (err) {
+      console.error('[AutoMinerExecutor] Failed to start:', err.message);
+    }
   } else {
     console.warn('[Indexer] RPC_URL not set — blockchain indexer disabled');
   }

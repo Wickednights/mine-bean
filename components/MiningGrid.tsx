@@ -437,6 +437,19 @@ setCells(blocksToGrid(d.blocks))
         }
     }, [])
 
+    // Restore grid selection when page loads with active AutoMiner "select" strategy
+    useEffect(() => {
+        const handleBlocksRestored = (event: CustomEvent<{ blocks: number[] }>) => {
+            const blocks = event.detail?.blocks ?? []
+            if (blocks.length > 0) {
+                setSelectedBlocks(blocks)
+                window.dispatchEvent(new CustomEvent("blocksChanged", { detail: { blocks, count: blocks.length } }))
+            }
+        }
+        window.addEventListener("autoMinerBlocksRestored" as any, handleBlocksRestored)
+        return () => window.removeEventListener("autoMinerBlocksRestored" as any, handleBlocksRestored)
+    }, [])
+
     const handleBlockClick = (index: number) => {
         if (autoMode.enabled && autoMode.strategy !== "select") return  // Allow clicks in select mode
         if (phase !== "counting") return

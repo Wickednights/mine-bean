@@ -1,7 +1,7 @@
 'use client'
 import BeanLogo, { BnbLogo } from './BeanLogo'
 
-import React from "react"
+import React, { useState } from "react"
 import { useUserData } from '@/lib/UserDataContext'
 
 interface ClaimRewardsProps {
@@ -15,6 +15,7 @@ interface ClaimRewardsProps {
 export default function ClaimRewards({ userAddress, onClaimETH, onClaimBEAN, onCheckpoint, isCheckpointing }: ClaimRewardsProps) {
   // Shared rewards data from context (no local fetching)
   const { rewards } = useUserData()
+  const [manualRound, setManualRound] = useState('')
 
   if (!userAddress) return null
 
@@ -25,6 +26,11 @@ export default function ClaimRewards({ userAddress, onClaimETH, onClaimBEAN, onC
   const hasRoasted = (rewards?.pendingBEAN?.roasted ?? "0") !== "0"
   const uncheckpointedRound = rewards?.uncheckpointedRound ? parseInt(rewards.uncheckpointedRound, 10) : 0
   const needsCheckpoint = uncheckpointedRound > 0 && onCheckpoint
+
+  const totalBEANFormatted = rewards?.pendingBEAN?.grossFormatted
+    ? parseFloat(rewards.pendingBEAN.grossFormatted).toFixed(4)
+    : "0.0000"
+  const hasTotalBEAN = hasBEAN
 
   return (
     <div style={styles.card}>
@@ -60,38 +66,104 @@ export default function ClaimRewards({ userAddress, onClaimETH, onClaimBEAN, onC
             {rewards ? parseFloat(rewards.pendingBEAN?.roastedFormatted || "0").toFixed(4) : "0.0000"} BNBEAN
           </div>
         </div>
+
+        <div style={{ ...styles.row, ...styles.totalRow }}>
+          <div style={styles.rowLabel}>
+            <BeanLogo size={16} />
+            <span>Total BNBEAN</span>
+          </div>
+          <div style={{ ...styles.rowValue, color: hasTotalBEAN ? "#fff" : "#555", fontWeight: 700 }}>
+            {totalBEANFormatted} BNBEAN
+          </div>
+        </div>
       </div>
 
-      {needsCheckpoint && (
-        <div style={{ marginBottom: 12 }}>
+      <div style={styles.actionGroup}>
+        {needsCheckpoint && (
+          <>
+            <button
+              style={styles.btnCheckpoint}
+              disabled={isCheckpointing}
+              onClick={() => onCheckpoint(uncheckpointedRound)}
+            >
+              {isCheckpointing ? 'Checkpointing...' : `Checkpoint Round ${uncheckpointedRound} (required before claim)`}
+            </button>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 4 }}>
+              <span style={{ fontSize: 11, color: '#888' }}>Or checkpoint round:</span>
+              <input
+                type="number"
+                min={1}
+                placeholder="e.g. 25"
+                value={manualRound}
+                onChange={(e) => setManualRound(e.target.value.replace(/\D/g, ''))}
+                style={{
+                  width: 60,
+                  padding: '4px 8px',
+                  fontSize: 12,
+                  background: 'rgba(255,255,255,0.06)',
+                  border: '1px solid #333',
+                  borderRadius: 6,
+                  color: '#fff',
+                }}
+              />
+              <button
+                style={{
+                  padding: '4px 10px',
+                  fontSize: 11,
+                  background: manualRound ? '#444' : 'transparent',
+                  border: '1px solid #444',
+                  borderRadius: 6,
+                  color: '#aaa',
+                  cursor: manualRound ? 'pointer' : 'not-allowed',
+                }}
+                disabled={!manualRound || isCheckpointing}
+                onClick={() => {
+                  const r = parseInt(manualRound, 10)
+                  if (r > 0 && onCheckpoint) {
+                    onCheckpoint(r)
+                    setManualRound('')
+                  }
+                }}
+              >
+                Go
+              </button>
+            </div>
+          </>
+        )}
+        <div style={styles.buttons}>
           <button
-            style={styles.btnActive}
-            disabled={isCheckpointing}
-            onClick={() => onCheckpoint(uncheckpointedRound)}
+            style={hasBEAN ? styles.btnActive : styles.btnDisabled}
+            disabled={!hasBEAN}
+            onClick={onClaimBEAN}
           >
-            {isCheckpointing ? 'Checkpointing...' : `Checkpoint Round ${uncheckpointedRound} (required before claim)`}
-          </button>
-        </div>
-      )}
-      <div style={styles.buttons}>
-        <button
-          style={hasBEAN ? styles.btnActive : styles.btnDisabled}
-          disabled={!hasBEAN}
-          onClick={onClaimBEAN}
-        >
           Claim BNBEAN
         </button>
-        <button
-          style={hasETH ? styles.btnActive : styles.btnDisabled}
-          disabled={!hasETH}
-          onClick={onClaimETH}
-        >
-          Claim BNB
-        </button>
+          <button
+            style={hasETH ? styles.btnActive : styles.btnDisabled}
+            disabled={!hasETH}
+            onClick={onClaimETH}
+          >
+            Claim BNB
+          </button>
+        </div>
       </div>
       {needsCheckpoint && (
         <div style={{ fontSize: 11, color: "#888", marginTop: 8 }}>
           You won a round. Checkpoint first to add rewards to your balance, then claim.
+        </div>
+      )}
+      {needsCheckpoint && !hasBEAN && (
+        <div style={{ fontSize: 11, color: "#888", marginTop: 8 }}>
+          <div>Try checkpointing the round you won (see Winners panel). If BNBEAN is still 0:</div>
+          <a
+            href="/api/stats/diagnostic"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: "#888", textDecoration: "underline", marginTop: 4, display: "inline-block" }}
+          >
+            Debug BNBEAN mint
+          </a>
+          <span style={{ marginLeft: 4 }}>— check minter, Bean address match, and VRF LINK.</span>
         </div>
       )}
       {hasBEAN && (
@@ -127,6 +199,28 @@ const styles: { [key: string]: React.CSSProperties } = {
     flexDirection: "column",
     gap: 10,
   },
+  totalRow: {
+    paddingTop: 4,
+    borderTop: "1px solid rgba(255,255,255,0.08)",
+    marginTop: 2,
+  },
+  actionGroup: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 10,
+    marginTop: 12,
+  },
+  btnCheckpoint: {
+    width: "100%",
+    padding: "10px 0",
+    background: "#F0B90B",
+    color: "#1a1a1a",
+    border: "none",
+    borderRadius: 8,
+    fontSize: 13,
+    fontWeight: 700,
+    cursor: "pointer",
+  },
   row: {
     display: "flex",
     justifyContent: "space-between",
@@ -147,7 +241,6 @@ const styles: { [key: string]: React.CSSProperties } = {
   buttons: {
     display: "flex",
     gap: 8,
-    marginTop: 14,
   },
   btnActive: {
     flex: 1,

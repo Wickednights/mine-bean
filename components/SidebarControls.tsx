@@ -116,6 +116,7 @@ export default function SidebarControls({
                     numRounds: number
                     roundsExecuted: number
                     depositAmountFormatted: string
+                    selectedBlocks?: number[]
                 }
                 costPerRoundFormatted: string
                 roundsRemaining: number
@@ -137,6 +138,12 @@ export default function SidebarControls({
                     // Force auto mode if active
                     if (data.config.active) {
                         setMode("auto")
+                        window.dispatchEvent(new CustomEvent("autoMinerActivated"))
+                        // Restore grid selection for "select" strategy (strategyId 2)
+                        const blocks = data.config.selectedBlocks
+                        if (blocks && blocks.length > 0 && data.config.strategyId === 2) {
+                            window.dispatchEvent(new CustomEvent("autoMinerBlocksRestored", { detail: { blocks } }))
+                        }
                     }
                 })
                 .catch(() => {})
@@ -169,6 +176,7 @@ export default function SidebarControls({
                     numRounds: number
                     roundsExecuted: number
                     depositAmountFormatted: string
+                    selectedBlocks?: number[]
                 }
                 costPerRoundFormatted: string
                 roundsRemaining: number
@@ -190,6 +198,12 @@ export default function SidebarControls({
                     // If deactivated, switch back to allow manual mode
                     if (!data.config.active) {
                         setMode("manual")
+                    } else {
+                        // Restore grid selection for "select" strategy (strategyId 2)
+                        const blocks = data.config.selectedBlocks
+                        if (blocks && blocks.length > 0 && data.config.strategyId === 2) {
+                            window.dispatchEvent(new CustomEvent("autoMinerBlocksRestored", { detail: { blocks } }))
+                        }
                     }
                 })
                 .catch(() => {})
@@ -464,6 +478,7 @@ const handleSelectClick = () => {
                                 <button style={styles.quickBtn} onClick={() => handleQuickAmount(1)}>+1</button>
                                 <button style={styles.quickBtn} onClick={() => handleQuickAmount(0.1)}>+0.1</button>
                                 <button style={styles.quickBtn} onClick={() => handleQuickAmount(0.01)}>+0.01</button>
+                                <button style={styles.quickBtn} onClick={() => handleQuickAmount(0.001)}>+0.001</button>
                             </div>
                         </div>
 
@@ -550,6 +565,7 @@ const handleSelectClick = () => {
                                 <button style={styles.quickBtn} onClick={() => handleQuickAmount(1)}>+1</button>
                                 <button style={styles.quickBtn} onClick={() => handleQuickAmount(0.1)}>+0.1</button>
                                 <button style={styles.quickBtn} onClick={() => handleQuickAmount(0.01)}>+0.01</button>
+                                <button style={styles.quickBtn} onClick={() => handleQuickAmount(0.001)}>+0.001</button>
                             </div>
                         </div>
 
