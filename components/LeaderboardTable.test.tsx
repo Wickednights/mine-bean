@@ -286,13 +286,13 @@ describe('LeaderboardTable', () => {
     // Stakers tab description
     fireEvent.click(screen.getByText('Stakers'))
     await waitFor(() => {
-      expect(screen.getByText('Top stakers by amount of BEANS staked.')).toBeInTheDocument()
+      expect(screen.getByText('Top stakers by amount of BNBEAN staked.')).toBeInTheDocument()
     })
 
     // Unroasted tab description
     fireEvent.click(screen.getByText('Unroasted'))
     await waitFor(() => {
-      expect(screen.getByText('Top miners by amount of unroasted BEANS.')).toBeInTheDocument()
+      expect(screen.getByText('Top miners by amount of unroasted BNBEAN.')).toBeInTheDocument()
     })
   })
 

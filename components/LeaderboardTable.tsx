@@ -160,9 +160,9 @@ export default function LeaderboardTable() {
             case "miners":
                 return "Top miners by total BNB deployed over their lifetime."
             case "stakers":
-                return "Top stakers by amount of BEANS staked."
+                return "Top stakers by amount of BNBEAN staked."
             case "unroasted":
-                return "Top miners by amount of unroasted BEANS."
+                return "Top miners by amount of unroasted BNBEAN."
         }
     }
 

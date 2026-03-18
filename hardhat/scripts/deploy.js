@@ -23,6 +23,13 @@ async function main() {
     ? hre.ethers.parseEther(process.env.BUYBACK_THRESHOLD)
     : hre.ethers.parseEther("0.01");
 
+  // PancakeSwap router (testnet: 0xD99D1c33F9fC3444f8101754aBC46c52416550D1, mainnet: 0x10ED43C718714eb63d5aA57B78B54704E256024E)
+  const pancakeRouter = process.env.PANCAKESWAP_ROUTER;
+  if (!pancakeRouter) {
+    console.error("ERROR: PANCAKESWAP_ROUTER env var not set. Use testnet or mainnet router address.");
+    process.exit(1);
+  }
+
   // 1. Deploy Bean (BNBEAN) token
   console.log("\n1. Deploying Bean (BNBEAN) token...");
   const Bean = await hre.ethers.getContractFactory("Bean");
@@ -34,7 +41,7 @@ async function main() {
   // 2. Deploy Treasury (needed by GridMining constructor)
   console.log("\n2. Deploying Treasury...");
   const Treasury = await hre.ethers.getContractFactory("Treasury");
-  const treasury = await Treasury.deploy(beanAddress, buybackThreshold);
+  const treasury = await Treasury.deploy(beanAddress, pancakeRouter, buybackThreshold);
   await treasury.waitForDeployment();
   const treasuryAddress = await treasury.getAddress();
   console.log("   Treasury deployed to:", treasuryAddress);
@@ -120,10 +127,13 @@ async function main() {
   console.log("  1. Add GridMining as VRF consumer at vrf.chain.link");
   console.log("  2. Verify contracts on BscScan");
   console.log("  3. Create BNBEAN/WBNB liquidity pool on PancakeSwap");
-  console.log("  4. Call gridMining.startFirstRound() to begin the game");
-  console.log("  5. Freeze Bean minter: bean.freezeMinter()");
-  console.log("  6. Update frontend contract addresses in lib/contracts.ts");
-  console.log("  7. Update backend contract addresses in Backend/lib/contracts.js");
+  console.log("  4. Call bean.setPair(<pairAddress>) with the pool pair address");
+  console.log("  5. (Optional) Call bean.setRouter(<routerAddress>) if different from deploy config");
+  console.log("  6. Call bean.updateReserveSnapshot() 3+ times (wait for new blocks between calls)");
+  console.log("  7. Call gridMining.startFirstRound() to begin the game");
+  console.log("  8. Freeze Bean minter: bean.freezeMinter()");
+  console.log("  9. Update frontend contract addresses in lib/contracts.ts");
+  console.log(" 10. Update backend contract addresses in Backend/lib/contracts.js");
 }
 
 main()

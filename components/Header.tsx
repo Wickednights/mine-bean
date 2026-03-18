@@ -144,16 +144,11 @@ export default function Header({
 
       <div style={styles.headerRight}>
         <a href="#" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
-  <div style={styles.priceTag}>
-    <span style={styles.priceSymbol}>BEAN</span>
-    <span style={styles.priceValue}>${beansPrice}</span>
-  </div>
-</a>
-
-        <div style={{ ...styles.priceTag, opacity: 0.5, cursor: 'default' }} title="Coming soon">
-          <span style={styles.priceSymbol}>BNBEAN</span>
-          <span style={styles.priceValue}>--</span>
-        </div>
+          <div style={styles.priceTag}>
+            <span style={styles.priceSymbol}>BNBEAN</span>
+            <span style={styles.priceValue}>${beansPrice}</span>
+          </div>
+        </a>
 
         <div style={styles.socials}>
           <a href="#" title="Coming Soon" style={styles.socialLink} target="_blank" rel="noopener noreferrer">

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Web3Provider } from '@/lib/providers'
 import HelpButton from '@/components/HelpButton'
+import TestingBanner from '@/components/TestingBanner'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -42,6 +43,7 @@ export default function RootLayout({
         />
       </head>
       <body>
+        <TestingBanner />
         <Web3Provider>
           {children}
           <HelpButton />

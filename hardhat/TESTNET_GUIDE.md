@@ -333,8 +333,8 @@ npx hardhat verify --network bscTestnet AUTOMINER_ADDRESS "GRIDMINING_ADDRESS"
 # Verify Staking (1 constructor arg: bean address)
 npx hardhat verify --network bscTestnet STAKING_ADDRESS "BEAN_ADDRESS"
 
-# Verify Treasury (1 constructor arg: bean address)
-npx hardhat verify --network bscTestnet TREASURY_ADDRESS "BEAN_ADDRESS"
+# Verify Treasury (3 constructor args: bean, router, buybackThreshold)
+npx hardhat verify --network bscTestnet TREASURY_ADDRESS "BEAN_ADDRESS" "0xD99D1c33F9fC3444f8101754aBC46c52416550D1" "10000000000000000"
 ```
 
 Replace the `_ADDRESS` placeholders with your actual deployed addresses.

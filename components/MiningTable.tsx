@@ -24,7 +24,7 @@ interface Round {
 interface RoundFromAPI {
     roundId: number
     winningBlock: number
-    beanWinner: string | null  // address that won BEAN reward (null if split round)
+    beanWinner: string | null  // address that won BNBEAN reward (null if split round)
     isSplit: boolean
     winnerCount: number
     totalDeployed: string
@@ -219,7 +219,7 @@ export default function MiningTable() {
                         <tr>
                             <th style={styles.th}>Round</th>
                             <th style={styles.th}>Block</th>
-                            <th style={styles.th}>BEAN Winner</th>
+                            <th style={styles.th}>BNBEAN Winner</th>
                             <th style={styles.thCenter}>Winners</th>
                             <th style={styles.thRight}>Deployed</th>
                             <th style={styles.thRight}>Vaulted</th>

@@ -33,7 +33,7 @@ export async function PUT(req: Request, { params }: { params: { address: string 
 
   // Verify the wallet signature — reconstruct expected message server-side
   try {
-    const expectedMessage = `BEAN Protocol Profile Update\nAddress: ${address}\nTimestamp: ${timestamp}`
+    const expectedMessage = `BNBEAN Protocol Profile Update\nAddress: ${address}\nTimestamp: ${timestamp}`
     const valid = await verifyMessage({
       address: address as `0x${string}`,
       message: expectedMessage,

@@ -54,6 +54,7 @@ interface SidebarControlsProps {
     onDeploy?: (amount: number, blockIds: number[]) => void
     onAutoActivate?: (strategyId: number, numRounds: number, numBlocks: number, depositAmount: bigint, blockMask: number) => void
     onAutoStop?: () => void
+    onReset?: () => void
 }
 
 export default function SidebarControls({
@@ -63,6 +64,7 @@ export default function SidebarControls({
     onDeploy,
     onAutoActivate,
     onAutoStop,
+    onReset,
 }: SidebarControlsProps) {
     const { openConnectModal } = useConnectModal()
     const [mode, setMode] = useState<"manual" | "auto">("manual")
@@ -114,6 +116,7 @@ export default function SidebarControls({
                     numRounds: number
                     roundsExecuted: number
                     depositAmountFormatted: string
+                    selectedBlocks?: number[]
                 }
                 costPerRoundFormatted: string
                 roundsRemaining: number
@@ -135,6 +138,12 @@ export default function SidebarControls({
                     // Force auto mode if active
                     if (data.config.active) {
                         setMode("auto")
+                        window.dispatchEvent(new CustomEvent("autoMinerActivated"))
+                        // Restore grid selection for "select" strategy (strategyId 2)
+                        const blocks = data.config.selectedBlocks
+                        if (blocks && blocks.length > 0 && data.config.strategyId === 2) {
+                            window.dispatchEvent(new CustomEvent("autoMinerBlocksRestored", { detail: { blocks } }))
+                        }
                     }
                 })
                 .catch(() => {})
@@ -167,6 +176,7 @@ export default function SidebarControls({
                     numRounds: number
                     roundsExecuted: number
                     depositAmountFormatted: string
+                    selectedBlocks?: number[]
                 }
                 costPerRoundFormatted: string
                 roundsRemaining: number
@@ -188,6 +198,12 @@ export default function SidebarControls({
                     // If deactivated, switch back to allow manual mode
                     if (!data.config.active) {
                         setMode("manual")
+                    } else {
+                        // Restore grid selection for "select" strategy (strategyId 2)
+                        const blocks = data.config.selectedBlocks
+                        if (blocks && blocks.length > 0 && data.config.strategyId === 2) {
+                            window.dispatchEvent(new CustomEvent("autoMinerBlocksRestored", { detail: { blocks } }))
+                        }
                     }
                 })
                 .catch(() => {})
@@ -351,8 +367,8 @@ const handleSelectClick = () => {
                         </span>
                     </div>
                     <div style={styles.statLabel}>
-                        {isHoveringBeanpot && beanpotPool > 0
-                            ? `≈$${(beanpotPool * beansPrice).toFixed(2)}`
+                        {isHoveringBeanpot
+                            ? (beanpotPool > 0 ? `≈$${(beanpotPool * beansPrice).toFixed(2)} · Jackpot pool (0.3 BNBEAN/round, 1/777 chance to win)` : "Jackpot pool. 0.3 BNBEAN added per round. 1/777 chance to win.")
                             : "Beanpot"}
                     </div>
                 </div>
@@ -368,6 +384,14 @@ const handleSelectClick = () => {
                     <div style={styles.statLabel}>
                         {isHoveringTimer && currentRound ? `Round #${currentRound}` : "Time remaining"}
                     </div>
+                    {timer === 0 && isConnected && onReset && (
+                        <button
+                            style={styles.resetBtn}
+                            onClick={onReset}
+                        >
+                            Settle & Start Next
+                        </button>
+                    )}
                 </div>
 
                 <div
@@ -454,6 +478,7 @@ const handleSelectClick = () => {
                                 <button style={styles.quickBtn} onClick={() => handleQuickAmount(1)}>+1</button>
                                 <button style={styles.quickBtn} onClick={() => handleQuickAmount(0.1)}>+0.1</button>
                                 <button style={styles.quickBtn} onClick={() => handleQuickAmount(0.01)}>+0.01</button>
+                                <button style={styles.quickBtn} onClick={() => handleQuickAmount(0.001)}>+0.001</button>
                             </div>
                         </div>
 
@@ -540,6 +565,7 @@ const handleSelectClick = () => {
                                 <button style={styles.quickBtn} onClick={() => handleQuickAmount(1)}>+1</button>
                                 <button style={styles.quickBtn} onClick={() => handleQuickAmount(0.1)}>+0.1</button>
                                 <button style={styles.quickBtn} onClick={() => handleQuickAmount(0.01)}>+0.01</button>
+                                <button style={styles.quickBtn} onClick={() => handleQuickAmount(0.001)}>+0.001</button>
                             </div>
                         </div>
 
@@ -766,6 +792,19 @@ const styles: { [key: string]: React.CSSProperties } = {
         fontSize: "13px",
         color: "#999",
         fontWeight: 500,
+    },
+    resetBtn: {
+        marginTop: 8,
+        width: "100%",
+        padding: "8px 12px",
+        background: "rgba(240, 185, 11, 0.2)",
+        border: "1px solid #F0B90B",
+        borderRadius: 8,
+        fontSize: 12,
+        fontWeight: 700,
+        color: "#F0B90B",
+        cursor: "pointer",
+        fontFamily: "inherit",
     },
     controlsCard: {
         background: "rgba(255, 255, 255, 0.05)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",

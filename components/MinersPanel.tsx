@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import BeanLogo, { BnbLogo } from './BeanLogo'
-import { apiFetch } from "@/lib/api"
 import { useProfileResolver } from '@/lib/useProfileResolver'
 
 interface Miner {
@@ -17,6 +16,8 @@ interface MinersResponse {
     winningBlock: number
     miners: Miner[]
 }
+
+const CROWN_ROUND_KEY = 'beans_crown_roundId'
 
 export default function MinersPanel() {
     const [isOpen, setIsOpen] = useState(false)
@@ -34,19 +35,23 @@ export default function MinersPanel() {
     // Store settled roundId so we can fetch miners after animation completes
     const settledRoundIdRef = useRef<string | null>(null)
 
-    const fetchMiners = useCallback((id: string) => {
+    const fetchMiners = useCallback((id: string | number) => {
         setLoading(true)
-        apiFetch<MinersResponse>(`/api/round/${id}/miners`)
-            .then((data) => {
-                if (data.miners.length > 0) {
+        const idStr = String(id)
+        fetch(`/api/proxy/round/${idStr}/miners`)
+            .then((r) => r.json())
+            .then((data: MinersResponse) => {
+                if (data.miners?.length > 0) {
                     setMiners(data.miners)
                     setRoundId(data.roundId)
+                    setWinningBlock(data.winningBlock ?? null)
                     setIsOpen(true)
-if (autoCloseRef.current) clearTimeout(autoCloseRef.current)
-autoCloseRef.current = setTimeout(() => setIsOpen(false), 3000)
+                    try {
+                        sessionStorage.setItem(CROWN_ROUND_KEY, String(data.roundId))
+                    } catch { /* ignore */ }
+                    if (autoCloseRef.current) clearTimeout(autoCloseRef.current)
+                    autoCloseRef.current = setTimeout(() => setIsOpen(false), 3000)
                 }
-                // If no miners (empty round), keep showing previous round's data
-                // but don't open the panel — it stays as-is
             })
             .catch((err) => console.error('Failed to fetch miners:', err))
             .finally(() => setLoading(false))
@@ -75,6 +80,119 @@ autoCloseRef.current = setTimeout(() => setIsOpen(false), 3000)
         window.addEventListener("settlementComplete", handleSettlementComplete)
         return () => window.removeEventListener("settlementComplete", handleSettlementComplete)
     }, [fetchMiners])
+
+    // Helper: try proxy first, fallback to backend URL (for Docker/internal routing)
+    const apiBase = typeof window !== 'undefined' ? (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001') : ''
+
+    const fetchRounds = useCallback(async () => {
+        try {
+            const r = await fetch('/api/proxy/rounds?page=1&limit=1&settled=true')
+            const d = await r.json()
+            if (d?.rounds?.length) return d
+        } catch {}
+        if (apiBase) {
+            try {
+                const r = await fetch(`${apiBase}/api/rounds?page=1&limit=1&settled=true`)
+                if (r.ok) return r.json()
+            } catch {}
+        }
+        return { rounds: [] }
+    }, [apiBase])
+
+    const fetchMinersForRound = useCallback(async (roundId: number) => {
+        try {
+            const r = await fetch(`/api/proxy/round/${roundId}/miners`)
+            const d = await r.json()
+            if (d?.miners?.length) return d
+        } catch {}
+        if (apiBase) {
+            try {
+                const r = await fetch(`${apiBase}/api/round/${roundId}/miners`)
+                if (r.ok) return r.json()
+            } catch {}
+        }
+        return { miners: [] }
+    }, [apiBase])
+
+    const fetchCurrentRound = useCallback(async () => {
+        try {
+            const r = await fetch('/api/proxy/round/current')
+            const d = await r.json()
+            if (d?.roundId != null) return d
+        } catch {}
+        if (apiBase) {
+            try {
+                const r = await fetch(`${apiBase}/api/round/current`)
+                if (r.ok) return r.json()
+            } catch {}
+        }
+        return null
+    }, [apiBase])
+
+    // On mount: fetch latest settled round's miners so crown persists after refresh.
+    // Retry 2–3 times (indexer may not have processed yet); use sessionStorage hint if rounds list is empty.
+    useEffect(() => {
+        const MAX_RETRIES = 3
+        const RETRY_DELAY_MS = 2000
+
+        const tryLoad = async (): Promise<boolean> => {
+            try {
+                // 1. Try sessionStorage hint first (last round we showed crown for)
+                const storedRound = sessionStorage.getItem(CROWN_ROUND_KEY)
+                if (storedRound) {
+                    const roundIdVal = parseInt(storedRound, 10)
+                    if (!isNaN(roundIdVal)) {
+                        const minersData = await fetchMinersForRound(roundIdVal)
+                        if (minersData?.miners?.length) {
+                            setMiners(minersData.miners)
+                            setRoundId(minersData.roundId)
+                            setWinningBlock(minersData.winningBlock ?? null)
+                            return true
+                        }
+                    }
+                }
+
+                // 2. Fetch latest settled round from API
+                const roundsData = await fetchRounds()
+                const latest = roundsData?.rounds?.[0]
+                const roundIdVal = latest?.roundId != null ? Number(latest.roundId) : null
+
+                if (roundIdVal != null) {
+                    const minersData = await fetchMinersForRound(roundIdVal)
+                    if (minersData?.miners?.length) {
+                        setMiners(minersData.miners)
+                        setRoundId(minersData.roundId)
+                        setWinningBlock(minersData.winningBlock ?? null)
+                        return true
+                    }
+                }
+
+                // 3. Fallback: current round - 1 (last settled)
+                const currentData = await fetchCurrentRound()
+                const currentId = currentData?.roundId != null ? Number(currentData.roundId) : null
+                if (currentId != null && currentId > 1) {
+                    const prevData = await fetchMinersForRound(currentId - 1)
+                    if (prevData?.miners?.length) {
+                        setMiners(prevData.miners)
+                        setRoundId(prevData.roundId)
+                        setWinningBlock(prevData.winningBlock ?? null)
+                        return true
+                    }
+                }
+            } catch {
+                // Silently ignore
+            }
+            return false
+        }
+
+        const loadPersistedCrown = async () => {
+            for (let i = 0; i < MAX_RETRIES; i++) {
+                if (i > 0) await new Promise((r) => setTimeout(r, RETRY_DELAY_MS))
+                if (await tryLoad()) return
+            }
+        }
+        loadPersistedCrown()
+    }, [fetchRounds, fetchMinersForRound, fetchCurrentRound])
 
     // Don't show tab if no miners data yet
     const hasData = miners.length > 0

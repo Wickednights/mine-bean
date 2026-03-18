@@ -456,8 +456,14 @@ contract GridMining is ReentrancyGuard, VRFConsumerBaseV2Plus {
         pendingUnroastedBEAN = userUnclaimedBEAN[user];
         pendingRoastedBEAN = userRoastedBEAN[user];
         uint64 lastRound = userLastRound[user];
-        if (lastRound < currentRoundId && rounds[lastRound + 1].settled) {
-            uncheckpointedRound = lastRound + 1;
+        // Find next round user participated in (skip rounds they didn't deploy to)
+        for (uint64 r = lastRound + 1; r <= currentRoundId; r++) {
+            if (!rounds[r].settled) break;
+            Miner storage m = miners[r][user];
+            if (m.amountPerBlock > 0 && !m.checkpointed) {
+                uncheckpointedRound = r;
+                break;
+            }
         }
     }
 

@@ -313,6 +313,7 @@ export default function MobileControls({
                                 <button style={styles.quickBtn} onClick={() => handleQuickAmount(1)}>+1</button>
                                 <button style={styles.quickBtn} onClick={() => handleQuickAmount(0.1)}>+0.1</button>
                                 <button style={styles.quickBtn} onClick={() => handleQuickAmount(0.01)}>+0.01</button>
+                                <button style={styles.quickBtn} onClick={() => handleQuickAmount(0.001)}>+0.001</button>
                             </div>
                         </div>
 
@@ -381,6 +382,7 @@ export default function MobileControls({
                                 <button style={styles.quickBtn} onClick={() => handleQuickAmount(1)}>+1</button>
                                 <button style={styles.quickBtn} onClick={() => handleQuickAmount(0.1)}>+0.1</button>
                                 <button style={styles.quickBtn} onClick={() => handleQuickAmount(0.01)}>+0.01</button>
+                                <button style={styles.quickBtn} onClick={() => handleQuickAmount(0.001)}>+0.001</button>
                             </div>
                         </div>
 

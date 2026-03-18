@@ -87,7 +87,7 @@ npx vitest run    # Run test suite
 | Contract    | Address                                      |
 |-------------|----------------------------------------------|
 | Bean        | `0x5c72992b83E74c4D5200A8E8920fB946214a5A5D` |
-| GridMining  | `0x9632495bDb93FD6B0740Ab69cc6c71C9c01da4f0` |
+| GridMining  | `0x268Cac7cCEFa8F542a3B64002D66Edc3d6C930FB` |
 | AutoMiner   | `0x31358496900D600B2f523d6EdC4933E78F72De89` |
 | Treasury    | `0x38F6E74148D6904286131e190d879A699fE3Aeb3` |
 | Staking     | `0xfe177128Df8d336cAf99F787b72183D1E68Ff9c2` |

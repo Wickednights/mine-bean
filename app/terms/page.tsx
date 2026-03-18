@@ -28,20 +28,20 @@ export default function Terms() {
         <h1 style={{ fontSize: isMobile ? 28 : 36, fontWeight: 700, color: '#fff', margin: '0 0 8px' }}>Terms of Service</h1>
         <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.3)', margin: '0 0 40px' }}>Effective Date: February 18, 2026</p>
 
-        <p style={text}>These Terms of Service (<span style={bold}>&quot;Terms&quot;</span>) govern your access to and use of the website located at <span style={bold}>minebean.io</span> (the <span style={bold}>&quot;Website&quot;</span>) and the associated services (collectively, the <span style={bold}>&quot;Services&quot;</span>) provided by NU11 LABS LLC (<span style={bold}>&quot;we,&quot; &quot;us,&quot;</span> or <span style={bold}>&quot;our&quot;</span>). The Services consist of a frontend interface to facilitate interaction with the BEAN mining protocol (the <span style={bold}>&quot;Protocol&quot;</span>), a decentralized application operating on the BNB Smart Chain blockchain. By accessing or using the Website or Services, you (<span style={bold}>&quot;User,&quot; &quot;you,&quot;</span> or <span style={bold}>&quot;your&quot;</span>) agree to be bound by these Terms. If you do not agree, you must not access or use the Website or Services.</p>
+        <p style={text}>These Terms of Service (<span style={bold}>&quot;Terms&quot;</span>) govern your access to and use of the website located at <span style={bold}>minebean.io</span> (the <span style={bold}>&quot;Website&quot;</span>) and the associated services (collectively, the <span style={bold}>&quot;Services&quot;</span>) provided by NU11 LABS LLC (<span style={bold}>&quot;we,&quot; &quot;us,&quot;</span> or <span style={bold}>&quot;our&quot;</span>). The Services consist of a frontend interface to facilitate interaction with the BNBEAN mining protocol (the <span style={bold}>&quot;Protocol&quot;</span>), a decentralized application operating on the BNB Smart Chain blockchain. By accessing or using the Website or Services, you (<span style={bold}>&quot;User,&quot; &quot;you,&quot;</span> or <span style={bold}>&quot;your&quot;</span>) agree to be bound by these Terms. If you do not agree, you must not access or use the Website or Services.</p>
 
         <p style={text}>The Services are intended for users who are at least 18 years old or the age of majority in their jurisdiction, whichever is greater. By using the Services, you represent and warrant that you meet this eligibility requirement and have the legal capacity to enter into these Terms.</p>
 
         <p style={caps}>PLEASE READ THESE TERMS CAREFULLY. THEY CONTAIN IMPORTANT PROVISIONS REGARDING ASSUMPTION OF RISK, LIMITATION OF LIABILITY, DISCLAIMER OF WARRANTIES, AND DISPUTE RESOLUTION.</p>
 
         <h2 style={heading}>1. Description of Services</h2>
-        <p style={text}>The Website provides a frontend interface for users to interact with the BEAN mining protocol, a decentralized application running on the BNB Smart Chain blockchain. The Protocol operates through smart contracts and functions as follows:</p>
+        <p style={text}>The Website provides a frontend interface for users to interact with the BNBEAN mining protocol, a decentralized application running on the BNB Smart Chain blockchain. The Protocol operates through smart contracts and functions as follows:</p>
         <p style={text}>(a) Users select one or more blocks on a 5x5 grid and deploy BNB (BNB Smart Chain) to claim space on those blocks.</p>
         <p style={text}>(b) Each mining round lasts approximately 60 seconds.</p>
         <p style={text}>(c) A single winning block is selected per round via a verifiable random process on the BNB Smart Chain blockchain.</p>
         <p style={text}>(d) BNB deployed on losing blocks is aggregated and distributed to users with claims on the winning block, proportional to their claim sizes.</p>
-        <p style={text}>(e) The Beanpot jackpot mechanism may be triggered under specific on-chain conditions defined in the smart contract, awarding accumulated BEAN tokens to qualifying participants.</p>
-        <p style={text}>(f) 10% of all distributed BNB is automatically allocated by the Protocol to BEAN token staking rewards. 90% is allocated to BEAN token buyback-and-burn operations, reducing circulating supply.</p>
+        <p style={text}>(e) The Beanpot jackpot mechanism may be triggered under specific on-chain conditions defined in the smart contract, awarding accumulated BNBEAN tokens to qualifying participants.</p>
+        <p style={text}>(f) 10% of all distributed BNB is automatically allocated by the Protocol to BNBEAN token staking rewards. 90% is allocated to BNBEAN token buyback-and-burn operations, reducing circulating supply.</p>
         <p style={text}>The Protocol is permissionless and wallet-based, requiring no user registration or account creation to participate in mining. Users interact directly with the Protocol&apos;s smart contracts via their non-custodial cryptocurrency wallets (such as MetaMask, Coinbase Wallet, or other wallets supported through RainbowKit). All transactions are irreversible and recorded on the public BNB Smart Chain blockchain. We provide only the Website interface and do not custody user funds or control Protocol operations.</p>
 
         <h2 style={heading}>2. Wallet Connection and User Profiles</h2>
@@ -71,7 +71,7 @@ export default function Terms() {
 
         <h2 style={heading}>4. Risks and Disclaimers</h2>
         <p style={text}>Cryptocurrency and blockchain activities involve significant risks. By using the Services, you acknowledge and accept:</p>
-        <p style={text}><span style={bold}>Volatility:</span> Cryptocurrencies like BNB and the BEAN token are highly volatile; their value may fluctuate dramatically and may go to zero.</p>
+        <p style={text}><span style={bold}>Volatility:</span> Cryptocurrencies like BNB and the BNBEAN token are highly volatile; their value may fluctuate dramatically and may go to zero.</p>
         <p style={text}><span style={bold}>No Guarantees:</span> There are no guarantees of rewards, profits, or returns. The Protocol is a decentralized mining game, not an investment. Past performance is not indicative of future results.</p>
         <p style={text}><span style={bold}>Loss of Funds:</span> You may lose some or all of the BNB you deploy in any given mining round. Round outcomes are determined by the Protocol&apos;s smart contracts and cannot be influenced or controlled by us.</p>
         <p style={text}><span style={bold}>Blockchain Risks:</span> Transactions are irreversible. Errors in wallet addresses, gas fees, network congestion, forks, or smart contract vulnerabilities may result in loss of funds.</p>
@@ -86,11 +86,11 @@ export default function Terms() {
         <p style={caps}>WE DO NOT REPRESENT OR WARRANT THAT ACCESS TO THE WEBSITE WILL BE CONTINUOUS, UNINTERRUPTED, TIMELY, OR SECURE; THAT THE INFORMATION CONTAINED IN THE WEBSITE WILL BE ACCURATE, RELIABLE, COMPLETE, OR CURRENT; OR THAT THE WEBSITE WILL BE FREE FROM ERRORS, DEFECTS, VIRUSES, OR OTHER HARMFUL ELEMENTS.</p>
 
         <h2 style={heading}>6. Payments and Transactions</h2>
-        <p style={text}>All transactions occur on the BNB Smart Chain blockchain using BNB and the BEAN token. We do not process fiat payments or custody user assets.</p>
-        <p style={text}>The Protocol charges fees on mining round activity. The current fee allocation is: 10% of distributed BNB to BEAN staking rewards and 90% to BEAN buyback-and-burn operations. Fee structures may change from time to time.</p>
+        <p style={text}>All transactions occur on the BNB Smart Chain blockchain using BNB and the BNBEAN token. We do not process fiat payments or custody user assets.</p>
+        <p style={text}>The Protocol charges fees on mining round activity. The current fee allocation is: 10% of distributed BNB to BNBEAN staking rewards and 90% to BNBEAN buyback-and-burn operations. Fee structures may change from time to time.</p>
         <p style={text}>Blockchain network fees (gas fees) are your responsibility and are paid directly to the BNB Smart Chain network, not to us.</p>
         <p style={text}><span style={bold}>No Refunds:</span> Due to the immutable nature of blockchain, all transactions are final and non-refundable. This includes BNB deployed in mining rounds, staking transactions, and any fees.</p>
-        <p style={text}><span style={bold}>BEAN Token:</span> BEAN is a utility token within the Protocol ecosystem. It has no guaranteed value and is not an investment security. Token values fluctuate based on market conditions.</p>
+        <p style={text}><span style={bold}>BNBEAN Token:</span> BNBEAN is a utility token within the Protocol ecosystem. It has no guaranteed value and is not an investment security. Token values fluctuate based on market conditions.</p>
 
         <h2 style={heading}>7. Third-Party Services</h2>
         <p style={text}>The Website integrates with or relies upon the following third-party services:</p>

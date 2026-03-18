@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://api.minebean.io'
+// Server-side: use INTERNAL_API_URL in Docker (backend service), else localhost
+const API_BASE = process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
 
 // blockMask is a uint32 bitmask where bit N = block N was deployed (0-indexed, 0-24)
 function decodeBlockMask(mask: string): number[] {

@@ -55,15 +55,16 @@ describe('ClaimRewards', () => {
     expect(container.innerHTML).toBe('')
   })
 
-  it('returns null when rewards is null', () => {
+  it('shows Rewards card when rewards is null (displays zeros)', () => {
     currentRewards = null
-    const { container } = render(
+    render(
       <ClaimRewards userAddress="0xABC" onClaimETH={onClaimETH} onClaimBEAN={onClaimBEAN} />
     )
-    expect(container.innerHTML).toBe('')
+    expect(screen.getByText('Rewards')).toBeInTheDocument()
+    expect(screen.getByText(/0\.000000 BNB/)).toBeInTheDocument()
   })
 
-  it('returns null when all rewards are zero', () => {
+  it('shows Rewards card when all rewards are zero (buttons disabled)', () => {
     currentRewards = {
       pendingETH: '0',
       pendingETHFormatted: '0',
@@ -76,10 +77,12 @@ describe('ClaimRewards', () => {
       },
       uncheckpointedRound: '0',
     }
-    const { container } = render(
+    render(
       <ClaimRewards userAddress="0xABC" onClaimETH={onClaimETH} onClaimBEAN={onClaimBEAN} />
     )
-    expect(container.innerHTML).toBe('')
+    expect(screen.getByText('Rewards')).toBeInTheDocument()
+    const claimBeanBtn = screen.getByText('Claim BEAN')
+    expect(claimBeanBtn).toBeDisabled()
   })
 
   it('displays BNB rewards amount when non-zero', () => {

@@ -151,7 +151,6 @@ router.get('/:id/miners', async (req, res) => {
     const totalWinnings = BigInt(round.totalWinnings || '0');
     const topMinerReward = BigInt(round.topMinerReward || '0');
     const beanpotAmount = BigInt(round.beanpotAmount || '0');
-    const topMinerSeed = BigInt(round.topMinerSeed || '0');
 
     const miners = winners.map(w => {
       const userDeployed = BigInt(w.amountPerBlock);
@@ -161,15 +160,10 @@ router.get('/:id/miners', async (req, res) => {
         ? (totalWinnings * userDeployed) / totalWinnersDeployed
         : 0n;
 
-      // BEAN rewards
-      let beanReward = 0n;
-      if (round.isSplit) {
-        // Split: proportional
-        beanReward = totalWinnersDeployed > 0n
-          ? (topMinerReward * userDeployed) / totalWinnersDeployed
-          : 0n;
-      }
-      // Non-split BEAN computed below
+      // BEAN rewards: always proportional (contract always splits)
+      const beanReward = topMinerReward > 0n && totalWinnersDeployed > 0n
+        ? (topMinerReward * userDeployed) / totalWinnersDeployed
+        : 0n;
 
       // Beanpot: proportional
       const beanpotBonus = totalWinnersDeployed > 0n && beanpotAmount > 0n
@@ -186,29 +180,6 @@ router.get('/:id/miners', async (req, res) => {
         deployedFormatted: formatEth(w.amountPerBlock),
       };
     });
-
-    // Non-split BEAN: weighted random replay
-    if (!round.isSplit && topMinerReward > 0n && totalWinnersDeployed > 0n) {
-      const winnersDeployed = BigInt(round.winnersDeployed || totalWinnersDeployed.toString());
-      const sample = topMinerSeed % winnersDeployed;
-
-      let cumulative = 0n;
-      let beanWinnerIdx = -1;
-      for (let i = 0; i < winners.length; i++) {
-        cumulative += BigInt(winners[i].amountPerBlock);
-        if (cumulative > sample && beanWinnerIdx === -1) {
-          beanWinnerIdx = i;
-        }
-      }
-
-      if (beanWinnerIdx >= 0) {
-        // Add topMinerReward to the BEAN winner
-        const current = BigInt(miners[beanWinnerIdx].beanReward);
-        const newReward = current + topMinerReward;
-        miners[beanWinnerIdx].beanReward = newReward.toString();
-        miners[beanWinnerIdx].beanRewardFormatted = formatEth(newReward);
-      }
-    }
 
     res.json({ roundId, winningBlock, miners });
   } catch (err) {
