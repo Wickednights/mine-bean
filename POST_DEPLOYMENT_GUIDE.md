@@ -399,6 +399,7 @@ Replace `0xd7e5522c9cc3682c960afada6adde0f8116580f2ad2cef08c197faf625e53842` wit
 
 Before going live, run through [PRE_LAUNCH_CHECKLIST.md](PRE_LAUNCH_CHECKLIST.md) to verify every game feature.
 For a full system verification and env var setup (Vercel, Render, MongoDB Atlas), see [SYSTEM_VERIFICATION_CHECKLIST.md](SYSTEM_VERIFICATION_CHECKLIST.md). It covers mining, rewards, AutoMiner, staking, Global, Profile, SSE, and mobile.
+Before going live, run through [PRE_LAUNCH_CHECKLIST.md](PRE_LAUNCH_CHECKLIST.md) to verify every game feature. It covers mining, rewards, AutoMiner, staking, Global, Profile, SSE, and mobile.
 
 **Restart Docker after Backend changes** (e.g. indexer optimizations): `docker compose down && docker compose up --build`.
 
