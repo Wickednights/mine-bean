@@ -46,6 +46,7 @@ export default function Stake() {
         args: [pendingApprovalAmount],
         value: pendingCompoundFee ?? BigInt(0),
         dataSuffix: BUILDER_CODE_SUFFIX,
+        gas: 350000n, // Explicit limit when estimation fails (e.g. RPC returns "Unavailable")
       })
       setPendingApprovalAmount(undefined)
       setPendingCompoundFee(undefined)
@@ -68,6 +69,7 @@ export default function Stake() {
         args: [amount],
         value: compoundFeeBnb ?? BigInt(0),
         dataSuffix: BUILDER_CODE_SUFFIX,
+        gas: 350000n, // Explicit limit when estimation fails (e.g. RPC returns "Unavailable")
       })
     } else {
       // Need approval first — store for the approval->deposit chain
@@ -79,6 +81,7 @@ export default function Stake() {
         functionName: 'approve',
         args: [CONTRACTS.Staking.address, maxUint256],
         dataSuffix: BUILDER_CODE_SUFFIX,
+        gas: 100000n, // Explicit limit when estimation fails
       })
     }
   }, [isConnected, allowance, writeContract, writeContract2])

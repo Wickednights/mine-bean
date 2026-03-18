@@ -22,10 +22,10 @@ This guide covers every step from contract deployment through game launch. Use i
 | Contract | Address |
 |----------|---------|
 | Bean (BNBEAN) | `0x89BeA6C663D33b129525F14574b8eFdC1d19A39c` — matches GridMining.bean() on-chain |
-| Treasury | `0xD02139f8ce44AA168822a706BDa3dde6a2305728` |
+| Treasury | `0x90bAbE945cffaA081a3853acFeAe1c97cEf726F4` |
 | GridMining | `0x268Cac7cCEFa8F542a3B64002D66Edc3d6C930FB` |
 | AutoMiner | `0xCdB629B6E58BBae482adfE49B9886a6a1BBD7304` |
-| Staking | `0x64C90Fdb24F275861067BF332A0C7661cb938F99` |
+| Staking | `0xeDcA64d1620D544Ac0184467CAc24867e682Bdc7` |
 
 **PancakeSwap BSC Testnet:**
 - WBNB: `0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd`
@@ -209,8 +209,8 @@ RPC_URL=https://bsc-testnet-dataseed.bnbchain.org
 GRIDMINING_ADDRESS=0x268Cac7cCEFa8F542a3B64002D66Edc3d6C930FB
 BEAN_ADDRESS=0x89BeA6C663D33b129525F14574b8eFdC1d19A39c
 AUTOMINER_ADDRESS=0xCdB629B6E58BBae482adfE49B9886a6a1BBD7304
-TREASURY_ADDRESS=0xD02139f8ce44AA168822a706BDa3dde6a2305728
-STAKING_ADDRESS=0x64C90Fdb24F275861067BF332A0C7661cb938F99
+TREASURY_ADDRESS=0x90bAbE945cffaA081a3853acFeAe1c97cEf726F4
+STAKING_ADDRESS=0xeDcA64d1620D544Ac0184467CAc24867e682Bdc7
 ```
 
 The Backend `lib/contracts.js` uses these env vars with the new addresses as fallbacks, so it will work even if `.env` is missing them — but setting them explicitly is recommended.
@@ -254,7 +254,7 @@ npx hardhat verify --network bscTestnet 0x89BeA6C663D33b129525F14574b8eFdC1d19A3
 
 **Treasury (3 args: bean, router, buybackThreshold):**
 ```bash
-npx hardhat verify --network bscTestnet 0xD02139f8ce44AA168822a706BDa3dde6a2305728 "0x89BeA6C663D33b129525F14574b8eFdC1d19A39c" "0xD99D1c33F9fC3444f8101754aBC46c52416550D1" "10000000000000000"
+npx hardhat verify --network bscTestnet 0x90bAbE945cffaA081a3853acFeAe1c97cEf726F4 "0x89BeA6C663D33b129525F14574b8eFdC1d19A39c" "0xD99D1c33F9fC3444f8101754aBC46c52416550D1" "10000000000000000"
 ```
 
 **GridMining (4 args: vrfCoordinator, bean, treasury, feeCollector):**
@@ -270,7 +270,7 @@ npx hardhat verify --network bscTestnet 0xCdB629B6E58BBae482adfE49B9886a6a1BBD73
 
 **Staking (2 args: bean, treasury):**
 ```bash
-npx hardhat verify --network bscTestnet 0x64C90Fdb24F275861067BF332A0C7661cb938F99 "0x89BeA6C663D33b129525F14574b8eFdC1d19A39c" "0xD02139f8ce44AA168822a706BDa3dde6a2305728"
+npx hardhat verify --network bscTestnet 0xeDcA64d1620D544Ac0184467CAc24867e682Bdc7 "0x89BeA6C663D33b129525F14574b8eFdC1d19A39c" "0x90bAbE945cffaA081a3853acFeAe1c97cEf726F4"
 ```
 
 ---
@@ -352,6 +352,19 @@ Replace `0xd7e5522c9cc3682c960afada6adde0f8116580f2ad2cef08c197faf625e53842` wit
 
 ---
 
+## Staking Troubleshooting
+
+**LP not required for staking.** Staking accepts BNBEAN directly — users deposit BNBEAN from their wallet, not LP tokens. The LP pool is only needed for Treasury buybacks and BEAN price display.
+
+**If deposit fails:**
+
+1. **tBNB for gas** — On BSC Testnet you need tBNB to pay gas. If MetaMask shows "Network fee: Unavailable tBNB" or "$0.00" balance, get testnet BNB from a [faucet](https://www.bnbchain.org/en/testnet-faucet).
+2. **Minimum stake** — Staking requires at least 1 BNBEAN per deposit.
+3. **Approval** — Approve BNBEAN spending for the Staking contract before depositing. The app handles this automatically (approve → deposit chain).
+4. **Gas estimation** — The app now uses explicit gas limits (`gas: 350000n` for deposit, `gas: 100000n` for approve) to avoid "Unavailable" when RPC estimation fails.
+
+---
+
 ## Full Checklist
 
 | # | Task | Done |
@@ -414,6 +427,149 @@ The executor wallet must match `await AutoMiner.executor()` (typically the deplo
 - **Poll interval:** `AUTO_MINER_EXECUTOR_POLL_MS=15000` (default 15s)
 
 **Alternative (manual):** If you prefer not to run the executor service, document that the deployer must run a script or cron to call `executeFor` for active users each round until automated execution is enabled.
+
+### AutoMiner: Round counter stuck at 0/X or state reverts on refresh
+
+**Symptoms:** Rounds display stays at 0/1 or 0/5 after many rounds; after refreshing the page, AutoMiner appears inactive or as if it was never activated.
+
+**Causes:**
+- **Executor not running:** The round counter (`roundsExecuted`) comes from the contract. If `EXECUTOR_PRIVATE_KEY` is missing or the executor service is disabled, `executeFor` is never called, so `roundsExecuted` stays 0.
+- **State on refresh:** The UI reads AutoMiner state from `GET /api/automine/:address`, which calls `AutoMiner.getUserState(address)` on-chain. If the contract shows `active: false` or `roundsExecuted: 0`, that is what the UI displays. After all configured rounds complete, the contract auto-deactivates, so a refresh will correctly show inactive.
+
+**Checks:**
+1. Ensure `EXECUTOR_PRIVATE_KEY` is set in Backend `.env` and the wallet matches `AutoMiner.executor()`.
+2. Check backend logs for `[Indexer] AutoMiner ExecutedFor round=...` — if you never see this, the executor is not running or failing.
+3. Verify the executor wallet has BNB for gas.
+
+### Deploy to Render + Vercel (Testnet)
+
+Deploy the frontend to Vercel and the backend to Render for a public testnet instance. The browser connects directly to the backend for API and SSE.
+
+#### Prerequisites
+
+- [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) — free cluster, connection string
+- [Render](https://render.com) account
+- [Vercel](https://vercel.com) account
+- GitHub repo with the mine-bean codebase
+
+#### 1. MongoDB Atlas
+
+1. Create a free cluster at [cloud.mongodb.com](https://cloud.mongodb.com).
+2. **Database Access** → Add user (username + password).
+3. **Network Access** → Add IP `0.0.0.0/0` (allow from anywhere; Render/Vercel IPs vary).
+4. **Connect** → Drivers → copy connection string, e.g. `mongodb+srv://user:pass@cluster.mongodb.net/minebean`.
+
+#### 2. Render (Backend)
+
+1. **New** → **Web Service**.
+2. Connect your GitHub repo.
+3. **Settings:**
+   - **Name:** `mine-bean-backend` (or similar)
+   - **Root Directory:** `Backend`
+   - **Runtime:** Node
+   - **Build Command:** `npm install`
+   - **Start Command:** `npm start`
+   - **Instance Type:** Free (or paid for always-on; free tier sleeps after ~15 min inactivity)
+
+4. **Environment variables** (Render Dashboard → Environment):
+
+   | Key | Value |
+   |-----|-------|
+   | `MONGODB_URI` | `mongodb+srv://user:pass@cluster.mongodb.net/minebean` |
+   | `RPC_URL` | `https://bsc-testnet-dataseed.bnbchain.org` (or Alchemy/QuickNode for fewer rate limits) |
+   | `GRIDMINING_ADDRESS` | `0x268Cac7cCEFa8F542a3B64002D66Edc3d6C930FB` |
+   | `BEAN_ADDRESS` | `0x89BeA6C663D33b129525F14574b8eFdC1d19A39c` |
+   | `AUTOMINER_ADDRESS` | `0xCdB629B6E58BBae482adfE49B9886a6a1BBD7304` |
+   | `TREASURY_ADDRESS` | `0x90bAbE945cffaA081a3853acFeAe1c97cEf726F4` |
+   | `STAKING_ADDRESS` | `0xeDcA64d1620D544Ac0184467CAc24867e682Bdc7` |
+
+   **Optional (for full functionality):**
+   | Key | Value |
+   |-----|-------|
+   | `RESET_WALLET_PRIVATE_KEY` | `0x...` (wallet with BNB for auto-reset) |
+   | `AUTO_RESET_ENABLED` | `true` |
+   | `EXECUTOR_PRIVATE_KEY` | `0x...` (AutoMiner executor wallet) |
+
+5. Deploy. Note the service URL, e.g. `https://mine-bean-backend.onrender.com`.
+
+#### 3. Vercel (Frontend)
+
+1. **Add New** → **Project** → Import your GitHub repo.
+2. **Settings:**
+   - **Framework Preset:** Next.js
+   - **Root Directory:** `.` (project root)
+   - **Build Command:** `npm run build` (default)
+   - **Output Directory:** `.next` (default)
+
+3. **Environment variables** (Vercel Dashboard → Settings → Environment Variables):
+
+   | Key | Value |
+   |-----|-------|
+   | `NEXT_PUBLIC_API_URL` | `https://mine-bean-backend.onrender.com` (your Render URL) |
+   | `NEXT_PUBLIC_APP_URL` | `https://your-app.vercel.app` (Vercel URL; set after first deploy) |
+   | `INTERNAL_API_URL` | `https://mine-bean-backend.onrender.com` (same as above) |
+
+   **Optional (Supabase profiles):**
+   | Key | Value |
+   |-----|-------|
+   | `NEXT_PUBLIC_SUPABASE_URL` | your Supabase URL |
+   | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | your Supabase anon key |
+
+4. Deploy. After the first deploy, set `NEXT_PUBLIC_APP_URL` to your Vercel URL and redeploy.
+
+#### 4. Post-deploy checks
+
+1. **Backend health:** `curl https://YOUR-RENDER-URL/health` — should return `{"status":"ok","mongo":"connected",...}`.
+2. **Frontend:** Open your Vercel URL, connect wallet, and verify Mine/Stake/Global load.
+3. **Wallet:** Ensure MetaMask (or your wallet) is on **BSC Testnet** (Chain ID 97). Add it via [Chainlist](https://chainlist.org/?search=bsc+testnet) if needed.
+4. **SSE:** Rounds and events should update live. If Render free tier has spun down, the first request may take ~30s to wake the backend.
+
+#### Notes
+
+- **Render free tier:** Service sleeps after ~15 min of no traffic. SSE connections drop when it sleeps; they reconnect when the backend wakes. For always-on, use a paid Render plan.
+- **CORS:** Backend uses `cors({ origin: '*' })`, so the Vercel domain can call it.
+- **RPC rate limits:** Public BSC RPC can hit limits. Use [Alchemy](https://alchemy.com) or [QuickNode](https://quicknode.com) BSC Testnet for higher limits.
+
+### Marketing workflow (standalone AI CMO)
+
+Use an AI-powered marketing tool (e.g. [Okara AI CMO](https://okara.ai/agent/cmo)) as a **standalone** system. Keep it separate from the app codebase.
+
+**Setup:**
+1. **Tool** — Sign up for Okara AI CMO (or similar) and use it in a separate browser tab or workspace.
+2. **Context** — Provide the AI with:
+   - Product: BEAN (BNBEAN) — DeFi mining game on BSC
+   - Features: mining rounds, AutoMiner, staking, beanpot, BNBEAN rewards
+   - Audience: DeFi users, BSC users, crypto gamers
+   - Status: testnet / mainnet
+3. **Outputs** — Use it for:
+   - Messaging and taglines
+   - Twitter/X threads and posts
+   - Discord/Telegram copy
+   - Landing page and blog content
+   - Launch and community campaign ideas
+
+**Workflow:**
+
+| Step | Action |
+|------|--------|
+| 1 | Open the AI CMO tool in a separate tab or app |
+| 2 | Paste or describe BEAN's value proposition and target audience |
+| 3 | Request outputs (e.g. tweet thread, Discord announcement, landing copy) |
+| 4 | Copy outputs into your content tools (Twitter, Discord, Notion, etc.) |
+| 5 | Review and edit before publishing |
+
+**What stays out of the codebase:**
+- No AI CMO integration in the app
+- No marketing API keys in the repo
+- Marketing tools and workflows live outside the mine-bean project
+
+**Checklist for launch marketing:**
+- [ ] Messaging and value proposition
+- [ ] Twitter/X account and bio
+- [ ] Discord/Telegram announcement templates
+- [ ] Landing page copy
+- [ ] Launch thread or announcement post
+- [ ] Community engagement plan
 
 ---
 
@@ -492,11 +648,26 @@ After winning, settling, and resetting, BNB and BNBEAN may stay at 0.0000.
 - In Docker, ensure the frontend can reach the backend. Rewards are fetched via `/api/user/[address]/rewards` (Next.js proxy). Set `INTERNAL_API_URL` so the proxy works.
 - **Checkpoint stuck on wrong round:** If the UI shows "Checkpoint Round 2" but you didn't deploy to round 2, the old contract required checkpointing rounds in sequence and could get stuck. The contract has been updated to skip rounds you didn't participate in — **redeploy GridMining** and update the address to fix this.
 
+### Staking/Treasury use wrong Bean (`allContractsUseAppBean: false`)
+
+**Symptom:** Staking deposit fails; Protocol Revenue and BNB in Treasury show 0; diagnostic shows `staking.beanAddress` and `treasury.beanAddress` differ from `GridMining.bean()`.
+
+**Cause:** Treasury and Staking were deployed with a different Bean contract (e.g. `0xC9ccBa...`) while GridMining mints to the legacy Bean (`0x89BeA6...`). Users hold BNBEAN from the legacy contract, but Staking expects the other one.
+
+**Fix:** Redeploy Treasury and Staking with the legacy Bean:
+
+```bash
+cd hardhat
+npx hardhat run scripts/redeployTreasuryStaking.js --network bscTestnet
+```
+
+Then update `lib/contracts.ts` and `Backend/.env` (or `Backend/lib/contracts.js`) with the new Treasury and Staking addresses. Restart the backend and frontend.
+
 ### Stats showing zeros (Circulating Supply, Protocol Revenue, BNB in Treasury)
 
 **Diagnostic:** Call `GET /api/stats/diagnostic` (or `http://localhost:3001/api/stats/diagnostic` if backend runs separately). This returns raw contract reads (Bean.totalSupply, Treasury.getStats, minter address, etc.) to verify RPC, addresses, and minter.
 
-**Common causes:** Wrong RPC (e.g. mainnet vs testnet), minter not set, or all-blocks strategy (vaultAmount = 0). Stats cache TTL was reduced (15s for stats, 30s for treasury) so values refresh sooner.
+**Common causes:** Wrong RPC (e.g. mainnet vs testnet), minter not set, all-blocks strategy (vaultAmount = 0), or **Treasury/Staking using wrong Bean** (see above). Stats cache TTL was reduced (15s for stats, 30s for treasury) so values refresh sooner.
 
 ### VRF subscription must be funded with LINK
 

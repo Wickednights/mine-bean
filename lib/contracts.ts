@@ -20,7 +20,7 @@ export const CONTRACTS = {
     abi: AutoMinerABI as Abi,
   },
   Treasury: {
-    address: '0xD02139f8ce44AA168822a706BDa3dde6a2305728' as `0x${string}`,
+    address: '0x90bAbE945cffaA081a3853acFeAe1c97cEf726F4' as `0x${string}`,
     abi: TreasuryABI as Abi,
   },
   // TODO: Add LP pair address after creating BEAN/WBNB pool on PancakeSwap
@@ -28,7 +28,7 @@ export const CONTRACTS = {
     address: '0xd7e5522c9cc3682c960afada6adde0f8116580f2ad2cef08c197faf625e53842' as `0x${string}`,
   },
   Staking: {
-    address: '0x64C90Fdb24F275861067BF332A0C7661cb938F99' as `0x${string}`,
+    address: '0xeDcA64d1620D544Ac0184467CAc24867e682Bdc7' as `0x${string}`,
     abi: StakingABI as Abi,
   },
 } as const

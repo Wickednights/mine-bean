@@ -122,6 +122,7 @@ const [isAutoMinerActive, setIsAutoMinerActive] = useState(false)
     const animatingRef = useRef(false)
     const snapshotCellsRef = useRef<CellData[] | null>(null)
     const pendingResetRef = useRef<GameStartedEvent | null>(null)
+    const pendingAutoMineBlocksRef = useRef<{ roundId: string; blocks: number[] } | null>(null)
     const animationTimers = useRef<ReturnType<typeof setTimeout>[]>([])
     // Keep a mutable ref to cells so the SSE closure always reads the latest value
     const cellsRef = useRef(cells)
@@ -156,6 +157,13 @@ const [isAutoMinerActive, setIsAutoMinerActive] = useState(false)
             window.dispatchEvent(
                 new CustomEvent("roundData", { detail: eventData })
             )
+            // Apply any AutoMiner blocks that arrived during the animation (fixes Random strategy not showing selections)
+            const pending = pendingAutoMineBlocksRef.current
+            if (pending && String(pending.roundId) === String(eventData.roundId) && pending.blocks.length > 0) {
+                setUserDeployedBlocks(new Set(pending.blocks))
+                setHasDeployedThisRound(true)
+                pendingAutoMineBlocksRef.current = null
+            }
         }
 
         // Re-fetch current round to pick up any deployments that arrived during the animation
@@ -258,16 +266,19 @@ const [isAutoMinerActive, setIsAutoMinerActive] = useState(false)
 
     useEffect(() => {
         return subscribeUser('autoMineExecuted', (data) => {
-            const d = data as { roundId: string; blocks?: number[]; roundsExecuted: number }
-            // Mark these blocks as deployed by user (guard against undefined blocks)
-            if (d.blocks && d.blocks.length > 0) {
+            const d = data as { roundId: number | string; blocks?: number[]; roundsExecuted: number }
+            if (!d.blocks || d.blocks.length === 0) return
+            const roundStr = String(d.roundId)
+            // Store for resetForNewRound in case we're mid-animation (fixes Random strategy not showing selections)
+            pendingAutoMineBlocksRef.current = { roundId: roundStr, blocks: d.blocks }
+            // If we're already in this round, apply immediately
+            if (currentRoundIdRef.current === roundStr) {
                 setUserDeployedBlocks(prev => {
                     const next = new Set(prev)
                     d.blocks!.forEach(id => next.add(id))
                     return next
                 })
                 setHasDeployedThisRound(true)
-                // Clear selection and notify controls
                 setSelectedBlocks([])
                 window.dispatchEvent(new CustomEvent("blocksChanged", {
                     detail: { blocks: [], count: 0 }
@@ -324,6 +335,11 @@ setCells(blocksToGrid(d.blocks))
 
             // Buffer the new round data
             pendingResetRef.current = newRound
+
+            // Dispatch roundData immediately so the timer shows countdown right away (fixes delayed timer)
+            if (newRound) {
+                window.dispatchEvent(new CustomEvent("roundData", { detail: newRound }))
+            }
 
             if (settled) {
                 // Round had deployments — run settlement animation
