@@ -12,9 +12,29 @@ const { getProvider, getContracts, ADDRESSES } = require('./contracts');
 const AutoMinerABI = require('../abis/AutoMiner.json');
 const GridMiningABI = require('../abis/GridMining.json');
 
-const POLL_INTERVAL_MS = parseInt(process.env.AUTO_MINER_EXECUTOR_POLL_MS || '15000', 10) || 15000;
+const POLL_INTERVAL_MS = parseInt(process.env.AUTO_MINER_EXECUTOR_POLL_MS || '10000', 10) || 10000;
+const MIN_TIME_REMAINING_SEC = parseInt(process.env.AUTO_MINER_MIN_TIME_REMAINING || '25', 10) || 25;
+
+// GridMining error selectors (ethers v6 returns "unknown custom error" without decoded name)
+const ROUND_NOT_ACTIVE_SELECTOR = '0x3df07da5';
+const ALREADY_DEPLOYED_SELECTOR = '0x25b23b73';
 
 let started = false;
+
+function isExpectedRevert(err) {
+  const msg = err?.message || String(err);
+  const data = err?.data ?? err?.error?.data ?? err?.info?.error?.data;
+  const selector = typeof data === 'string' && data.length >= 10 ? data.slice(0, 10) : null;
+  return (
+    msg.includes('RoundNotActive') ||
+    msg.includes('AlreadyDeployedThisRound') ||
+    msg.includes('AlreadyPlayedThisRound') ||
+    msg.includes('RoundLimitReached') ||
+    msg.includes('ConfigNotActive') ||
+    selector === ROUND_NOT_ACTIVE_SELECTOR ||
+    selector === ALREADY_DEPLOYED_SELECTOR
+  );
+}
 
 function decodeBlockMask(mask) {
   const blocks = [];
@@ -71,6 +91,7 @@ async function startAutoMinerExecutor() {
       const isActive = roundInfo.isActive ?? roundInfo[5];
 
       if (!isActive || timeRemaining <= 0) return;
+      if (timeRemaining < MIN_TIME_REMAINING_SEC) return; // need buffer for tx to be mined before round ends
       if (roundId <= lastExecutedRound) return;
       if (Number(count) === 0) return;
 
@@ -105,25 +126,22 @@ async function startAutoMinerExecutor() {
           await AutoMiner.executeFor(userAddr, blocks);
           console.log(`[AutoMinerExecutor] Executed for ${userAddr.slice(0, 10)}... round ${roundId} blocks=${blocks.length}`);
         } catch (err) {
-          const msg = err.message || String(err);
-          if (
-            msg.includes('RoundNotActive') ||
-            msg.includes('AlreadyPlayedThisRound') ||
-            msg.includes('RoundLimitReached') ||
-            msg.includes('ConfigNotActive')
-          ) {
-            // Expected — skip
+          if (isExpectedRevert(err)) {
+            // RoundNotActive, AlreadyDeployedThisRound, etc — skip
+            const data = err?.data ?? err?.error?.data;
+            if (data && String(data).slice(0, 10) === ROUND_NOT_ACTIVE_SELECTOR) {
+              break; // round ended, rest will fail too
+            }
           } else {
-            console.error(`[AutoMinerExecutor] Error for ${userAddr?.slice(0, 10)}...:`, msg);
+            console.error(`[AutoMinerExecutor] Error for ${userAddr?.slice(0, 10)}...:`, err.message || String(err));
           }
         }
       }
 
       lastExecutedRound = roundId;
     } catch (err) {
-      const msg = err.message || String(err);
-      if (!msg.includes('RoundNotActive') && !msg.includes('GameNotStarted')) {
-        console.error('[AutoMinerExecutor] Error:', msg);
+      if (!isExpectedRevert(err) && !String(err).includes('GameNotStarted')) {
+        console.error('[AutoMinerExecutor] Error:', err.message || String(err));
       }
     }
   }
