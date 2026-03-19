@@ -1,0 +1,11 @@
+# Supabase local dev config (optional)
+# Used by: supabase start, supabase db push, etc.
+# GitHub integration uses migrations from supabase/migrations/
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public"]
+
+[db]
+port = 54322

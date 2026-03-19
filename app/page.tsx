@@ -66,6 +66,7 @@ useEffect(() => {
       dataSuffix: BUILDER_CODE_SUFFIX,
     }, {
       onSuccess: () => refetchRewards(),
+      onError: () => refetchRewards(), // Sync UI when claim fails (e.g. NothingToClaim from stale data)
     })
   }, [isConnected, writeContract, refetchRewards])
 
@@ -79,6 +80,7 @@ useEffect(() => {
       dataSuffix: BUILDER_CODE_SUFFIX,
     }, {
       onSuccess: () => refetchRewards(),
+      onError: () => refetchRewards(), // Sync UI when claim fails (e.g. NothingToClaim from stale data)
     })
   }, [isConnected, writeContract, refetchRewards])
 

@@ -10,9 +10,25 @@ const { ethers } = require('ethers');
 const { getProvider, ADDRESSES } = require('./contracts');
 const GridMiningABI = require('../abis/GridMining.json');
 
-const POLL_INTERVAL_MS = parseInt(process.env.AUTO_RESET_POLL_INTERVAL_MS || '12000', 10) || 12000;
+const POLL_INTERVAL_MS = parseInt(process.env.AUTO_RESET_POLL_INTERVAL_MS || '8000', 10) || 8000;
 
 let started = false;
+
+function isExpectedResetError(err) {
+  const msg = err?.message || String(err);
+  return (
+    msg.includes('RoundNotEnded') ||
+    msg.includes('RoundAlreadySettled') ||
+    msg.includes('VRFAlreadyRequested') ||
+    msg.includes('VRFNotConfigured')
+  );
+}
+
+// When reset fails, round may have been settled by VRF callback (race) — advance to avoid retry loop
+function shouldAdvanceOnResetError(err) {
+  const msg = err?.message || String(err);
+  return msg.includes('RoundAlreadySettled') || msg.includes('VRFAlreadyRequested');
+}
 
 async function startAutoReset() {
   const privateKey = process.env.RESET_WALLET_PRIVATE_KEY;
@@ -47,16 +63,18 @@ async function startAutoReset() {
 
       // Round ended and not settled — call reset
       if (roundId <= lastResetRound) return;
-      lastResetRound = roundId;
 
       const tx = await GridMining.reset();
       console.log(`[AutoReset] Round ${roundId} ended — reset tx: ${tx.hash}`);
       await tx.wait();
+      lastResetRound = roundId; // only advance after successful confirmation
       console.log(`[AutoReset] Round ${roundId} reset confirmed`);
     } catch (err) {
       const msg = err.message || String(err);
-      if (msg.includes('RoundNotEnded') || msg.includes('RoundAlreadySettled') || msg.includes('VRFAlreadyRequested')) {
-        // Expected — no action needed
+      if (isExpectedResetError(err)) {
+        if (shouldAdvanceOnResetError(err)) {
+          lastResetRound = roundId; // round settled by race or VRF pending — don't retry
+        }
       } else {
         console.error('[AutoReset] Error:', msg);
       }

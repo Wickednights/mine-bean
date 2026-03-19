@@ -289,7 +289,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     tab: {
         position: "fixed",
         left: 0,
-        top: "100px",
+        top: "150px",
         background: "rgba(255, 255, 255, 0.04)",
         borderRadius: "0 8px 8px 0",
         padding: "14px 12px",

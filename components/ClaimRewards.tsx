@@ -1,5 +1,6 @@
 'use client'
 import BeanLogo, { BnbLogo } from './BeanLogo'
+import { CONTRACTS } from '@/lib/contracts'
 
 import React, { useState } from "react"
 import { useUserData } from '@/lib/UserDataContext'
@@ -14,7 +15,7 @@ interface ClaimRewardsProps {
 
 export default function ClaimRewards({ userAddress, onClaimETH, onClaimBEAN, onCheckpoint, isCheckpointing }: ClaimRewardsProps) {
   // Shared rewards data from context (no local fetching)
-  const { rewards } = useUserData()
+  const { rewards, refetchRewards } = useUserData()
   const [manualRound, setManualRound] = useState('')
 
   if (!userAddress) return null
@@ -152,6 +153,12 @@ export default function ClaimRewards({ userAddress, onClaimETH, onClaimBEAN, onC
           You won a round. Checkpoint first to add rewards to your balance, then claim.
         </div>
       )}
+      {(hasETH || hasBEAN) && (
+        <div style={{ fontSize: 11, color: "#888", marginTop: 4 }}>
+          If claim fails with &quot;nothing to claim&quot;, balance may be stale —{' '}
+          <button type="button" onClick={() => refetchRewards()} style={{ background: 'none', border: 'none', color: '#F0B90B', cursor: 'pointer', textDecoration: 'underline', padding: 0, fontSize: 11 }}>Refresh</button>
+        </div>
+      )}
       {needsCheckpoint && !hasBEAN && (
         <div style={{ fontSize: 11, color: "#888", marginTop: 8 }}>
           <div>Try checkpointing the round you won (see Winners panel). If BNBEAN is still 0:</div>
@@ -171,6 +178,24 @@ export default function ClaimRewards({ userAddress, onClaimETH, onClaimBEAN, onC
           Claim BNBEAN sends BNBEAN to your wallet. Add the token in MetaMask if it doesn&apos;t appear.
         </div>
       )}
+      <div style={{ fontSize: 11, color: "#666", marginTop: 8, display: "flex", flexDirection: "column", gap: 4 }}>
+        <span>BNBEAN contract (add to MetaMask):</span>
+        <code
+          style={{
+            fontSize: 10,
+            background: "rgba(0,0,0,0.3)",
+            padding: "4px 8px",
+            borderRadius: 4,
+            wordBreak: "break-all",
+            cursor: "pointer",
+            userSelect: "all",
+          }}
+          onClick={() => navigator.clipboard?.writeText(CONTRACTS.Bean.address)}
+          title="Click to copy"
+        >
+          {CONTRACTS.Bean.address}
+        </code>
+      </div>
       {(!rewards || (!hasETH && !hasBEAN && !needsCheckpoint)) && (
         <div style={{ fontSize: 11, color: "#666", marginTop: 8 }}>
           Win a round to earn rewards. Click &quot;Claim BNBEAN&quot; or &quot;Claim BNB&quot; when you have pending rewards.

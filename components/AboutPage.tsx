@@ -2,6 +2,54 @@
 
 import React, { useState } from "react"
 
+const placeholderBoxStyle: React.CSSProperties = {
+    background: "rgba(255,255,255,0.04)",
+    color: "rgba(255,255,255,0.5)",
+    fontSize: "14px",
+    padding: "24px",
+    textAlign: "center" as const,
+    minHeight: "120px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+}
+
+function SectionImage({ alt, placeholder, maxWidth = "480px" }: { alt: string; placeholder: string; maxWidth?: string }) {
+    const [errored, setErrored] = useState(false)
+    return (
+        <div style={{ maxWidth, borderRadius: "12px", overflow: "hidden", border: "1px solid #222", marginTop: "8px", marginBottom: "8px" }}>
+            {errored ? (
+                <div style={{ ...placeholderBoxStyle, width: "100%" }}>{alt}</div>
+            ) : (
+                <img src={`/images/about/${placeholder}`} alt={alt} style={{ width: "100%", height: "auto", display: "block" }} onError={() => setErrored(true)} />
+            )}
+        </div>
+    )
+}
+
+function SideBySideImages({ left, right, maxWidth = "520px" }: { left: { alt: string; placeholder: string }; right: { alt: string; placeholder: string }; maxWidth?: string }) {
+    const [leftErrored, setLeftErrored] = useState(false)
+    const [rightErrored, setRightErrored] = useState(false)
+    return (
+        <div style={{ display: "flex", gap: "12px", marginTop: "8px", marginBottom: "8px", maxWidth }}>
+            <div style={{ flex: 1, borderRadius: "12px", overflow: "hidden", border: "1px solid #222" }}>
+                {leftErrored ? (
+                    <div style={placeholderBoxStyle}>{left.alt}</div>
+                ) : (
+                    <img src={`/images/about/${left.placeholder}`} alt={left.alt} style={{ width: "100%", height: "auto", display: "block" }} onError={() => setLeftErrored(true)} />
+                )}
+            </div>
+            <div style={{ flex: 1, borderRadius: "12px", overflow: "hidden", border: "1px solid #222" }}>
+                {rightErrored ? (
+                    <div style={placeholderBoxStyle}>{right.alt}</div>
+                ) : (
+                    <img src={`/images/about/${right.placeholder}`} alt={right.alt} style={{ width: "100%", height: "auto", display: "block" }} onError={() => setRightErrored(true)} />
+                )}
+            </div>
+        </div>
+    )
+}
+
 interface AboutPageProps {
     initialSection?: string
     isMobile?: boolean
@@ -41,23 +89,6 @@ export default function AboutPage({
     const sectionGap = isMobile ? "28px" : "40px"
     const paragraphGap = isMobile ? "16px" : "20px"
     const listGap = isMobile ? "12px" : "16px"
-
-    const SectionImage = ({ alt, placeholder, maxWidth = "480px" }: { alt: string; placeholder: string; maxWidth?: string }) => (
-        <div style={{ maxWidth, borderRadius: "12px", overflow: "hidden", border: "1px solid #222", marginTop: "8px", marginBottom: "8px" }}>
-            <img src={`/images/about/${placeholder}`} alt={alt} style={{ width: "100%", height: "auto", display: "block" }} />
-        </div>
-    )
-
-    const SideBySideImages = ({ left, right, maxWidth = "520px" }: { left: { alt: string; placeholder: string }; right: { alt: string; placeholder: string }; maxWidth?: string }) => (
-        <div style={{ display: "flex", gap: "12px", marginTop: "8px", marginBottom: "8px", maxWidth }}>
-            <div style={{ flex: 1, borderRadius: "12px", overflow: "hidden", border: "1px solid #222" }}>
-                <img src={`/images/about/${left.placeholder}`} alt={left.alt} style={{ width: "100%", height: "auto", display: "block" }} />
-            </div>
-            <div style={{ flex: 1, borderRadius: "12px", overflow: "hidden", border: "1px solid #222" }}>
-                <img src={`/images/about/${right.placeholder}`} alt={right.alt} style={{ width: "100%", height: "auto", display: "block" }} />
-            </div>
-        </div>
-    )
 
     const content: Record<string, { title: string; content: React.ReactNode }> = {
         overview: {

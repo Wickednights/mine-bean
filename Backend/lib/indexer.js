@@ -15,8 +15,8 @@ const AutoMinerABI = require('../abis/AutoMiner.json');
 const TreasuryABI = require('../abis/Treasury.json');
 const StakingABI = require('../abis/Staking.json');
 
-// Configurable via env: INDEXER_POLL_INTERVAL_MS (default 12s). Higher = fewer RPC calls.
-const POLL_INTERVAL = parseInt(process.env.INDEXER_POLL_INTERVAL_MS || '12000', 10) || 12000;
+// Configurable via env: INDEXER_POLL_INTERVAL_MS (default 6s). Higher = fewer RPC calls.
+const POLL_INTERVAL = parseInt(process.env.INDEXER_POLL_INTERVAL_MS || '6000', 10) || 6000;
 const MAX_BLOCK_RANGE = 2000; // Many RPCs (Alchemy, etc.) reject eth_getLogs over ~2k blocks
 
 // All contract addresses for single eth_getLogs call (reduces 4 RPC calls → 1)
