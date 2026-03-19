@@ -71,7 +71,7 @@ export async function GET(request: Request) {
         args: [wallet as `0x${string}`],
       }),
     ])
-    const [staked, unclaimedStaking] = stakeInfo
+    const [staked, unclaimedStaking] = stakeInfo as readonly [bigint, bigint, ...unknown[]]
     const beanBalance =
       (Number(liquid) + Number(staked) + Number(unclaimedStaking) + Number(unclaimedGrid)) / 1e18
     console.log(`[Discord] wallet=${wallet} discordUser=${discordUser.username} totalBean=${beanBalance}`)
