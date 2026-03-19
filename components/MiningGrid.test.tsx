@@ -811,7 +811,7 @@ describe('MiningGrid', () => {
       window.removeEventListener('roundSettled', eventListener as any)
     })
 
-    it('resets grid after 8.2 seconds of animation', async () => {
+    it('resets grid after settlement animation (~4.7s)', async () => {
       mockApiFetch
         .mockResolvedValueOnce(mockRoundResponse) // initial
         .mockResolvedValueOnce({ ...mockRoundResponse, roundId: '2' }) // after reset
@@ -848,9 +848,9 @@ describe('MiningGrid', () => {
         } as RoundTransitionEvent)
       })
 
-      // Fast-forward past animation (8.2 seconds)
+      // Fast-forward past animation (~4.7s: 2.5s elim + 2s winner)
       await act(async () => {
-        await vi.advanceTimersByTimeAsync(8300)
+        await vi.advanceTimersByTimeAsync(5000)
       })
 
       // Wait for the API call to be made

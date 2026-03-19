@@ -121,12 +121,15 @@ const [isAutoMinerActive, setIsAutoMinerActive] = useState(false)
     // Animation state: snapshot freezes grid data so resets can't wipe it mid-animation
     const animatingRef = useRef(false)
     const snapshotCellsRef = useRef<CellData[] | null>(null)
+    const snapshotUserDeployedRef = useRef<Set<number> | null>(null)
     const pendingResetRef = useRef<GameStartedEvent | null>(null)
     const pendingAutoMineBlocksRef = useRef<{ roundId: string; blocks: number[] } | null>(null)
     const animationTimers = useRef<ReturnType<typeof setTimeout>[]>([])
     // Keep a mutable ref to cells so the SSE closure always reads the latest value
     const cellsRef = useRef(cells)
     cellsRef.current = cells
+    const userDeployedBlocksRef = useRef(userDeployedBlocks)
+    userDeployedBlocksRef.current = userDeployedBlocks
     // Keep a mutable ref to userAddress so callbacks always read the latest value
     const userAddressRef = useRef(userAddress)
     userAddressRef.current = userAddress
@@ -141,6 +144,7 @@ const [isAutoMinerActive, setIsAutoMinerActive] = useState(false)
     const resetForNewRound = useCallback((eventData?: GameStartedEvent | null) => {
         clearAnimationTimers()
         snapshotCellsRef.current = null
+        snapshotUserDeployedRef.current = null
         setPhase("counting")
         setEliminatedBlocks([])
         setWinningBlock(null)
@@ -333,30 +337,29 @@ setCells(blocksToGrid(d.blocks))
         const unsubTransition = subscribeGlobal('roundTransition', (data) => {
             const { settled, newRound } = data as RoundTransitionEvent
 
-            // Buffer the new round data
+            // Buffer the new round data — do NOT dispatch roundData here; wait until grid resets
+            // so the countdown doesn't start until the grid is playable
             pendingResetRef.current = newRound
-
-            // Dispatch roundData immediately so the timer shows countdown right away (fixes delayed timer)
-            if (newRound) {
-                window.dispatchEvent(new CustomEvent("roundData", { detail: newRound }))
-            }
 
             if (settled) {
                 // Round had deployments — run settlement animation
                 const winner = parseInt(settled.winningBlock, 10)
                 clearAnimationTimers()
 
-                // Freeze current grid data so it survives any resets
+                // Freeze current grid data and user's deployed blocks so they persist during animation
                 snapshotCellsRef.current = [...cellsRef.current]
+                snapshotUserDeployedRef.current = new Set(userDeployedBlocksRef.current)
                 animatingRef.current = true
                 setPhase("eliminating")
                 setWinningBlock(winner)
 
-                // Eliminate blocks one by one over 5 seconds
+                // Eliminate blocks one by one over 2.5 seconds (shortened from 5s)
+                const ELIMINATION_MS = 2500
+                const WINNER_DISPLAY_MS = 2000
                 const toEliminate = Array.from({ length: 25 }, (_, i) => i).filter((i) => i !== winner)
                 toEliminate.sort(() => Math.random() - 0.5)
 
-                const intervalTime = 5000 / toEliminate.length
+                const intervalTime = ELIMINATION_MS / toEliminate.length
                 let eliminated: number[] = []
 
                 toEliminate.forEach((blockIndex, i) => {
@@ -367,16 +370,16 @@ setCells(blocksToGrid(d.blocks))
                     animationTimers.current.push(tid)
                 })
 
-                // Show winner phase after elimination finishes (~5s)
+                // Show winner phase after elimination finishes
                 animationTimers.current.push(
-                    setTimeout(() => setPhase("winner"), 5200)
+                    setTimeout(() => setPhase("winner"), ELIMINATION_MS + 200)
                 )
 
-                // After 3 more seconds of winner display (8s total), reset for the new round
+                // After winner display, reset for the new round and dispatch roundData (timer starts then)
                 animationTimers.current.push(
                     setTimeout(() => {
                         resetForNewRound(pendingResetRef.current)
-                    }, 8200)
+                    }, ELIMINATION_MS + WINNER_DISPLAY_MS + 200)
                 )
 
                 window.dispatchEvent(
@@ -488,7 +491,10 @@ setCells(blocksToGrid(d.blocks))
                     const isSelected = selectedBlocks.includes(index)
                     const isWinner = winningBlock === index
                     const isEliminated = eliminatedBlocks.includes(index)
-                    const isDeployed = userDeployedBlocks.has(index)
+                    // Use snapshot during elimination so deployed blocks stay highlighted
+                    const isDeployed = animatingRef.current && snapshotUserDeployedRef.current
+                        ? snapshotUserDeployedRef.current.has(index)
+                        : userDeployedBlocks.has(index)
 
                     return (
                         <button
