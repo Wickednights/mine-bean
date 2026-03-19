@@ -353,9 +353,9 @@ setCells(blocksToGrid(d.blocks))
                 setPhase("eliminating")
                 setWinningBlock(winner)
 
-                // Eliminate blocks one by one over 2.5 seconds (shortened from 5s)
-                const ELIMINATION_MS = 2500
-                const WINNER_DISPLAY_MS = 2000
+                // Eliminate blocks one by one over 1.5s, then show winner 1.5s
+                const ELIMINATION_MS = 1500
+                const WINNER_DISPLAY_MS = 1500
                 const toEliminate = Array.from({ length: 25 }, (_, i) => i).filter((i) => i !== winner)
                 toEliminate.sort(() => Math.random() - 0.5)
 

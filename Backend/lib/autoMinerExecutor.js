@@ -12,8 +12,8 @@ const { getProvider, getContracts, ADDRESSES } = require('./contracts');
 const AutoMinerABI = require('../abis/AutoMiner.json');
 const GridMiningABI = require('../abis/GridMining.json');
 
-const POLL_INTERVAL_MS = parseInt(process.env.AUTO_MINER_EXECUTOR_POLL_MS || '10000', 10) || 10000;
-const MIN_TIME_REMAINING_SEC = parseInt(process.env.AUTO_MINER_MIN_TIME_REMAINING || '25', 10) || 25;
+const POLL_INTERVAL_MS = parseInt(process.env.AUTO_MINER_EXECUTOR_POLL_MS || '5000', 10) || 5000;
+const MIN_TIME_REMAINING_SEC = parseInt(process.env.AUTO_MINER_MIN_TIME_REMAINING || '20', 10) || 20;
 
 // GridMining error selectors (ethers v6 returns "unknown custom error" without decoded name)
 const ROUND_NOT_ACTIVE_SELECTOR = '0x3df07da5';

@@ -50,15 +50,31 @@ export async function GET(request: Request) {
     })
     const discordUser = await userRes.json()
 
-    // Check BEAN balance on-chain
-    const balance = await publicClient.readContract({
-      address: CONTRACTS.Bean.address,
-      abi: CONTRACTS.Bean.abi,
-      functionName: 'balanceOf',
-      args: [wallet as `0x${string}`],
-    })
-    const beanBalance = Number(balance) / 1e18
-    console.log(`[Discord] wallet=${wallet} discordUser=${discordUser.username} beanBalance=${beanBalance}`)
+    // Check total BEAN (liquid + staked + unclaimed) on-chain
+    const [liquid, stakeInfo, unclaimedGrid] = await Promise.all([
+      publicClient.readContract({
+        address: CONTRACTS.Bean.address,
+        abi: CONTRACTS.Bean.abi,
+        functionName: 'balanceOf',
+        args: [wallet as `0x${string}`],
+      }),
+      publicClient.readContract({
+        address: CONTRACTS.Staking.address,
+        abi: CONTRACTS.Staking.abi,
+        functionName: 'getStakeInfo',
+        args: [wallet as `0x${string}`],
+      }),
+      publicClient.readContract({
+        address: CONTRACTS.GridMining.address,
+        abi: CONTRACTS.GridMining.abi,
+        functionName: 'userUnclaimedBEAN',
+        args: [wallet as `0x${string}`],
+      }),
+    ])
+    const [staked, unclaimedStaking] = stakeInfo
+    const beanBalance =
+      (Number(liquid) + Number(staked) + Number(unclaimedStaking) + Number(unclaimedGrid)) / 1e18
+    console.log(`[Discord] wallet=${wallet} discordUser=${discordUser.username} totalBean=${beanBalance}`)
 
     // Assign Holder role if balance >= 1 BEAN
     if (beanBalance >= 1) {
