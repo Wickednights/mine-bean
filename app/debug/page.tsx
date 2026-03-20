@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useAccount } from 'wagmi'
 import { useState, useCallback, useEffect } from 'react'
 import { apiFetch } from '@/lib/api'
+import { formatUnits } from 'viem'
 
 interface DebugData {
   gridMining?: {
@@ -141,10 +142,27 @@ export default function DebugPage() {
                       return <span style={{ color: '#f55' }}>{String(r.error)}</span>
                     }
                     if (r && typeof r === 'object') {
-                      const rr = r as { pendingETHFormatted?: string; pendingBEAN?: { grossFormatted?: string } }
+                      const rr = r as {
+                        pendingETHFormatted?: string
+                        pendingBEAN?: {
+                          grossFormatted?: string
+                          unroasted?: string
+                          roasted?: string
+                        }
+                      }
+                      let beanGross = rr.pendingBEAN?.grossFormatted
+                      if (beanGross == null || beanGross === '') {
+                        try {
+                          const u = BigInt(rr.pendingBEAN?.unroasted ?? '0')
+                          const ro = BigInt(rr.pendingBEAN?.roasted ?? '0')
+                          beanGross = formatUnits(u + ro, 18)
+                        } catch {
+                          beanGross = '0'
+                        }
+                      }
                       return (
                         <span>
-                          Pending: {rr.pendingETHFormatted ?? '0'} BNB · {rr.pendingBEAN?.grossFormatted ?? '0'} BNBEAN
+                          Pending: {rr.pendingETHFormatted ?? '0'} BNB · {beanGross} BNBEAN (gross)
                         </span>
                       )
                     }

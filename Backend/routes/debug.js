@@ -135,12 +135,25 @@ router.get('/', async (req, res) => {
           }
         }
 
+        const u = BigInt(result.gridMining.userRewards.pendingUnroasted || 0);
+        const r = BigInt(result.gridMining.userRewards.pendingRoasted || 0);
+        const gross = u + r;
+        const fee = u / 10n;
+        const net = gross - fee;
         result.rewards = {
           pendingETH: result.gridMining.userRewards.pendingETH,
           pendingETHFormatted: result.gridMining.userRewards.pendingETHFormatted,
           pendingBEAN: {
             unroasted: result.gridMining.userRewards.pendingUnroasted,
             roasted: result.gridMining.userRewards.pendingRoasted,
+            unroastedFormatted: formatEth(u),
+            roastedFormatted: formatEth(r),
+            gross: gross.toString(),
+            grossFormatted: formatEth(gross),
+            fee: fee.toString(),
+            feeFormatted: formatEth(fee),
+            net: net.toString(),
+            netFormatted: formatEth(net),
           },
           uncheckpointedRound: result.gridMining.userRewards.uncheckpointedRound,
         };
@@ -157,10 +170,12 @@ router.get('/', async (req, res) => {
         const state = await AutoMiner.getUserState(address);
         const config = state.config ?? state[0];
         const lastRoundPlayed = Number(state.lastRound ?? state[1] ?? 0);
+        // AutoConfig: 0 strategyId, 1 numBlocks, 2 active, 3 executorFeeBps, 4 selectedBlockMask,
+        // 5 amountPerBlock, 6 numRounds, 7 roundsExecuted, ... (see AutoMiner.sol)
         const strategyId = Number(config?.strategyId ?? config?.[0] ?? 0);
         const numBlocks = Number(config?.numBlocks ?? config?.[1] ?? 0);
-        const numRounds = Number(config?.numRounds ?? config?.[2] ?? 0);
-        const roundsExecuted = Number(config?.roundsExecuted ?? config?.[3] ?? 0);
+        const numRounds = Number(config?.numRounds ?? config?.[6] ?? 0);
+        const roundsExecuted = Number(config?.roundsExecuted ?? config?.[7] ?? 0);
         const active = Boolean(config?.active ?? config?.[2] ?? false);
 
         result.autoMiner = {
