@@ -104,6 +104,7 @@ async function startAutoMinerExecutor() {
       if (!isActive || timeRemaining <= 0) return;
       if (timeRemaining < MIN_TIME_REMAINING_SEC) return; // need buffer for tx to be mined before round ends
       if (roundId <= status.lastExecutedRound) return;
+      if (roundId <= lastExecutedRound) return;
       if (Number(count) === 0) return;
 
       const users = await AutoMiner.getActiveUsers(0, 100);
