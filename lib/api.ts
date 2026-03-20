@@ -5,6 +5,9 @@ function getFetchUrl(path: string): string {
   if (path.startsWith('/api/user/') && path.endsWith('/rewards')) {
     return path
   }
+  if (path.startsWith('/api/debug')) {
+    return path
+  }
   return `${API_BASE}${path}`
 }
 

@@ -30,6 +30,18 @@ function shouldAdvanceOnResetError(err) {
   return msg.includes('RoundAlreadySettled') || msg.includes('VRFAlreadyRequested');
 }
 
+// Status for debug API
+const status = {
+  lastResetRound: 0,
+  lastResetError: null,
+  lastResetSuccessAt: null,
+  walletAddress: null,
+};
+
+function getStatus() {
+  return { ...status };
+}
+
 async function startAutoReset() {
   const privateKey = process.env.RESET_WALLET_PRIVATE_KEY;
   if (!privateKey || process.env.AUTO_RESET_ENABLED === 'false') {
@@ -48,12 +60,13 @@ async function startAutoReset() {
   const wallet = new ethers.Wallet(privateKey, provider);
   const GridMining = new ethers.Contract(ADDRESSES.GridMining, GridMiningABI, wallet);
 
-  let lastResetRound = 0;
+  status.walletAddress = wallet.address;
 
   async function tryReset() {
+    let roundId = 0;
     try {
       const info = await GridMining.getCurrentRoundInfo();
-      const roundId = Number(info.roundId ?? info[0]);
+      roundId = Number(info.roundId ?? info[0]);
       const timeRemaining = Number(info.timeRemaining ?? info[4]);
       const round = await GridMining.getRound(roundId);
       const settled = round?.settled ?? round[8];
@@ -62,11 +75,22 @@ async function startAutoReset() {
       if (timeRemaining > 0) return;
 
       // Round ended and not settled — call reset
+      if (roundId <= status.lastResetRound) return;
       if (roundId <= lastResetRound) return;
 
       const tx = await GridMining.reset();
       console.log(`[AutoReset] Round ${roundId} ended — reset tx: ${tx.hash}`);
       await tx.wait();
+      status.lastResetRound = roundId;
+      status.lastResetSuccessAt = new Date().toISOString();
+      status.lastResetError = null;
+      console.log(`[AutoReset] Round ${roundId} reset confirmed`);
+    } catch (err) {
+      const msg = err.message || String(err);
+      status.lastResetError = msg;
+      if (isExpectedResetError(err)) {
+        if (shouldAdvanceOnResetError(err) && typeof roundId === 'number' && roundId > 0) {
+          status.lastResetRound = roundId;
       lastResetRound = roundId; // only advance after successful confirmation
       console.log(`[AutoReset] Round ${roundId} reset confirmed`);
     } catch (err) {
@@ -85,4 +109,4 @@ async function startAutoReset() {
   console.log(`[AutoReset] Running (poll every ${POLL_INTERVAL_MS}ms). Fund ${wallet.address} with BNB for gas.`);
 }
 
-module.exports = { startAutoReset };
+module.exports = { startAutoReset, getStatus };
