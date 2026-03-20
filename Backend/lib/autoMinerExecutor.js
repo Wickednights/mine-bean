@@ -21,6 +21,17 @@ const ALREADY_DEPLOYED_SELECTOR = '0x25b23b73';
 
 let started = false;
 
+// Status for debug API
+const status = {
+  lastExecutedRound: 0,
+  lastError: null,
+  executorWallet: null,
+};
+
+function getStatus() {
+  return { ...status };
+}
+
 function isExpectedRevert(err) {
   const msg = err?.message || String(err);
   const data = err?.data ?? err?.error?.data ?? err?.info?.error?.data;
@@ -78,7 +89,7 @@ async function startAutoMinerExecutor() {
     return;
   }
 
-  let lastExecutedRound = 0;
+  status.executorWallet = wallet.address;
 
   async function tryExecute() {
     try {
@@ -92,7 +103,7 @@ async function startAutoMinerExecutor() {
 
       if (!isActive || timeRemaining <= 0) return;
       if (timeRemaining < MIN_TIME_REMAINING_SEC) return; // need buffer for tx to be mined before round ends
-      if (roundId <= lastExecutedRound) return;
+      if (roundId <= status.lastExecutedRound) return;
       if (Number(count) === 0) return;
 
       const users = await AutoMiner.getActiveUsers(0, 100);
@@ -124,6 +135,8 @@ async function startAutoMinerExecutor() {
           if (blocks.length === 0) continue;
 
           await AutoMiner.executeFor(userAddr, blocks);
+          status.lastExecutedRound = roundId;
+          status.lastError = null;
           console.log(`[AutoMinerExecutor] Executed for ${userAddr.slice(0, 10)}... round ${roundId} blocks=${blocks.length}`);
         } catch (err) {
           if (isExpectedRevert(err)) {
@@ -133,14 +146,16 @@ async function startAutoMinerExecutor() {
               break; // round ended, rest will fail too
             }
           } else {
+            status.lastError = err.message || String(err);
             console.error(`[AutoMinerExecutor] Error for ${userAddr?.slice(0, 10)}...:`, err.message || String(err));
           }
         }
       }
 
-      lastExecutedRound = roundId;
+      status.lastExecutedRound = roundId;
     } catch (err) {
       if (!isExpectedRevert(err) && !String(err).includes('GameNotStarted')) {
+        status.lastError = err.message || String(err);
         console.error('[AutoMinerExecutor] Error:', err.message || String(err));
       }
     }
@@ -151,4 +166,4 @@ async function startAutoMinerExecutor() {
   console.log(`[AutoMinerExecutor] Running (poll every ${POLL_INTERVAL_MS}ms). Fund ${wallet.address} with BNB for gas.`);
 }
 
-module.exports = { startAutoMinerExecutor };
+module.exports = { startAutoMinerExecutor, getStatus };

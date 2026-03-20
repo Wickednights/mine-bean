@@ -1,6 +1,7 @@
 'use client'
 import BeanLogo, { BnbLogo } from './BeanLogo'
 import { CONTRACTS } from '@/lib/contracts'
+import Link from 'next/link'
 
 import React, { useState } from "react"
 import { useUserData } from '@/lib/UserDataContext'
@@ -173,6 +174,15 @@ export default function ClaimRewards({ userAddress, onClaimETH, onClaimBEAN, onC
           <span style={{ marginLeft: 4 }}>— check minter, Bean address match, and VRF LINK.</span>
         </div>
       )}
+      <div style={{ fontSize: 11, color: "#888", marginTop: 8 }}>
+        <Link
+          href={userAddress ? `/debug?address=${encodeURIComponent(userAddress)}` : '/debug'}
+          style={{ color: "#F0B90B", textDecoration: "underline" }}
+        >
+          Open Debug Console
+        </Link>
+        <span style={{ marginLeft: 4 }}>— view raw contract reads and backend status.</span>
+      </div>
       {hasBEAN && (
         <div style={{ fontSize: 11, color: "#888", marginTop: 8 }}>
           Claim BNBEAN sends BNBEAN to your wallet. Add the token in MetaMask if it doesn&apos;t appear.
