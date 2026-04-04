@@ -241,6 +241,8 @@ If minter is `0x0000...` or wrong, call `bean.setMinter(gridMiningAddr)` as the 
 
 ## Step 7: Verify Contracts on BscScan (Optional)
 
+**Important:** The `npx hardhat verify` examples below use **sample addresses** from an older testnet deployment. After **your** deploy, replace **every** contract address and constructor argument with the values from **your** deploy output and `hardhat/.env`. Wrong args will fail verification or verify the wrong contract.
+
 Verification lets users read the source code and interact via the BscScan UI.
 
 ```bash
@@ -397,9 +399,9 @@ Replace `0xd7e5522c9cc3682c960afada6adde0f8116580f2ad2cef08c197faf625e53842` wit
 
 ## Pre-Launch Checklist
 
-Before going live, run through [PRE_LAUNCH_CHECKLIST.md](PRE_LAUNCH_CHECKLIST.md) to verify every game feature.
-For a full system verification and env var setup (Vercel, Render, MongoDB Atlas), see [SYSTEM_VERIFICATION_CHECKLIST.md](SYSTEM_VERIFICATION_CHECKLIST.md). It covers mining, rewards, AutoMiner, staking, Global, Profile, SSE, and mobile.
-Before going live, run through [PRE_LAUNCH_CHECKLIST.md](PRE_LAUNCH_CHECKLIST.md) to verify every game feature. It covers mining, rewards, AutoMiner, staking, Global, Profile, SSE, and mobile.
+Before going live, run through [PRE_LAUNCH_CHECKLIST.md](PRE_LAUNCH_CHECKLIST.md) to verify every game feature (mining, rewards, AutoMiner, staking, Global, Profile, SSE, and mobile). For a full system verification and env var setup (Vercel, Render, MongoDB Atlas), see [SYSTEM_VERIFICATION_CHECKLIST.md](SYSTEM_VERIFICATION_CHECKLIST.md).
+
+For a single ordered path from zero to a working stack, see **[FULL_SYSTEM_RUNBOOK.md](FULL_SYSTEM_RUNBOOK.md)**.
 
 **Restart Docker after Backend changes** (e.g. indexer optimizations): `docker compose down && docker compose up --build`.
 
