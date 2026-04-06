@@ -81,7 +81,7 @@ describe('ClaimRewards', () => {
       <ClaimRewards userAddress="0xABC" onClaimETH={onClaimETH} onClaimBEAN={onClaimBEAN} />
     )
     expect(screen.getByText('Rewards')).toBeInTheDocument()
-    const claimBeanBtn = screen.getByText('Claim BEAN')
+    const claimBeanBtn = screen.getByText('Claim BNBEAN')
     expect(claimBeanBtn).toBeDisabled()
   })
 
@@ -96,15 +96,15 @@ describe('ClaimRewards', () => {
     render(
       <ClaimRewards userAddress="0xABC" onClaimETH={onClaimETH} onClaimBEAN={onClaimBEAN} />
     )
-    expect(screen.getByText(/0\.5000 BEAN/)).toBeInTheDocument()
-    expect(screen.getByText(/0\.2000 BEAN/)).toBeInTheDocument()
+    expect(screen.getByText(/0\.5000 BNBEAN/)).toBeInTheDocument()
+    expect(screen.getByText(/0\.2000 BNBEAN/)).toBeInTheDocument()
   })
 
-  it('Claim BEAN button is enabled when hasBEAN is true', () => {
+  it('Claim BNBEAN button is enabled when hasBEAN is true', () => {
     render(
       <ClaimRewards userAddress="0xABC" onClaimETH={onClaimETH} onClaimBEAN={onClaimBEAN} />
     )
-    const claimBeanBtn = screen.getByText('Claim BEAN')
+    const claimBeanBtn = screen.getByText('Claim BNBEAN')
     expect(claimBeanBtn).not.toBeDisabled()
   })
 
@@ -116,7 +116,7 @@ describe('ClaimRewards', () => {
     expect(claimBnbBtn).not.toBeDisabled()
   })
 
-  it('Claim BEAN button is disabled when no BEAN rewards', () => {
+  it('Claim BNBEAN button is disabled when no BEAN rewards', () => {
     currentRewards = {
       ...mockRewards,
       pendingBEAN: {
@@ -130,15 +130,15 @@ describe('ClaimRewards', () => {
     render(
       <ClaimRewards userAddress="0xABC" onClaimETH={onClaimETH} onClaimBEAN={onClaimBEAN} />
     )
-    const claimBeanBtn = screen.getByText('Claim BEAN')
+    const claimBeanBtn = screen.getByText('Claim BNBEAN')
     expect(claimBeanBtn).toBeDisabled()
   })
 
-  it('clicking Claim BEAN calls onClaimBEAN', () => {
+  it('clicking Claim BNBEAN calls onClaimBEAN', () => {
     render(
       <ClaimRewards userAddress="0xABC" onClaimETH={onClaimETH} onClaimBEAN={onClaimBEAN} />
     )
-    fireEvent.click(screen.getByText('Claim BEAN'))
+    fireEvent.click(screen.getByText('Claim BNBEAN'))
     expect(onClaimBEAN).toHaveBeenCalledTimes(1)
   })
 

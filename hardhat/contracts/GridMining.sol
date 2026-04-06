@@ -26,6 +26,10 @@ contract GridMining is ReentrancyGuard, VRFConsumerBaseV2Plus {
     uint256 public constant BPS_DENOMINATOR = 10000;
     uint256 public constant MIN_BEANPOT_ACCUMULATION = 100;
     uint256 public constant MAX_BEANPOT_ACCUMULATION = 2000;
+    /// @dev Max rounds per checkpointPending / checkpointBatch tx (gas bound)
+    uint256 public constant MAX_CHECKPOINT_BATCH = 50;
+    /// @dev Auto catch-up checkpoints before deploy() / deployFor() (same scan as checkpointPending)
+    uint256 public constant DEPLOY_CHECKPOINT_CATCHUP = 15;
 
     // ─── State ─────────────────────────────────────────────────
 
@@ -108,6 +112,8 @@ contract GridMining is ReentrancyGuard, VRFConsumerBaseV2Plus {
     error VRFAlreadyRequested();
     error InvalidVRFRequest();
     error AlreadyCheckpointed();
+    error CheckpointBatchTooLarge();
+    error InvalidMaxRounds();
     error EmergencyTooEarly();
     error MinimumThresholdTooLow();
     error InvalidBeanpotAccumulation();
@@ -170,6 +176,9 @@ contract GridMining is ReentrancyGuard, VRFConsumerBaseV2Plus {
     }
 
     function _deploy(address user, uint8[] calldata blockIds, uint256 value) internal {
+        // Catch up pending rewards in chronological order (capped) so returning players need fewer manual steps
+        _checkpointPendingForUser(user, DEPLOY_CHECKPOINT_CATCHUP);
+
         uint64 roundId = currentRoundId;
         Round storage round = rounds[roundId];
 
@@ -322,6 +331,8 @@ contract GridMining is ReentrancyGuard, VRFConsumerBaseV2Plus {
 
     // ─── Checkpoint & Claims ───────────────────────────────────
 
+    /// @notice Apply checkpoint for `user` on `roundId`. No-op if user did not deploy that round.
+    /// @dev Reverts if round not settled or already checkpointed (single-round UX).
     function checkpoint(uint64 roundId) external nonReentrant {
         Round storage round = rounds[roundId];
         if (!round.settled) revert RoundNotSettled();
@@ -330,39 +341,105 @@ contract GridMining is ReentrancyGuard, VRFConsumerBaseV2Plus {
         if (miner.amountPerBlock == 0) return;
         if (miner.checkpointed) revert AlreadyCheckpointed();
 
+        _executeCheckpoint(msg.sender, roundId, round, miner);
+    }
+
+    /// @notice Checkpoint up to `maxRounds` pending rounds in order (same scan as getTotalPendingRewards).
+    /// @param maxRounds Must be 1..MAX_CHECKPOINT_BATCH. Call again if more rounds remain.
+    function checkpointPending(uint256 maxRounds) external nonReentrant {
+        if (maxRounds == 0 || maxRounds > MAX_CHECKPOINT_BATCH) revert InvalidMaxRounds();
+        _checkpointPendingForUser(msg.sender, maxRounds);
+    }
+
+    /// @notice Checkpoint multiple settled rounds in one tx. Round IDs are sorted ascending; duplicates ignored.
+    /// @dev Prefer checkpointPending if you are unsure of order — batch does not fill gaps between rounds.
+    function checkpointBatch(uint64[] calldata roundIds) external nonReentrant {
+        uint256 len = roundIds.length;
+        if (len == 0 || len > MAX_CHECKPOINT_BATCH) revert CheckpointBatchTooLarge();
+
+        uint64[] memory sorted = new uint64[](len);
+        for (uint256 i = 0; i < len; i++) {
+            sorted[i] = roundIds[i];
+        }
+        _sortRoundIdsAsc(sorted);
+
+        for (uint256 i = 0; i < len; i++) {
+            uint64 rid = sorted[i];
+            if (i > 0 && rid == sorted[i - 1]) continue;
+
+            Round storage round = rounds[rid];
+            if (!round.settled) revert RoundNotSettled();
+
+            Miner storage miner = miners[rid][msg.sender];
+            if (miner.amountPerBlock == 0) continue;
+            if (miner.checkpointed) continue;
+
+            _executeCheckpoint(msg.sender, rid, round, miner);
+        }
+    }
+
+    function _checkpointPendingForUser(address user, uint256 maxRounds) internal {
+        uint256 executed;
+        uint64 last = userLastRound[user];
+        uint64 cur = currentRoundId;
+
+        for (uint64 r = last + 1; r <= cur && executed < maxRounds; r++) {
+            if (!rounds[r].settled) break;
+
+            Miner storage miner = miners[r][user];
+            if (miner.amountPerBlock == 0) continue;
+            if (miner.checkpointed) continue;
+
+            _executeCheckpoint(user, r, rounds[r], miner);
+            unchecked {
+                ++executed;
+            }
+        }
+    }
+
+    function _executeCheckpoint(address user, uint64 roundId, Round storage round, Miner storage miner) private {
         miner.checkpointed = true;
 
         uint256 ethReward;
         uint256 beanReward;
 
-        // Check if user deployed to winning block
-        if (miner.deployedMask & (1 << round.winningBlock) != 0) {
-            // Proportional ETH reward
+        if (miner.deployedMask & (1 << round.winningBlock) != 0 && round.winnersDeployed > 0) {
             ethReward = (round.totalWinnings * miner.amountPerBlock) / round.winnersDeployed;
-            userUnclaimedETH[msg.sender] += ethReward;
+            userUnclaimedETH[user] += ethReward;
 
-            // Beanpot bonus (proportional)
             if (round.beanpotAmount > 0) {
                 uint256 beanpotShare = (round.beanpotAmount * miner.amountPerBlock) / round.winnersDeployed;
                 beanReward += beanpotShare;
             }
 
-            // BEAN reward from top miner
             if (round.topMinerReward > 0) {
-                // Simplified: all winners on winning block share the BEAN
                 uint256 beanShare = (round.topMinerReward * miner.amountPerBlock) / round.winnersDeployed;
                 beanReward += beanShare;
             }
 
             if (beanReward > 0) {
-                userUnclaimedBEAN[msg.sender] += beanReward;
+                userUnclaimedBEAN[user] += beanReward;
                 totalUnclaimed += beanReward;
             }
         }
 
-        userLastRound[msg.sender] = roundId;
+        userLastRound[user] = roundId;
+        emit Checkpointed(roundId, user, ethReward, beanReward);
+    }
 
-        emit Checkpointed(roundId, msg.sender, ethReward, beanReward);
+    function _sortRoundIdsAsc(uint64[] memory arr) private pure {
+        uint256 n = arr.length;
+        for (uint256 i = 1; i < n; i++) {
+            uint64 key = arr[i];
+            uint256 j = i;
+            while (j > 0 && arr[j - 1] > key) {
+                arr[j] = arr[j - 1];
+                unchecked {
+                    j--;
+                }
+            }
+            arr[j] = key;
+        }
     }
 
     function claimETH() external nonReentrant {

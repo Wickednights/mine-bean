@@ -94,10 +94,11 @@ async function startAutoReset() {
       lastResetRound = roundId; // only advance after successful confirmation
       console.log(`[AutoReset] Round ${roundId} reset confirmed`);
     } catch (err) {
-      const msg = err.message || String(err);
+      const msg = err?.message || String(err);
+      status.lastResetError = msg;
       if (isExpectedResetError(err)) {
-        if (shouldAdvanceOnResetError(err)) {
-          lastResetRound = roundId; // round settled by race or VRF pending — don't retry
+        if (shouldAdvanceOnResetError(err) && typeof roundId === 'number' && roundId > 0) {
+          status.lastResetRound = roundId;
         }
       } else {
         console.error('[AutoReset] Error:', msg);

@@ -241,9 +241,11 @@ export default function SidebarControls({
                 })
                 .catch((err) => console.error('Failed to fetch prices:', err))
 
-            fetch("https://api.coingecko.com/api/v3/simple/price?ids=binancecoin&vs_currencies=usd")
+            fetch('/api/price/bnb')
                 .then(r => r.json())
-                .then(d => { if (d.binancecoin?.usd) setBnbPrice(d.binancecoin.usd) })
+                .then(d => {
+                  if (typeof d.usd === 'number' && !Number.isNaN(d.usd)) setBnbPrice(d.usd)
+                })
                 .catch(() => {})
         }
 

@@ -7,7 +7,8 @@
     "test": "hardhat test",
     "deploy:testnet": "hardhat run scripts/deploy.js --network bscTestnet",
     "deploy:mainnet": "hardhat run scripts/deploy.js --network bsc",
-    "verify": "hardhat verify --network bsc"
+    "verify": "hardhat verify --network bsc",
+    "sync-abis": "node scripts/sync-abis.js"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^4.0.0",

@@ -92,28 +92,23 @@ describe('Header', () => {
     expect(stakeLink).toHaveAttribute('href', '/stake')
   })
 
-  it('fetches BNB price from CoinGecko API', async () => {
-    const mockCoinGeckoResponse = {
-      binancecoin: { usd: 595.50 }
-    }
-
+  it('fetches BNB price from same-origin /api/price/bnb proxy', async () => {
     ;(global.fetch as any).mockImplementation((url: string) => {
-      if (url.includes('coingecko.com')) {
+      if (typeof url === 'string' && url.includes('/api/price/bnb')) {
         return Promise.resolve({
-          json: () => Promise.resolve(mockCoinGeckoResponse)
+          json: () => Promise.resolve({ usd: 595.5 }),
         })
       }
       // DexScreener fallback
       return Promise.resolve({
-        json: () => Promise.resolve({ pair: { priceUsd: '0.0264' } })
+        json: () => Promise.resolve({ pair: { priceUsd: '0.0264' } }),
       })
     })
 
     render(<Header />)
 
-    // BNB price is fetched from CoinGecko.
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith('https://api.coingecko.com/api/v3/simple/price?ids=binancecoin&vs_currencies=usd')
+      expect(global.fetch).toHaveBeenCalledWith('/api/price/bnb')
     })
   })
 
@@ -149,13 +144,12 @@ describe('Header', () => {
   })
 
   it('shows price values when loaded', async () => {
-    const mockBinanceResponse = { price: '600.00' }
     const mockDexScreenerResponse = { pairs: [{ priceUsd: '0.0300', liquidity: { usd: 1000 } }] }
 
     ;(global.fetch as any).mockImplementation((url: string) => {
-      if (url.includes('binance.com')) {
+      if (typeof url === 'string' && url.includes('/api/price/bnb')) {
         return Promise.resolve({
-          json: () => Promise.resolve(mockBinanceResponse)
+          json: () => Promise.resolve({ usd: 600 }),
         })
       }
       if (url.includes('dexscreener.com')) {
@@ -182,11 +176,9 @@ describe('Header', () => {
 
     render(<Header />)
 
-    // Fallback shows '--' for BEAN price on error
+    // BEAN price renders as "$--" when DexScreener fails; BNB falls back to 600.00 in catch.
     await waitFor(() => {
-      const priceValues = document.querySelectorAll('span')
-      const dashSpan = Array.from(priceValues).find(s => s.textContent === '--')
-      expect(dashSpan).toBeTruthy()
+      expect(screen.getByText('$--')).toBeInTheDocument()
     }, { timeout: 3000 })
   })
 
@@ -247,9 +239,9 @@ describe('Header', () => {
 
   it('displays price tags with correct icons', async () => {
     ;(global.fetch as any).mockImplementation((url: string) => {
-      if (url.includes('binance.com')) {
+      if (typeof url === 'string' && url.includes('/api/price/bnb')) {
         return Promise.resolve({
-          json: () => Promise.resolve({ price: '580.00' })
+          json: () => Promise.resolve({ usd: 580 }),
         })
       }
       if (url.includes('dexscreener.com')) {
@@ -273,12 +265,12 @@ describe('Header', () => {
   it('updates BNB price on interval', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true })
 
-    let binanceCallCount = 0
+    let bnbProxyCallCount = 0
     ;(global.fetch as any).mockImplementation((url: string) => {
-      if (url.includes('binance.com')) {
-        binanceCallCount++
+      if (typeof url === 'string' && url.includes('/api/price/bnb')) {
+        bnbProxyCallCount++
         return Promise.resolve({
-          json: () => Promise.resolve({ price: `${580 + binanceCallCount}.00` })
+          json: () => Promise.resolve({ usd: 580 + bnbProxyCallCount }),
         })
       }
       return Promise.resolve({
@@ -288,23 +280,19 @@ describe('Header', () => {
 
     render(<Header isMobile={false} />)
 
-    // BNB price is fetched via Binance API.
-    // Verify the fetch interval works by checking call count.
     await waitFor(() => {
-      expect(binanceCallCount).toBeGreaterThanOrEqual(1)
+      expect(bnbProxyCallCount).toBeGreaterThanOrEqual(1)
     })
 
-    const countAfterInitial = binanceCallCount
+    const countAfterInitial = bnbProxyCallCount
 
-    // Advance timers by 10 seconds (ETH price interval) and flush promises
     await act(async () => {
       vi.advanceTimersByTime(10000)
       await new Promise(resolve => setTimeout(resolve, 0))
     })
 
-    // Second fetch should happen
     await waitFor(() => {
-      expect(binanceCallCount).toBeGreaterThan(countAfterInitial)
+      expect(bnbProxyCallCount).toBeGreaterThan(countAfterInitial)
     })
 
     vi.useRealTimers()
@@ -323,9 +311,10 @@ describe('Header', () => {
           json: () => Promise.resolve({ pairs: [{ priceUsd: prices[callCount - 1] || '1.00', liquidity: { usd: 1000 } }] })
         })
       }
-      return Promise.resolve({
-        json: () => Promise.resolve({ price: '600.00' })
-      })
+      if (typeof url === 'string' && url.includes('/api/price/bnb')) {
+        return Promise.resolve({ json: () => Promise.resolve({ usd: 600 }) })
+      }
+      return Promise.resolve({ json: () => Promise.resolve({ pairs: [] }) })
     })
 
     render(<Header isMobile={false} />)

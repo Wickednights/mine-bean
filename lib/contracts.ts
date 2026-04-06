@@ -41,3 +41,6 @@ export const EXECUTOR_FLAT_FEE = 0.000006 // BNB per round — fee floor for Aut
 
 // ERC-8021 Builder Code attribution suffix (bc_rudgiazu)
 export const BUILDER_CODE_SUFFIX = '0x62635f7275646769617a750b0080218021802180218021802180218021' as `0x${string}`
+
+/** Default max rounds for `checkpointPending` — must be ≤ 50 (GridMining `MAX_CHECKPOINT_BATCH`). */
+export const CHECKPOINT_PENDING_DEFAULT_MAX = 20

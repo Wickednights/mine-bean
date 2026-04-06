@@ -12,7 +12,7 @@ import ClaimRewards from '@/components/ClaimRewards'
 import { useAccount, useBalance, useWriteContract } from 'wagmi'
 import { parseEther } from 'viem'
 import { useState, useEffect, useCallback } from 'react'
-import { CONTRACTS, BUILDER_CODE_SUFFIX } from '@/lib/contracts'
+import { CONTRACTS, BUILDER_CODE_SUFFIX, CHECKPOINT_PENDING_DEFAULT_MAX } from '@/lib/contracts'
 import { useUserData } from '@/lib/UserDataContext'
 import BeanpotCelebration from '@/components/BeanpotCelebration'
 import CountdownCelebration from '@/components/CountdownCelebration'
@@ -97,6 +97,21 @@ useEffect(() => {
     })
   }, [isConnected, writeContract, refetchRewards])
 
+  const handleCheckpointPending = useCallback((maxRounds: number = CHECKPOINT_PENDING_DEFAULT_MAX) => {
+    if (!isConnected) return
+    const capped = Math.min(Math.max(1, maxRounds), 50)
+    writeContract({
+      address: CONTRACTS.GridMining.address,
+      abi: CONTRACTS.GridMining.abi,
+      functionName: 'checkpointPending',
+      args: [BigInt(capped)],
+      dataSuffix: BUILDER_CODE_SUFFIX,
+    }, {
+      onSuccess: () => refetchRewards(),
+      onError: () => refetchRewards(),
+    })
+  }, [isConnected, writeContract, refetchRewards])
+
   const handleAutoActivate = useCallback((strategyId: number, numRounds: number, numBlocks: number, depositAmount: bigint, blockMask: number) => {
     if (!isConnected) return
     writeContract({
@@ -152,7 +167,7 @@ if (!showMining) {
           <MobileStatsBar userAddress={address} isConnected={isConnected} onReset={handleReset} />
           <MiningGrid userAddress={address} />
           <MobileControls isConnected={isConnected} userBalance={userBalance} userAddress={address} onDeploy={handleDeploy} onAutoActivate={handleAutoActivate} onAutoStop={handleAutoStop} />
-          <ClaimRewards userAddress={address} onClaimETH={handleClaimETH} onClaimBEAN={handleClaimBEAN} onCheckpoint={handleCheckpoint} isCheckpointing={isWritePending} />
+          <ClaimRewards userAddress={address} onClaimETH={handleClaimETH} onClaimBEAN={handleClaimBEAN} onCheckpoint={handleCheckpoint} onCheckpointPending={handleCheckpointPending} isCheckpointing={isWritePending} />
         </div>
         <BottomNav currentPage="mine" />
       </div>
@@ -171,7 +186,7 @@ if (!showMining) {
         </div>
         <div style={styles.controlsSection}>
           <SidebarControls isConnected={isConnected} userBalance={userBalance} userAddress={address} onDeploy={handleDeploy} onAutoActivate={handleAutoActivate} onAutoStop={handleAutoStop} onReset={handleReset} />
-          <ClaimRewards userAddress={address} onClaimETH={handleClaimETH} onClaimBEAN={handleClaimBEAN} onCheckpoint={handleCheckpoint} isCheckpointing={isWritePending} />
+          <ClaimRewards userAddress={address} onClaimETH={handleClaimETH} onClaimBEAN={handleClaimBEAN} onCheckpoint={handleCheckpoint} onCheckpointPending={handleCheckpointPending} isCheckpointing={isWritePending} />
         </div>
       </div>
     </div>

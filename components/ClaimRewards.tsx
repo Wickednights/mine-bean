@@ -11,10 +11,12 @@ interface ClaimRewardsProps {
   onClaimETH: () => void
   onClaimBEAN: () => void
   onCheckpoint?: (roundId: number) => void
+  /** Clears up to N oldest pending checkpoints in one tx (new GridMining only). */
+  onCheckpointPending?: (maxRounds?: number) => void
   isCheckpointing?: boolean
 }
 
-export default function ClaimRewards({ userAddress, onClaimETH, onClaimBEAN, onCheckpoint, isCheckpointing }: ClaimRewardsProps) {
+export default function ClaimRewards({ userAddress, onClaimETH, onClaimBEAN, onCheckpoint, onCheckpointPending, isCheckpointing }: ClaimRewardsProps) {
   // Shared rewards data from context (no local fetching)
   const { rewards, refetchRewards } = useUserData()
   const [manualRound, setManualRound] = useState('')
@@ -90,6 +92,17 @@ export default function ClaimRewards({ userAddress, onClaimETH, onClaimBEAN, onC
             >
               {isCheckpointing ? 'Checkpointing...' : `Checkpoint Round ${uncheckpointedRound} (required before claim)`}
             </button>
+            {onCheckpointPending && (
+              <button
+                type="button"
+                style={styles.btnCheckpointSecondary}
+                disabled={isCheckpointing}
+                onClick={() => onCheckpointPending(CHECKPOINT_PENDING_DEFAULT_MAX)}
+                title={`Runs checkpointPending(${CHECKPOINT_PENDING_DEFAULT_MAX}) — use if you have many uncleared wins`}
+              >
+                {isCheckpointing ? '…' : `Sync pending (up to ${CHECKPOINT_PENDING_DEFAULT_MAX} rounds)`}
+              </button>
+            )}
             <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 4 }}>
               <span style={{ fontSize: 11, color: '#888' }}>Or checkpoint round:</span>
               <input
@@ -152,6 +165,12 @@ export default function ClaimRewards({ userAddress, onClaimETH, onClaimBEAN, onC
       {needsCheckpoint && (
         <div style={{ fontSize: 11, color: "#888", marginTop: 8 }}>
           You won a round. Checkpoint first to add rewards to your balance, then claim.
+          {onCheckpointPending && (
+            <>
+              {' '}
+              <strong>Sync pending</strong> clears multiple old rounds in one transaction if your deployment uses the latest GridMining contract.
+            </>
+          )}
         </div>
       )}
       {(hasETH || hasBEAN) && (
@@ -254,6 +273,17 @@ const styles: { [key: string]: React.CSSProperties } = {
     borderRadius: 8,
     fontSize: 13,
     fontWeight: 700,
+    cursor: "pointer",
+  },
+  btnCheckpointSecondary: {
+    width: "100%",
+    padding: "8px 0",
+    background: "transparent",
+    color: "#F0B90B",
+    border: "1px solid rgba(240, 185, 11, 0.5)",
+    borderRadius: 8,
+    fontSize: 12,
+    fontWeight: 600,
     cursor: "pointer",
   },
   row: {

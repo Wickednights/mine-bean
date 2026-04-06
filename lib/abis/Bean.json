@@ -330,6 +330,25 @@
       {
         "indexed": true,
         "internalType": "address",
+        "name": "oldRouter",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "newRouter",
+        "type": "address"
+      }
+    ],
+    "name": "RouterUpdated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
         "name": "from",
         "type": "address"
       },
@@ -606,7 +625,7 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "ethAmount",
+        "name": "bnbAmount",
         "type": "uint256"
       }
     ],
@@ -820,7 +839,7 @@
     "name": "router",
     "outputs": [
       {
-        "internalType": "contract IUniswapV2Router02",
+        "internalType": "address",
         "name": "",
         "type": "address"
       }
@@ -837,6 +856,32 @@
       }
     ],
     "name": "setMinter",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_pair",
+        "type": "address"
+      }
+    ],
+    "name": "setPair",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_router",
+        "type": "address"
+      }
+    ],
+    "name": "setRouter",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

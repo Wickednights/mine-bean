@@ -4,6 +4,8 @@ This guide covers deploying the BNBEAN Protocol to BSC testnet and mainnet, with
 
 **For post-deployment steps (pool creation, setPair, startFirstRound, etc.), see [POST_DEPLOYMENT_GUIDE.md](POST_DEPLOYMENT_GUIDE.md).**
 
+**For a single beginner-friendly ordered checklist (commands, directories, address sync), see [FULL_SYSTEM_RUNBOOK.md](FULL_SYSTEM_RUNBOOK.md).**
+
 **For Docker-based local development, see [DOCKER.md](DOCKER.md).**
 
 ---
