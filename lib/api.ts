@@ -5,7 +5,17 @@ function getFetchUrl(path: string): string {
   if (path.startsWith('/api/user/') && path.endsWith('/rewards')) {
     return path
   }
+  /* Profile lives in Supabase via Next route — not the Render stub. */
+  if (path.startsWith('/api/user/') && path.endsWith('/profile')) {
+    return path
+  }
+  if (path.startsWith('/api/profiles/batch')) {
+    return path
+  }
   if (path.startsWith('/api/debug')) {
+    return path
+  }
+  if (path.startsWith('/api/diagnostics')) {
     return path
   }
   return `${API_BASE}${path}`

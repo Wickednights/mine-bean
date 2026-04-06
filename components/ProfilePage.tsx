@@ -292,9 +292,9 @@ export default function ProfilePage() {
   useEffect(() => {
     const fetchEthPrice = async () => {
       try {
-        const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=binancecoin&vs_currencies=usd')
+        const res = await fetch('/api/price/bnb')
         const data = await res.json()
-        if (data.binancecoin?.usd) setEthPriceUsd(data.binancecoin.usd)
+        if (typeof data.usd === 'number' && !Number.isNaN(data.usd)) setEthPriceUsd(data.usd)
       } catch {}
     }
     fetchEthPrice()

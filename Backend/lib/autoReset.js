@@ -74,9 +74,7 @@ async function startAutoReset() {
       if (settled) return;
       if (timeRemaining > 0) return;
 
-      // Round ended and not settled — call reset
       if (roundId <= status.lastResetRound) return;
-      if (roundId <= lastResetRound) return;
 
       const tx = await GridMining.reset();
       console.log(`[AutoReset] Round ${roundId} ended — reset tx: ${tx.hash}`);
@@ -86,18 +84,11 @@ async function startAutoReset() {
       status.lastResetError = null;
       console.log(`[AutoReset] Round ${roundId} reset confirmed`);
     } catch (err) {
-      const msg = err.message || String(err);
+      const msg = err?.message || String(err);
       status.lastResetError = msg;
       if (isExpectedResetError(err)) {
         if (shouldAdvanceOnResetError(err) && typeof roundId === 'number' && roundId > 0) {
           status.lastResetRound = roundId;
-      lastResetRound = roundId; // only advance after successful confirmation
-      console.log(`[AutoReset] Round ${roundId} reset confirmed`);
-    } catch (err) {
-      const msg = err.message || String(err);
-      if (isExpectedResetError(err)) {
-        if (shouldAdvanceOnResetError(err)) {
-          lastResetRound = roundId; // round settled by race or VRF pending — don't retry
         }
       } else {
         console.error('[AutoReset] Error:', msg);

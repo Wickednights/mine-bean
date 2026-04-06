@@ -17,6 +17,168 @@
 
 ---
 
+## Part 0 — Linear checklist (minute-by-minute order)
+
+Follow **Step 1 → Step N** in order. Each step tells you **where** (folder), **what** (command or action), and **done when** (how you know it worked).
+
+**Paths:** Below, `mine-bean` means your cloned repo root (the folder that contains `package.json`, `hardhat/`, `Backend/`, and `docker-compose.yml`).
+
+**Windows PowerShell:** chain commands with `;` (e.g. `cd hardhat; npm install`). **macOS/Linux Bash:** you can use `&&` (e.g. `cd hardhat && npm install`).
+
+---
+
+### Phase 0 — One-time accounts (no repo folder yet)
+
+| Step | Where | What to do | Done when |
+|------|--------|------------|-----------|
+| 0.1 | Browser | Create/get **MetaMask** (or another EVM wallet). | You have a seed phrase stored safely. |
+| 0.2 | Browser | Add **BSC Testnet** (Chain ID **97**). Get **tBNB** from [BNB Chain faucet](https://www.bnbchain.org/en/testnet-faucet). | Wallet shows a tBNB balance greater than 0. |
+| 0.3 | Browser | Create **Chainlink VRF** subscription at [vrf.chain.link](https://vrf.chain.link) for **BNB Chain Testnet**. Fund with **testnet LINK** ([Chainlink faucet](https://faucets.chain.link/bnb-testnet)). | You have `VRF_SUBSCRIPTION_ID` (number) and note the **coordinator** address + **gas lane key hash** from [supported networks](https://docs.chain.link/vrf/v2-5/supported-networks). |
+| 0.4 | Browser (optional) | [BscScan API key](https://bscscan.com/myapikey) for contract verification. | Key saved for `hardhat/.env`. |
+| 0.5 | Browser | **MongoDB Atlas** free cluster OR skip if you will use Docker-only Mongo (Phase 4A). | You have `MONGODB_URI` *or* you plan `docker compose` only. |
+| 0.6 | Browser (optional) | **Supabase** project for profiles. | `NEXT_PUBLIC_SUPABASE_URL` + anon key. |
+| 0.7 | Your PC | Install **Node.js (LTS)** and **npm**. Install **Git**. Optional: **Docker Desktop**. | `node -v` and `npm -v` work in a terminal. |
+
+---
+
+### Phase 1 — Clone repo and deploy contracts
+
+| Step | Where | What to do | Done when |
+|------|--------|------------|-----------|
+| 1.1 | Parent folder (e.g. `Documents\GitHub`) | `git clone <your-repo-url> mine-bean` then `cd mine-bean` | You see `package.json`, `hardhat`, `Backend` inside `mine-bean`. |
+| 1.2 | `mine-bean/hardhat/` | Create file **`hardhat/.env`** (not committed). Use **Part C → C.1** and the minimal example in Phase 1 below. | File exists with `DEPLOYER_PRIVATE_KEY`, `VRF_COORDINATOR`, `VRF_SUBSCRIPTION_ID`, `VRF_KEY_HASH`, `PANCAKESWAP_ROUTER` (testnet: `0xD99D1c33F9fC3444f8101754aBC46c52416550D1`). |
+| 1.3 | `mine-bean/hardhat/` | `npm install` | Completes without errors. |
+| 1.4 | `mine-bean/hardhat/` | `npm run compile` | `Compiled ... successfully`. |
+| 1.5 | `mine-bean/hardhat/` | `npm run deploy:testnet` | Terminal prints **five addresses**: Bean, Treasury, GridMining, AutoMiner, Staking. |
+| 1.6 | Your notes | Copy all five addresses to a text file labeled **TESTNET_DEPLOY.txt**. | You never lose them. |
+
+**Minimal `hardhat/.env` example (testnet):**
+
+```env
+DEPLOYER_PRIVATE_KEY=YOUR_KEY_WITHOUT_0x
+RPC_URL=https://data-seed-prebsc-1-s1.binance.org:8545
+BSCSCAN_API_KEY=
+VRF_COORDINATOR=0x_paste_from_chainlink_docs
+VRF_SUBSCRIPTION_ID=12345
+VRF_KEY_HASH=0x_paste_from_chainlink_docs
+PANCAKESWAP_ROUTER=0xD99D1c33F9fC3444f8101754aBC46c52416550D1
+```
+
+---
+
+### Phase 2 — VRF consumer + start game (on-chain)
+
+| Step | Where | What to do | Done when |
+|------|--------|------------|-----------|
+| 2.1 | [vrf.chain.link](https://vrf.chain.link) | Open your subscription → **Consumers** → Add **GridMining** address from TESTNET_DEPLOY.txt. | Consumer list shows GridMining. |
+| 2.2 | `mine-bean/hardhat/` | `npx hardhat console --network bscTestnet` | JavaScript prompt appears. |
+| 2.3 | Inside Hardhat console | Run the snippet under this table (replace `0xGRID` with your GridMining address). | Transaction succeeds; `await gm.gameStarted()` is `true`. |
+| 2.4 | Exit console | `.exit` or Ctrl+D | Back to shell. |
+
+**Step 2.3 — paste in the console:**
+
+```javascript
+const gm = await ethers.getContractAt("GridMining", "0xGRID")
+await (await gm.startFirstRound()).wait()
+```
+
+---
+
+### Phase 3 — Sync code with chain (must match deploy)
+
+| Step | Where | What to do | Done when |
+|------|--------|------------|-----------|
+| 3.1 | `mine-bean/lib/contracts.ts` | Replace `GridMining`, `Bean`, `AutoMiner`, `Treasury`, `Staking` addresses with TESTNET_DEPLOY.txt values. Leave `LP` if no pool yet, or set after Step 4. | File saves; no typos in `0x` lengths. |
+| 3.2 | `mine-bean/docker-compose.yml` | Under `backend.environment`, set `GRIDMINING_ADDRESS`, `BEAN_ADDRESS`, `AUTOMINER_ADDRESS`, `TREASURY_ADDRESS`, `STAKING_ADDRESS` to the same five. | Matches `lib/contracts.ts`. |
+| 3.3 | `mine-bean/Backend/.env` | Create if missing. Set `PORT=3001`, `MONGODB_URI=...`, `RPC_URL=https://bsc-testnet-dataseed.bnbchain.org` (or preferred RPC), plus the same five `*_ADDRESS` vars. | Backend can read env (see Part E). |
+| 3.4 | `mine-bean/hardhat/` | `npm run compile` then `npm run sync-abis` | Console prints `Synced ...` for Bean, Treasury, GridMining, AutoMiner, Staking. |
+| 3.5 | Quick check | Open `lib/abis/GridMining.json` — first line should be `[` (ABI array). | ABI files updated. |
+
+---
+
+### Phase 4 — Run app locally
+
+**Pick ONE path: 4A Docker OR 4B manual.**
+
+#### 4A — Docker (Mongo + backend + frontend)
+
+| Step | Where | What to do | Done when |
+|------|--------|------------|-----------|
+| 4A.1 | `mine-bean/` (root) | Optional: create `.env` in root with Supabase vars only. | Optional. |
+| 4A.2 | `mine-bean/` | `docker compose up --build` | Logs show backend listening on 3001, frontend on 3000. |
+| 4A.3 | Any terminal | `curl http://localhost:3001/health` | JSON with `"status":"ok"` and mongo connected. |
+| 4A.4 | Browser | Open `http://localhost:3000` — connect wallet on **BSC Testnet**. | Site loads; wallet connects. |
+
+#### 4B — Manual (two terminals)
+
+| Step | Where | What to do | Done when |
+|------|--------|------------|-----------|
+| 4B.1 | `mine-bean/Backend/` | `npm install` then `npm run dev` | Server says listening on 3001 (or PORT from .env). |
+| 4B.2 | `mine-bean/` (root) | Create **`.env.local`**: `NEXT_PUBLIC_API_URL=http://localhost:3001` (+ optional Supabase). | File exists. |
+| 4B.3 | `mine-bean/` | `npm install` then `npm run dev` | Next.js ready on 3000. |
+| 4B.4 | Browser | `http://localhost:3000` + BSC Testnet | Same as 4A.4. |
+| 4B.5 | Any terminal | `curl http://localhost:3001/health` | Same as 4A.3. |
+
+---
+
+### Phase 5 — Play one full round (prove mining + VRF)
+
+| Step | Where | What to do | Done when |
+|------|--------|------------|-----------|
+| 5.1 | App + wallet | Deploy tBNB to one or more grid blocks before round ends. | Tx succeeds; grid updates. |
+| 5.2 | When timer hits 0 | Click **Reset** in UI *or* ensure backend has `RESET_WALLET_PRIVATE_KEY` for auto-reset (see **Part G** below). | `reset` tx submitted. |
+| 5.3 | Wait | ~30–120s for VRF fulfillment. | Round settles; winners UI updates / SSE events. |
+| 5.4 | If you won | **Checkpoint** then **Claim** in Rewards card. | Pending rewards → claims succeed. |
+
+---
+
+### Phase 6 — Liquidity + TWAP (for treasury buybacks / price)
+
+Do **after** you have some BNBEAN (from winning rounds) unless you use another way to seed the pool. Order follows [POST_DEPLOYMENT_GUIDE.md](POST_DEPLOYMENT_GUIDE.md).
+
+| Step | Where | What to do | Done when |
+|------|--------|------------|-----------|
+| 6.1 | PancakeSwap testnet | Add **BNBEAN/WBNB** liquidity; get **pair** address from tx or factory `getPair`. | Pair `0x...` saved. |
+| 6.2 | Hardhat console | `bean.setPair(pairAddress)` then `updateReserveSnapshot()` **3+ times** waiting **4+ seconds** between each. | `await bean.isTWAPReady()` is `true`. |
+| 6.3 | `mine-bean/lib/contracts.ts` | Set `LP.address` to pair. | Matches Pancake pair. |
+| 6.4 | Restart | Docker: `docker compose down` then `up --build`. Manual: restart Backend + Frontend if needed. | Fresh config loaded. |
+
+---
+
+### Phase 7 — AutoMiner + auto-reset (production comfort)
+
+| Step | Where | What to do | Done when |
+|------|--------|------------|-----------|
+| 7.1 | `Backend/.env` (or Render env) | Set `RESET_WALLET_PRIVATE_KEY=0x...` (funded with tBNB). Optional: `AUTO_RESET_ENABLED=true`. | Rounds reset without manual UI button. |
+| 7.2 | Same file | Set `EXECUTOR_PRIVATE_KEY=0x...` to the wallet that is **`AutoMiner.executor()`** on-chain (deploy script uses deployer). Fund with tBNB. | Backend logs show AutoMiner execution; UI round counter advances. |
+| 7.3 | Restart backend | `docker compose down && docker compose up --build` *or* stop/start `npm run dev` in Backend. | New env active. |
+
+---
+
+### Phase 8 — Verify and ship checklist
+
+| Step | Where | What to do | Done when |
+|------|--------|------------|-----------|
+| 8.1 | Terminal | `curl http://localhost:3001/api/stats/diagnostic` | `beanAddressMatch: true`, `minterMatchesGridMining: true` (or follow `fixHint`). |
+| 8.2 | `mine-bean/` | `npm run test:run` | Tests pass (optional but good). |
+| 8.3 | Human | Open [PRE_LAUNCH_CHECKLIST.md](PRE_LAUNCH_CHECKLIST.md) and tick every row. | Confident for users. |
+
+---
+
+### Phase 9 — Production (Render + Vercel) — shorthand
+
+| Step | Where | What to do | Done when |
+|------|--------|------------|-----------|
+| 9.1 | MongoDB Atlas | Network access `0.0.0.0/0`, user + connection string. | `MONGODB_URI` for Render. |
+| 9.2 | Render | New Web Service, root dir **`Backend`**, build `npm install`, start `npm start`, paste all env vars from [POST_DEPLOYMENT_GUIDE.md](POST_DEPLOYMENT_GUIDE.md) (five addresses + RPC + Mongo + optional reset/executor keys). | `curl https://YOUR-SERVICE.onrender.com/health` returns ok. |
+| 9.3 | Vercel | Import repo, root **`.`**, env: `NEXT_PUBLIC_API_URL`, `INTERNAL_API_URL` = Render URL, optional Supabase. | Live URL loads and talks to API. |
+
+---
+
+**After this Part 0:** use **Part A–J** below for concepts, troubleshooting links, and duplicate reference. The table above is the **single ordered path**.
+
+---
+
 ## Part A — What you are actually running
 
 ### Five smart contracts (on BNB Chain)

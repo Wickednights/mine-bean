@@ -14,6 +14,7 @@ const GridMiningABI = require('../abis/GridMining.json');
 const AutoMinerABI = require('../abis/AutoMiner.json');
 const TreasuryABI = require('../abis/Treasury.json');
 const StakingABI = require('../abis/Staking.json');
+const indexerStatus = require('./indexerStatus');
 
 // Configurable via env: INDEXER_POLL_INTERVAL_MS (default 6s). Higher = fewer RPC calls.
 const POLL_INTERVAL = parseInt(process.env.INDEXER_POLL_INTERVAL_MS || '6000', 10) || 6000;
@@ -581,6 +582,7 @@ async function startIndexer() {
   async function pollEvents() {
     try {
       const currentBlock = await provider.getBlockNumber();
+      indexerStatus.touchHeartbeat(currentBlock);
       if (currentBlock <= lastBlock) return;
 
       const fromBlock = lastBlock + 1;
@@ -591,9 +593,11 @@ async function startIndexer() {
       lastBlock = toBlock;
 
       const rawLogs = await provider.getLogs({ address: INDEXER_ADDRESSES, fromBlock, toBlock }).catch(err => {
+        indexerStatus.recordPollError(`getLogs: ${err.message}`);
         console.error('[Indexer] getLogs error:', err.message);
         return [];
       });
+      indexerStatus.touchLogsProgress(fromBlock, toBlock, Array.isArray(rawLogs) ? rawLogs.length : 0);
 
       const allEvents = rawLogs
         .map(parseLogToEvent)
@@ -612,10 +616,12 @@ async function startIndexer() {
         }
       }
     } catch (err) {
+      indexerStatus.recordPollError(`poll: ${err.message}`);
       console.error('[Indexer] Poll error:', err.message);
     }
   }
 
+  indexerStatus.markStarted(POLL_INTERVAL);
   setInterval(pollEvents, POLL_INTERVAL);
 
   console.log(`[Indexer] Listening via single eth_getLogs (${POLL_INTERVAL}ms interval, env: INDEXER_POLL_INTERVAL_MS)`);

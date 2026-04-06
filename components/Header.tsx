@@ -32,9 +32,11 @@ export default function Header({
   useEffect(() => {
     const fetchBnbPrice = async () => {
       try {
-        const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=binancecoin&vs_currencies=usd')
+        const response = await fetch('/api/price/bnb')
         const data = await response.json()
-        if (data.binancecoin?.usd) setBnbPrice(data.binancecoin.usd.toFixed(2))
+        if (typeof data.usd === 'number' && !Number.isNaN(data.usd)) {
+          setBnbPrice(data.usd.toFixed(2))
+        }
       } catch {
         setBnbPrice('600.00')
       }

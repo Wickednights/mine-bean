@@ -2,12 +2,18 @@
 
 import Header from '@/components/Header'
 import Link from 'next/link'
-import { useAccount } from 'wagmi'
+import { useAccount, useChainId } from 'wagmi'
 import { useState, useCallback, useEffect } from 'react'
 import { apiFetch } from '@/lib/api'
 import { formatUnits } from 'viem'
 
 interface DebugData {
+  meta?: {
+    networkLabel?: string
+    chainId?: number
+    rpcConfigured?: boolean
+    rpcHost?: string | null
+  }
   gridMining?: {
     currentRoundId?: number
     roundInfo?: { roundId?: number; timeRemaining?: number; isActive?: boolean }
@@ -27,15 +33,54 @@ interface DebugData {
   }
   diagnostic?: Record<string, unknown> | { error?: string }
   backendStatus?: {
-    autoReset?: { lastResetRound?: number; lastResetError?: string | null; lastResetSuccessAt?: string | null; walletAddress?: string }
-    autoMinerExecutor?: { lastExecutedRound?: number; lastError?: string | null; executorWallet?: string }
+    servicesConfig?: {
+      resetWalletConfigured?: boolean
+      autoResetEnabled?: boolean
+      executorConfigured?: boolean
+      autoMinerExecutorEnabled?: boolean
+    }
+    autoReset?: {
+      lastResetRound?: number
+      lastResetError?: string | null
+      lastResetSuccessAt?: string | null
+      walletAddress?: string | null
+      loadError?: string
+    } | null
+    autoMinerExecutor?: {
+      lastExecutedRound?: number
+      lastError?: string | null
+      executorWallet?: string | null
+      loadError?: string
+    } | null
     note?: string
   }
   fetchedAt?: string
   error?: string
 }
 
-function Section({ title, summary, data, defaultOpen = false }: { title: string; summary: React.ReactNode; data: unknown; defaultOpen?: boolean }) {
+function gridMiningPhaseLabel(gm: NonNullable<DebugData['gridMining']>): string {
+  if (gm.error) return ''
+  const settled = gm.round?.settled === true
+  const tr = gm.roundInfo?.timeRemaining
+  if (settled) return 'Settled'
+  if (typeof tr === 'number' && tr > 0) return 'Active'
+  if (typeof tr === 'number' && tr <= 0 && !settled) return 'Ended · unsettled'
+  return '—'
+}
+
+function Section({
+  title,
+  summary,
+  data,
+  defaultOpen = false,
+  jsonStyle,
+}: {
+  title: string
+  summary: React.ReactNode
+  data: unknown
+  defaultOpen?: boolean
+  jsonStyle?: React.CSSProperties
+}) {
   const [open, setOpen] = useState(defaultOpen)
   return (
     <div style={styles.section}>
@@ -49,7 +94,7 @@ function Section({ title, summary, data, defaultOpen = false }: { title: string;
       </button>
       {summary && <div style={styles.summary}>{summary}</div>}
       {open && (
-        <pre style={styles.json}>
+        <pre style={{ ...styles.json, ...jsonStyle }}>
           {JSON.stringify(data, null, 2)}
         </pre>
       )}
@@ -57,11 +102,28 @@ function Section({ title, summary, data, defaultOpen = false }: { title: string;
   )
 }
 
+interface DiagnosticsPayload {
+  meta?: { networkLabel?: string; chainId?: number; addresses?: Record<string, string> }
+  rpc?: { ok?: boolean; latencyMs?: number; blockNumber?: number; chainId?: number; error?: string }
+  mongo?: { stateLabel?: string; counts?: Record<string, number>; latestRoundDoc?: unknown }
+  backend?: unknown
+  contractSuites?: {
+    summary?: { contracts?: number; totalCalls?: number; totalOk?: number; totalFail?: number }
+    suites?: unknown[]
+  }
+  fetchedAt?: string
+  error?: string
+}
+
 export default function DebugPage() {
-  const { address, isConnected } = useAccount()
+  const { address, isConnected, connector } = useAccount()
+  const chainId = useChainId()
   const [data, setData] = useState<DebugData | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [deepData, setDeepData] = useState<DiagnosticsPayload | null>(null)
+  const [deepLoading, setDeepLoading] = useState(false)
+  const [deepError, setDeepError] = useState<string | null>(null)
 
   const fetchDebug = useCallback(async () => {
     if (!address) return
@@ -78,6 +140,26 @@ export default function DebugPage() {
     }
   }, [address])
 
+  const fetchDeepDiagnostics = useCallback(
+    async (suite: '0' | '1') => {
+      if (!address) return
+      setDeepLoading(true)
+      setDeepError(null)
+      try {
+        const result = await apiFetch<DiagnosticsPayload>(
+          `/api/diagnostics?address=${encodeURIComponent(address)}&suite=${suite}`
+        )
+        setDeepData(result)
+      } catch (e) {
+        setDeepError(e instanceof Error ? e.message : 'Failed to fetch diagnostics')
+        setDeepData(null)
+      } finally {
+        setDeepLoading(false)
+      }
+    },
+    [address]
+  )
+
   useEffect(() => {
     if (address) fetchDebug()
   }, [address, fetchDebug])
@@ -87,7 +169,20 @@ export default function DebugPage() {
       <Header currentPage="mine" />
       <div style={styles.container}>
         <div style={styles.header}>
-          <h1 style={styles.title}>Debug Console</h1>
+          <div>
+            <h1 style={styles.title}>Debug Console</h1>
+            <p style={styles.subtitle}>
+              {data?.meta
+                ? [
+                    data.meta.networkLabel ?? 'BSC testnet (Chapel)',
+                    data.meta.chainId != null ? `chainId ${data.meta.chainId}` : null,
+                    data.meta.rpcHost ? `RPC ${data.meta.rpcHost}` : !data.meta.rpcConfigured ? 'RPC from default seed' : null,
+                  ]
+                    .filter(Boolean)
+                    .join(' · ')
+                : 'Set CHAIN_ID / NETWORK_LABEL on the backend for accurate labeling (testnet vs mainnet).'}
+            </p>
+          </div>
           <Link href="/" style={styles.backLink}>← Back to Mine</Link>
         </div>
 
@@ -114,6 +209,55 @@ export default function DebugPage() {
               </button>
             </div>
 
+            <Section
+              title="Client (browser · wagmi)"
+              summary={
+                <span>
+                  Wallet chainId {chainId} · connector {connector?.name ?? '—'} · origin{' '}
+                  {typeof window !== 'undefined' ? window.location.origin : '—'}
+                </span>
+              }
+              data={{
+                chainId,
+                address,
+                connectorId: connector?.id,
+                connectorName: connector?.name,
+                origin: typeof window !== 'undefined' ? window.location.origin : null,
+                ua: typeof navigator !== 'undefined' ? navigator.userAgent : null,
+              }}
+            />
+
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
+              <button
+                type="button"
+                onClick={() => fetchDeepDiagnostics('1')}
+                disabled={deepLoading}
+                style={styles.refreshBtn}
+              >
+                {deepLoading ? 'Loading full suite…' : 'Load full contract read suite'}
+              </button>
+              <button
+                type="button"
+                onClick={() => fetchDeepDiagnostics('0')}
+                disabled={deepLoading}
+                style={{ ...styles.refreshBtn, background: '#333', color: '#F0B90B' }}
+              >
+                RPC + Mongo + backend only (fast)
+              </button>
+            </div>
+            <Section
+              title="Full diagnostics (RPC · Mongo · indexer · every contract view)"
+              summary={
+                <span>
+                  Runs all view/pure methods on GridMining, AutoMiner, Bean, Treasury, Staking (heuristic args). Takes ~10–40s.
+                  {deepError ? <span style={{ color: '#f55' }}> {deepError}</span> : null}
+                </span>
+              }
+              data={deepData}
+              jsonStyle={{ maxHeight: '70vh' }}
+              defaultOpen={Boolean(deepData)}
+            />
+
             {data && (
               <>
                 <Section
@@ -123,10 +267,10 @@ export default function DebugPage() {
                       <span style={{ color: '#f55' }}>{String(data.gridMining.error)}</span>
                     ) : data.gridMining ? (
                       <span>
-                        Round {data.gridMining.currentRoundId} · {data.gridMining.roundInfo?.timeRemaining ?? '—'}s left · {data.gridMining.round?.settled ? 'Settled' : 'Active'}
-                        {data.gridMining.userRewards && (
+                        Round {data.gridMining.currentRoundId} · {data.gridMining.roundInfo?.timeRemaining ?? '—'}s left · {gridMiningPhaseLabel(data.gridMining)}
+                        {data.gridMining.userRewards ? (
                           <> · Next checkpoint: Round {data.gridMining.userRewards.uncheckpointedRound ?? '—'}</>
-                        )}
+                        ) : null}
                       </span>
                     ) : null
                   }
@@ -208,13 +352,29 @@ export default function DebugPage() {
                 <Section
                   title="Backend Status"
                   summary={
-                    data.backendStatus?.note ? (
-                      <span style={{ color: '#888' }}>{data.backendStatus.note}</span>
-                    ) : data.backendStatus ? (
+                    data.backendStatus ? (
                       <span>
-                        AutoReset: last round {data.backendStatus.autoReset?.lastResetRound ?? '—'} {data.backendStatus.autoReset?.lastResetError ? `· Error: ${data.backendStatus.autoReset.lastResetError.slice(0, 50)}...` : ''}
-                        {' · '}
-                        AutoMiner: last round {data.backendStatus.autoMinerExecutor?.lastExecutedRound ?? '—'} {data.backendStatus.autoMinerExecutor?.lastError ? `· Error: ${data.backendStatus.autoMinerExecutor.lastError.slice(0, 50)}...` : ''}
+                        {(() => {
+                          const cfg = data.backendStatus.servicesConfig
+                          const ar = data.backendStatus.autoReset
+                          const am = data.backendStatus.autoMinerExecutor
+                          const arErr = ar && typeof ar === 'object' && 'loadError' in ar ? ar.loadError : null
+                          const amErr = am && typeof am === 'object' && 'loadError' in am ? am.loadError : null
+                          const parts: string[] = []
+                          if (cfg) {
+                            parts.push(`Reset wallet env: ${cfg.resetWalletConfigured ? 'set' : 'missing'}`)
+                            parts.push(`Executor env: ${cfg.executorConfigured ? 'set' : 'missing'}`)
+                          }
+                          if (arErr) parts.push(`AutoReset module: ${arErr.slice(0, 120)}`)
+                          if (amErr) parts.push(`Executor module: ${amErr.slice(0, 120)}`)
+                          if (!arErr && ar && typeof ar === 'object' && !('loadError' in ar)) {
+                            parts.push(`AutoReset last round ${ar.lastResetRound ?? '—'}`)
+                          }
+                          if (!amErr && am && typeof am === 'object' && !('loadError' in am)) {
+                            parts.push(`Executor last round ${am.lastExecutedRound ?? '—'}`)
+                          }
+                          return parts.join(' · ')
+                        })()}
                       </span>
                     ) : null
                   }
@@ -242,7 +402,8 @@ const styles: { [key: string]: React.CSSProperties } = {
   header: {
     display: 'flex',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
+    gap: 16,
     marginBottom: 24,
   },
   title: {
@@ -250,6 +411,13 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontWeight: 700,
     color: '#fff',
     margin: 0,
+  },
+  subtitle: {
+    fontSize: 13,
+    color: '#888',
+    margin: '8px 0 0',
+    maxWidth: 560,
+    lineHeight: 1.4,
   },
   backLink: {
     color: '#F0B90B',
