@@ -1,6 +1,6 @@
 'use client'
 import BeanLogo, { BnbLogo } from './BeanLogo'
-import { CONTRACTS, CHECKPOINT_PENDING_DEFAULT_MAX } from '@/lib/contracts'
+import { CONTRACTS } from '@/lib/contracts'
 import Link from 'next/link'
 
 import React, { useState } from "react"

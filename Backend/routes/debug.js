@@ -44,26 +44,7 @@ router.get('/', async (req, res) => {
     const address = (req.query.address || '').trim().toLowerCase();
     const { GridMining, AutoMiner } = getContracts();
 
-    const rpcUrl = process.env.RPC_URL || '';
-    let rpcHost = null;
-    try {
-      if (rpcUrl) rpcHost = new URL(rpcUrl).hostname;
-    } catch {
-      rpcHost = null;
-    }
-
-    const chainId = parseInt(process.env.CHAIN_ID || '97', 10) || 97;
-    const networkLabel =
-      process.env.NETWORK_LABEL ||
-      (chainId === 56 ? 'BSC mainnet' : chainId === 97 ? 'BSC testnet (Chapel)' : `chain ${chainId}`);
-
     const result = {
-      meta: {
-        networkLabel,
-        chainId,
-        rpcConfigured: Boolean(process.env.RPC_URL),
-        rpcHost,
-      },
       gridMining: null,
       rewards: null,
       autoMiner: null,
@@ -219,32 +200,16 @@ router.get('/', async (req, res) => {
     result.diagnostic = await getDiagnostic();
 
     // ─── Backend status (AutoReset, AutoMinerExecutor) ─────────────────────
-    const servicesConfig = {
-      resetWalletConfigured: Boolean(process.env.RESET_WALLET_PRIVATE_KEY),
-      autoResetEnabled: process.env.AUTO_RESET_ENABLED !== 'false',
-      executorConfigured: Boolean(process.env.EXECUTOR_PRIVATE_KEY),
-      autoMinerExecutorEnabled: process.env.AUTO_MINER_EXECUTOR_ENABLED !== 'false',
-    };
-
-    let autoResetPayload;
     try {
-      autoResetPayload = require('../lib/autoReset').getStatus?.() ?? null;
-    } catch (e) {
-      autoResetPayload = { loadError: e?.message || String(e) };
+      const autoResetStatus = require('../lib/autoReset').getStatus?.() ?? null;
+      const autoMinerStatus = require('../lib/autoMinerExecutor').getStatus?.() ?? null;
+      result.backendStatus = {
+        autoReset: autoResetStatus,
+        autoMinerExecutor: autoMinerStatus,
+      };
+    } catch {
+      result.backendStatus = { note: 'Status not available (services may not be started)' };
     }
-
-    let autoMinerExecutorPayload;
-    try {
-      autoMinerExecutorPayload = require('../lib/autoMinerExecutor').getStatus?.() ?? null;
-    } catch (e) {
-      autoMinerExecutorPayload = { loadError: e?.message || String(e) };
-    }
-
-    result.backendStatus = {
-      servicesConfig,
-      autoReset: autoResetPayload,
-      autoMinerExecutor: autoMinerExecutorPayload,
-    };
 
     res.json(result);
   } catch (err) {

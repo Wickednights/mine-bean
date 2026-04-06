@@ -44,7 +44,6 @@ const stakingRouter = require('./routes/staking');
 const automineRouter = require('./routes/automine');
 const eventsRouter = require('./routes/events');
 const debugRouter = require('./routes/debug');
-const diagnosticsRouter = require('./routes/diagnostics');
 
 app.use('/api/stats', statsRouter);
 app.use('/api/price', statsRouter);
@@ -60,7 +59,6 @@ app.use('/api/staking', strictLimiter, stakingRouter);
 app.use('/api/automine', strictLimiter, automineRouter);
 app.use('/api/events', eventsRouter);
 app.use('/api/debug', debugRouter);
-app.use('/api/diagnostics', diagnosticsRouter);
 
 // ─── Health Check ─────────────────────────────────────────────────────────
 
